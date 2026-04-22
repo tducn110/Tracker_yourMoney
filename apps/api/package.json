@@ -1,0 +1,31 @@
+{
+  "name": "@finance/api",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@finance/cache": "workspace:*",
+    "@finance/db": "workspace:*",
+    "@finance/shared-schemas": "workspace:*",
+    "@hono/zod-validator": "^0.7.6",
+    "@sentry/node": "^10.49.0",
+    "@tidbcloud/serverless": "^0.3.0",
+    "decimal.js": "^10.6.0",
+    "dotenv": "^17.4.2",
+    "hono": "^4.12.14",
+    "jose": "^6.2.2",
+    "pino": "^10.3.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@hono/node-server": "^1.19.14",
+    "tsx": "^4.21.0",
+    "vitest": "^4.1.4"
+  }
+}

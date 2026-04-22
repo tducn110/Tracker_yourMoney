@@ -1,0 +1,18 @@
+{
+  "name": "@finance/shared-schemas",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "decimal.js": "^10.6.0",
+    "zod": "^4.3.6"
+  }
+}
