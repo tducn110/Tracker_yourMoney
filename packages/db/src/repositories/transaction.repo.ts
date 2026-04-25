@@ -1,0 +1,147 @@
+import { and, eq, isNull, between } from "drizzle-orm";
+import { MySql2Database } from "drizzle-orm/mysql2";
+import * as schema from "../schema/index";
+import { transactions, type Transaction, type NewTransaction } from "../schema/transactions";
+import { BaseRepository, type DB } from "./base-repository";
+
+/**
+ * Repository for Transaction operations.
+ * Centralizes data access for financial ledger entries.
+ */
+export class TransactionRepository extends BaseRepository {
+  private get typedDb() {
+    return this.db as unknown as MySql2Database<typeof schema>;
+  }
+
+  /**
+   * Create a new transaction.
+   * Supports cross-instance idempotency via the idempotencyKey constraint in DB.
+   */
+  async create(data: NewTransaction, tx?: DB) {
+    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const [result] = await client.insert(transactions).values(data);
+    
+    const id = String(result.insertId);
+    const [newTx] = await client.select().from(transactions).where(eq(transactions.id, id)).limit(1);
+    
+    return newTx || null;
+  }
+
+  /**
+   * Find a transaction by ID and userId.
+   */
+  async findById(id: string, userId: string, tx?: DB) {
+    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const [record] = await client
+      .select()
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.id, id),
+          eq(transactions.userId, userId),
+          isNull(transactions.deletedAt)
+        )
+      )
+      .limit(1);
+    
+    return record || null;
+  }
+
+  /**
+   * Find a transaction by idempotencyKey.
+   */
+  async findByIdempotencyKey(key: string, userId: string, tx?: DB) {
+    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const [record] = await client
+      .select()
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.idempotencyKey, key),
+          eq(transactions.userId, userId),
+          isNull(transactions.deletedAt)
+        )
+      )
+      .limit(1);
+    
+    return record || null;
+  }
+
+  /**
+   * Find all transactions for a user, including category details.
+   * Migrated to Relational Query API for type safety and clean nested data.
+   */
+  async findAll(userId: string, tx?: DB) {
+    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    
+    return client.query.transactions.findMany({
+      where: and(
+        eq(transactions.userId, userId),
+        isNull(transactions.deletedAt)
+      ),
+      with: {
+        category: {
+          columns: {
+            name: true,
+            icon: true
+          }
+        }
+      },
+      orderBy: (transactions, { desc }) => [desc(transactions.displayDate)]
+    });
+  }
+
+  /**
+   * Find transactions within a date range (Inclusive).
+   * Crucial for S2S (Safe-to-Spend) calculations and reports.
+   */
+  async findByDateRange(userId: string, startDate: string, endDate: string, tx?: DB) {
+    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    return client
+      .select()
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          between(transactions.displayDate, startDate, endDate),
+          isNull(transactions.deletedAt)
+        )
+      )
+      .orderBy(transactions.displayDate);
+  }
+
+  /**
+   * Update a transaction.
+   */
+  async update(id: string, userId: string, data: Partial<NewTransaction>, tx?: DB) {
+    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    await client
+      .update(transactions)
+      .set({ ...data, updatedAt: new Date() })
+      .where(
+        and(
+          eq(transactions.id, id),
+          eq(transactions.userId, userId),
+          isNull(transactions.deletedAt)
+        )
+      );
+    
+    return this.findById(id, userId, client);
+  }
+
+  /**
+   * Soft delete a transaction.
+   */
+  async delete(id: string, userId: string, tx?: DB) {
+    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    await client
+      .update(transactions)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(transactions.id, id),
+          eq(transactions.userId, userId)
+        )
+      );
+  }
+}
