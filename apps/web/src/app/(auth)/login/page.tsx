@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthProvider';
 
 export default function LoginPage() {
   const { 
+    user,
     loginWithGoogle, 
     loginWithFacebook, 
     loginWithGithub, 
@@ -14,6 +15,13 @@ export default function LoginPage() {
     loading: authLoading 
   } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      router.push('/');
+    }
+  }, [user, router]);
 
   const handleLogin = async (provider: string, loginFn: () => Promise<void>) => {
     setLoading(provider);

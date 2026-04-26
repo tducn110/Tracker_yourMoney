@@ -17,6 +17,12 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+console.log("🔥 [Firebase Config]", {
+  hasApiKey: !!firebaseConfig.apiKey,
+  projectId: firebaseConfig.projectId,
+  envKeys: Object.keys(process.env).filter(k => k.startsWith("NEXT_PUBLIC_FIREBASE"))
+});
+
 // Initialize Firebase
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);

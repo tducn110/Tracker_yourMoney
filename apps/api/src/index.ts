@@ -150,7 +150,7 @@ app.onError((err, c) => {
 
 // ── SERVER LIFECYCLE ──────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'production') {
-  const port = 3001;
+  const port = Number(process.env.PORT) || 3001;
   const server = serve({ fetch: app.fetch, port }, (info) => {
     logger.info({ event: 'SERVER_READY', port: info.port });
   });

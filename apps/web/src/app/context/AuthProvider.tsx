@@ -74,6 +74,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Auth failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
         throw new Error("Xác thực với backend thất bại");
       }
 

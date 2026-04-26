@@ -24,6 +24,7 @@ const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 ngày
 export const authRoutes = new Hono()
   // POST /api/auth/social
   .post("/social", zValidator("json", socialLoginSchema), async (c) => {
+    console.log("📥 [Auth] Social login request received");
     try {
       const { idToken } = c.req.valid("json");
 
@@ -99,6 +100,9 @@ export const authRoutes = new Hono()
       });
     } catch (e: any) {
       console.error("Social login error:", e);
+      const fs = require('fs');
+      const logMsg = `[${new Date().toISOString()}] Social login error: ${e.message}\n${e.stack}\n`;
+      fs.appendFileSync('apps/api/error.log', logMsg);
       return err(c, 401, "AUTH_ERROR", "Đăng nhập thất bại");
     }
   })

@@ -31,6 +31,7 @@ export const walletTypeLabel: Record<WalletType, string> = {
 };
 
 import { MOCK_WALLETS } from '../../_lib/mock-data';
+export const mockWallets = MOCK_WALLETS;
 
 export const getTotalWalletBalance = (wallets: MockWallet[] = MOCK_WALLETS as any): number =>
   wallets.reduce((sum, w) => sum + w.balance, 0);

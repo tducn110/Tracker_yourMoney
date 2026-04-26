@@ -14,7 +14,8 @@ import {
   CategorySpending,
   MonthlyTrend,
   Transaction,
-  Bill
+  Bill,
+  Category
 } from '@finance/api-client';
 
 import { 
@@ -74,7 +75,7 @@ export function useQuickAdd() {
  * Hook: Categories List
  */
 export function useCategories() {
-  return useQuery({
+  return useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: async () => {
       // return categoriesAPI.list();
@@ -84,7 +85,7 @@ export function useCategories() {
         { id: 3, name: 'Di chuyển', icon: '🚗', color: '#60a5fa', type: 'expense' },
         { id: 4, name: 'Tiền ích', icon: '⚡', color: '#fbbf24', type: 'expense' },
         { id: 5, name: 'Mua sắm', icon: '🛍️', color: '#f472b6', type: 'expense' },
-      ];
+      ] as Category[];
     },
   });
 }
