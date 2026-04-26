@@ -1,7 +1,0 @@
-interface:
-  display_name: "Security Review"
-  short_description: "Financial app security: JWT, idempotency, input validation, and secrets"
-  brand_color: "#EF4444"
-  default_prompt: "Review security for S2S Finance: check HttpOnly cookies, idempotency keys, Zod validation, SQL injection, and rate limiting"
-policy:
-  allow_implicit_invocation: true
