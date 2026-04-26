@@ -30,8 +30,11 @@ export const authMiddleware = createMiddleware<{ Variables: AuthVariables }>(
           c.set("userEmail", user.email || "");
           return await next();
         }
-      } catch (e) {
+      } catch (e: any) {
         // Session cookie không hợp lệ — thử fallback Authorization header
+        const fs = require('fs');
+        const logMsg = `[${new Date().toISOString()}] Session verify error: ${e.message}\n`;
+        fs.appendFileSync('apps/api/error.log', logMsg);
       }
     }
 

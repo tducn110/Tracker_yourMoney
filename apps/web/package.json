@@ -8,7 +8,8 @@
     "build": "node ../../node_modules/next/dist/bin/next build",
     "start": "node ../../node_modules/next/dist/bin/next start",
     "lint": "node ../../node_modules/next/dist/bin/next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
