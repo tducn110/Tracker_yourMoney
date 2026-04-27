@@ -30,22 +30,89 @@ export class BudgetService {
         ),
       );
 
+    if (activeBudgets.length === 0) {
+      return {
+        totalLimit: "0.00",
+        totalSpent: "0.00",
+        totalIncome: "0.00",
+        projectedSpending: "0.00",
+        left: "0.00",
+        percent: 0,
+      };
+    }
+
+    // 1. Get all budget categories in one go
+    const budgetIds = activeBudgets.map(b => b.id);
+    const allBudgetCats = await db
+      .select()
+      .from(budgetCategories)
+      .where(inArray(budgetCategories.budgetId, budgetIds));
+
+    const budgetCatMap = new Map<string, number[]>();
+    for (const bc of allBudgetCats) {
+      const bid = String(bc.budgetId);
+      if (!budgetCatMap.has(bid)) budgetCatMap.set(bid, []);
+      budgetCatMap.get(bid)!.push(Number(bc.categoryId));
+    }
+
+    // 2. Find the overall date range to fetch transactions once
+    let minDate = activeBudgets[0].startDate;
+    let maxDate = activeBudgets[0].endDate;
+    for (const b of activeBudgets) {
+      if (b.startDate < minDate) minDate = b.startDate;
+      if (b.endDate > maxDate) maxDate = b.endDate;
+    }
+
+    // 3. Fetch all expenses in this range
+    const allTxs = await db
+      .select()
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.type, "expense"),
+          between(transactions.displayDate, minDate, maxDate),
+          isNull(transactions.deletedAt),
+        )
+      );
+
+    // 4. Calculate spent and projected for each budget
     let totalLimit = new Decimal(0);
     let totalSpent = new Decimal(0);
     let totalProjected = new Decimal(0);
+    const today = new Date();
 
     for (const budget of activeBudgets) {
-      const detail = await this.getBudgetDetail(userId, String(budget.id));
-      totalLimit = totalLimit.plus(budget.targetAmount);
-      totalSpent = totalSpent.plus(detail.spent);
-      totalProjected = totalProjected.plus(detail.projectedSpending);
+      const bLimit = new Decimal(budget.targetAmount);
+      totalLimit = totalLimit.plus(bLimit);
+
+      // Filter transactions for this specific budget
+      const bCatIds = budgetCatMap.get(String(budget.id)) || [];
+      const bTxs = allTxs.filter(tx => {
+        const inDate = tx.displayDate >= budget.startDate && tx.displayDate <= budget.endDate;
+        if (!inDate) return false;
+        if (budget.isAllCategories) return true;
+        return bCatIds.includes(Number(tx.categoryId));
+      });
+
+      const bSpent = bTxs.reduce((sum, tx) => sum.plus(tx.amount), new Decimal(0));
+      totalSpent = totalSpent.plus(bSpent);
+
+      // Calculate projected
+      const start = new Date(budget.startDate);
+      const end = new Date(budget.endDate);
+      const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const daysElapsed = Math.max(1, Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+      
+      const bProjected = bSpent.div(daysElapsed).times(totalDays);
+      totalProjected = totalProjected.plus(bProjected);
     }
 
-    // Get total income for current month
+    // 5. Get total income for current month (fixed to current calendar month)
     const now = new Date();
-    const startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    const incomeStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    const incomeEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
     const [incomeRow] = await db
       .select({ total: sum(transactions.amount) })
@@ -54,15 +121,13 @@ export class BudgetService {
         and(
           eq(transactions.userId, userId),
           eq(transactions.type, "income"),
-          between(transactions.displayDate, startDate, endDate),
+          between(transactions.displayDate, incomeStart, incomeEnd),
           isNull(transactions.deletedAt),
         ),
       );
 
     const left = totalLimit.minus(totalSpent);
-    const percent = totalLimit.isZero()
-      ? 0
-      : totalSpent.div(totalLimit).times(100).toNumber();
+    const percent = totalLimit.isZero() ? 0 : totalSpent.div(totalLimit).times(100).toNumber();
 
     return {
       totalLimit: totalLimit.toFixed(2),

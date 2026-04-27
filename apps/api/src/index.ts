@@ -1,4 +1,3 @@
-import './instrument';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,11 +7,20 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootPath = path.resolve(__dirname, '../../../');
 
-const envPath = path.join(rootPath, '.env');
-const envLocalPath = path.join(rootPath, '.env.local');
+if (process.env.NODE_ENV !== 'production') {
+  const envPath = path.join(rootPath, '.env');
+  const envLocalPath = path.join(rootPath, '.env.local');
 
-dotenv.config({ path: envPath, override: true });
-dotenv.config({ path: envLocalPath, override: true });
+  dotenv.config({ path: envPath, override: true });
+  dotenv.config({ path: envLocalPath, override: true });
+}
+
+// ── INSTRUMENTATION ──────────────────────────────────────────────────
+// Only load Sentry in Node.js fallback if DSN is present.
+// For Cloudflare Workers, use @sentry/cloudflare middleware if needed.
+if (process.env.SENTRY_DSN) {
+  await import('./instrument');
+}
 
 // ── GLOBAL POLYFILLS ───────────────────────────────────────────────
 // Support BigInt serialization in JSON.stringify (required for TiDB IDs)

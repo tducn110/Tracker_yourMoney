@@ -1,4 +1,4 @@
-import { mysqlTable, bigint, int, varchar, decimal, date, timestamp, mysqlEnum, tinyint, index } from "drizzle-orm/mysql-core";
+import { mysqlTable, bigint, int, varchar, decimal, date, timestamp, mysqlEnum, tinyint, index, unique } from "drizzle-orm/mysql-core";
 import { users } from "./users";
 import { categories } from "./categories";
 
@@ -35,7 +35,20 @@ export const budgetCategories = mysqlTable(
   },
   (table) => ({
     budgetCategoriesIdx: index("idx_budget_categories").on(table.budgetId, table.categoryId),
-    budgetCategoryUq: index("uq_budget_category").on(table.budgetId, table.categoryId),
+    budgetCategoryUq: unique("uq_budget_category").on(table.budgetId, table.categoryId),
+  })
+);
+
+export const budgetWallets = mysqlTable(
+  "budget_wallets",
+  {
+    id: bigint("id", { mode: "number" }).primaryKey().autoincrement().$type<string>(),
+    budgetId: bigint("budget_id", { mode: "number" }).notNull().references(() => budgets.id, { onDelete: "cascade", onUpdate: "cascade" }).$type<string>(),
+    walletId: varchar("wallet_id", { length: 50 }).notNull(),
+  },
+  (table) => ({
+    budgetWalletsIdx: index("idx_budget_wallets").on(table.budgetId, table.walletId),
+    budgetWalletUq: unique("uq_budget_wallet").on(table.budgetId, table.walletId),
   })
 );
 
@@ -43,3 +56,5 @@ export type Budget = typeof budgets.$inferSelect;
 export type NewBudget = typeof budgets.$inferInsert;
 export type BudgetCategory = typeof budgetCategories.$inferSelect;
 export type NewBudgetCategory = typeof budgetCategories.$inferInsert;
+export type BudgetWallet = typeof budgetWallets.$inferSelect;
+export type NewBudgetWallet = typeof budgetWallets.$inferInsert;

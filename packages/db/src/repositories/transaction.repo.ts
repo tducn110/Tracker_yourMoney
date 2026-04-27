@@ -93,7 +93,7 @@ export class TransactionRepository extends BaseRepository {
 
   /**
    * Find transactions within a date range (Inclusive).
-   * Crucial for S2S (Safe-to-Spend) calculations and reports.
+   * Crucial for Budget calculations and reports.
    */
   async findByDateRange(userId: string, startDate: string, endDate: string, tx?: DB) {
     const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;

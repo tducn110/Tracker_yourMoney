@@ -12,6 +12,8 @@ import {
 } from "../lib/firebase-auth";
 import { ok, err } from "../lib/response";
 
+import { logger, logError } from "../lib/logger";
+
 const COOKIE_BASE = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
@@ -24,7 +26,7 @@ const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 ngày
 export const authRoutes = new Hono()
   // POST /api/auth/social
   .post("/social", zValidator("json", socialLoginSchema), async (c) => {
-    console.log("📥 [Auth] Social login request received");
+    logger.info({ event: "SOCIAL_LOGIN_REQUEST", path: c.req.path });
     try {
       const { idToken } = c.req.valid("json");
 
@@ -99,10 +101,7 @@ export const authRoutes = new Hono()
         },
       });
     } catch (e: any) {
-      console.error("Social login error:", e);
-      const fs = require('fs');
-      const logMsg = `[${new Date().toISOString()}] Social login error: ${e.message}\n${e.stack}\n`;
-      fs.appendFileSync('apps/api/error.log', logMsg);
+      logError(e, c.req.path, c.req.method, "social-login");
       return err(c, 401, "AUTH_ERROR", "Đăng nhập thất bại");
     }
   })

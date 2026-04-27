@@ -50,6 +50,20 @@
       "when": 1777032950853,
       "tag": "0006_crazy_night_thrasher",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1777264731169,
+      "tag": "0007_sparkling_trish_tilby",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1777265223391,
+      "tag": "0008_groovy_deathbird",
+      "breakpoints": true
     }
   ]
 }

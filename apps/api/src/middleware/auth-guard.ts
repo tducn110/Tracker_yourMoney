@@ -5,6 +5,8 @@ import { db, users } from "@finance/db";
 import { eq } from "@finance/db";
 import { err } from "../lib/response";
 
+import { logger } from "../lib/logger";
+
 type AuthVariables = { userId: string; userEmail: string };
 
 export const authMiddleware = createMiddleware<{ Variables: AuthVariables }>(
@@ -32,9 +34,12 @@ export const authMiddleware = createMiddleware<{ Variables: AuthVariables }>(
         }
       } catch (e: any) {
         // Session cookie không hợp lệ — thử fallback Authorization header
-        const fs = require('fs');
-        const logMsg = `[${new Date().toISOString()}] Session verify error: ${e.message}\n`;
-        fs.appendFileSync('apps/api/error.log', logMsg);
+        logger.warn({
+          event: "SESSION_VERIFY_ERROR",
+          message: e.message,
+          path: c.req.path,
+          method: c.req.method,
+        });
       }
     }
 

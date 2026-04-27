@@ -4,7 +4,7 @@
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 
 const getSecret = () => {
-  const secret = (globalThis as any).JWT_SECRET || (typeof process !== "undefined" ? process.env.JWT_SECRET : undefined) || "s2s_finance_default_secret_for_dev";
+  const secret = (globalThis as any).JWT_SECRET || (typeof process !== "undefined" ? process.env.JWT_SECRET : undefined) || "finance_tracker_default_secret_for_dev";
   return new TextEncoder().encode(secret);
 };
 

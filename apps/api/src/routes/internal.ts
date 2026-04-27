@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { db, users, transactions, userSettings, cashWallet, refreshTokens } from "@finance/db";
 import { eq } from "@finance/db";
 import { ok, err, created } from "../lib/response";
+import { logError } from "../lib/logger";
 import { hashPassword } from "../lib/crypto-utils";
 
 export const internalRoutes = new Hono();
@@ -60,7 +61,7 @@ internalRoutes.post("/seed-user", async (c) => {
     
     return created(c, { message: "User seeded successfully (Dynamic ID)", user: { id: String(insertedUserId), email } });
   } catch (e: any) {
-    console.error('❌ [INTERNAL-SEED] FAILED:', e);
+    logError(e, c.req.path, c.req.method, "internal-seed");
     return err(c, 500, "SEED_FAILED", `${e.message} \n ${e.stack}`);
   }
 });
@@ -87,7 +88,7 @@ internalRoutes.post("/teardown-user", async (c) => {
 
     return ok(c, { message: "Teardown completed successfully." });
   } catch (e: any) {
-    console.error('❌ [INTERNAL-TEARDOWN] FAILED:', e);
+    logError(e, c.req.path, c.req.method, "internal-teardown");
     return err(c, 500, "TEARDOWN_FAILED", e.message);
   }
 });

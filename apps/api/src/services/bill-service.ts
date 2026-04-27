@@ -1,12 +1,17 @@
 // apps/api/src/services/bill-service.ts
 import Decimal from "decimal.js";
+import type { TransactionRepository } from "@finance/db/src/repositories/transaction.repo";
 import type { BillRepository } from "@finance/db/src/repositories/bill.repo";
 import type { InsertBill, UpdateBill, InsertBillPayment } from "@finance/shared-schemas";
+import { db } from "@finance/db";
 
 export type BillStatus = "paid" | "partial" | "pending";
 
 export class BillService {
-  constructor(private readonly repository: BillRepository) {}
+  constructor(
+    private readonly repository: BillRepository,
+    private readonly transactionRepository: TransactionRepository
+  ) {}
 
   async getBillPaymentStatus(userId: string, billId: string, periodMonth: string): Promise<{ status: BillStatus; totalPaid: string }> {
     const totalPaidStr = await this.repository.sumPayments(billId, periodMonth);
@@ -35,13 +40,29 @@ export class BillService {
       throw Object.assign(new Error("Hóa đơn kỳ này đã thanh toán đủ"), { code: "ALREADY_PAID" });
     }
 
-    return this.repository.createPayment({
-      billId:      billIdNum as any,
-      userId:      userId as any,
-      periodMonth: input.periodMonth,
-      amountPaid:  input.amountPaid,
-      note:        input.note ?? null,
-      idempotencyKey: input.idempotencyKey,
+    return await db.transaction(async (tx) => {
+      // 1. Create Bill Payment Record
+      const payment = await this.repository.createPayment({
+        billId:      billIdNum as any,
+        userId:      userId as any,
+        periodMonth: input.periodMonth,
+        amountPaid:  input.amountPaid,
+        note:        input.note ?? null,
+        idempotencyKey: input.idempotencyKey,
+      }, tx);
+
+      // 2. Create Transaction Record (Expense)
+      await this.transactionRepository.create({
+        userId: userId as any,
+        categoryId: bill.categoryId,
+        amount: input.amountPaid,
+        type: "expense",
+        note: `Thanh toán hóa đơn: ${bill.name}${input.note ? ` - ${input.note}` : ""}`,
+        displayDate: new Date().toISOString().split('T')[0],
+        source: "bill_payment",
+      }, tx);
+
+      return payment;
     });
   }
 
