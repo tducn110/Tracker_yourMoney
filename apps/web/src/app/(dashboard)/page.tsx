@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Dashboard Page — Finance Tracker V3
  * Layout (8px grid):
