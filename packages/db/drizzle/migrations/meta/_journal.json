@@ -64,6 +64,13 @@
       "when": 1777265223391,
       "tag": "0008_groovy_deathbird",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1777306604784,
+      "tag": "0009_remove_budget_wallets",
+      "breakpoints": true
     }
   ]
 }
