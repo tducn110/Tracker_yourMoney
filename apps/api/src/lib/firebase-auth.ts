@@ -1,5 +1,6 @@
 // apps/api/src/lib/firebase-auth.ts
 import * as admin from "firebase-admin";
+import { logger } from "./logger";
 
 // Lazy initialization to ensure dotenv is loaded first
 function getAuth() {
@@ -21,7 +22,7 @@ function getAuth() {
       }),
     });
 
-    console.log(`🔥 Firebase Admin SDK initialized for project: ${app.options.projectId || projectId}`);
+    logger.info({ event: 'FIREBASE_INIT', message: `Firebase Admin SDK initialized for project: ${app.options.projectId || projectId}`, projectId: app.options.projectId || projectId });
   }
   return admin.auth();
 }

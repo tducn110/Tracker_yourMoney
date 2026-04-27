@@ -7,7 +7,7 @@
  *   4. TopGoals Section
  *   5. Transactions (2/3) + Bills (1/3)
  *
- * Removed: MultiWalletStrip (ví lớn), S2S row
+ * Removed: MultiWalletStrip (ví lớn)
  */
 
 import { SimpleQuickInput }        from '@/_components/quick-add/SimpleQuickInput';

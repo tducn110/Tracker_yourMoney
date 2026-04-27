@@ -84,10 +84,11 @@ export class BillRepository extends BaseRepository {
     return row?.total ?? "0";
   }
 
-  async createPayment(data: NewBillPayment): Promise<BillPayment> {
-    const [result] = await this.typedDb.insert(billPayments).values(data);
+  async createPayment(data: NewBillPayment, tx?: DB): Promise<BillPayment> {
+    const client = tx || this.typedDb;
+    const [result] = await client.insert(billPayments).values(data);
     const insertId = String(result.insertId);
-    const [row] = await this.typedDb
+    const [row] = await client
       .select()
       .from(billPayments)
       .where(eq(billPayments.id, String(insertId)))
@@ -96,8 +97,9 @@ export class BillRepository extends BaseRepository {
     return row;
   }
 
-  async findPaymentByIdempotencyKey(userId: string, key: string): Promise<BillPayment | undefined> {
-    const [row] = await this.typedDb
+  async findPaymentByIdempotencyKey(userId: string, key: string, tx?: DB): Promise<BillPayment | undefined> {
+    const client = tx || this.typedDb;
+    const [row] = await client
       .select()
       .from(billPayments)
       .where(and(eq(billPayments.userId, userId), eq(billPayments.idempotencyKey, key)))

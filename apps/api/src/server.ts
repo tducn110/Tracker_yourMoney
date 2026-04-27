@@ -2,9 +2,11 @@ import "./env.ts"; // Load env vars first!
 import { serve } from "@hono/node-server";
 import app from "./index.ts";
 
+import { logger } from "./lib/logger";
+
 const port = 8787;
 
-console.log(`🚀 S2S API (Node Fallback) is running on http://localhost:${port}`);
+logger.info({ event: 'SERVER_STARTUP', message: `Finance API (Node Fallback) is running on http://localhost:${port}`, port });
 
 serve({
   fetch: app.fetch,

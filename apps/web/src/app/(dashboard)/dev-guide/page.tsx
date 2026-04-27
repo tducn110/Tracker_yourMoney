@@ -231,7 +231,7 @@ const FOLDER_STRUCTURE = `src/app/
 │   ├── wallet/              # MultiWalletStrip, WalletCard, WalletSyncModal
 │   ├── quick-add/           # SimpleQuickInput
 │   ├── layout/              # Sidebar, Header
-│   └── s2s/                 # S2SHeroSection (legacy)
+│   └── wallet/              # Components ví
 ├── data/
 │   └── mockData.ts          # ← Tất cả mock data + types
 └── routes.tsx               # ← Router config`;

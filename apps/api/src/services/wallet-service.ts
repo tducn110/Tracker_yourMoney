@@ -40,9 +40,12 @@ export class WalletService {
 
       // Auto-create misc expense if money went down (diff negative)
       if (diff.isNegative()) {
-        const categories = await this.categoryRepository.findAll(userId);
-        const matched = categories.find((c: any) => c.name === "Khác");
-        const catId = matched?.id ?? 11;
+        const matched = await this.categoryRepository.findByName("Khác", userId, tx);
+        const catId = matched?.id;
+
+        if (!catId) {
+          throw new Error("Không tìm thấy danh mục 'Khác' để tạo giao dịch tự động");
+        }
 
         const txResult = await tx.insert(transactions).values({
           userId: userId as any,

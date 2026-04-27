@@ -4,3 +4,4 @@ export * from "./transaction.repo";
 export * from "./analytics.repo";
 export * from "./bill.repo";
 export * from "./goal.repo";
+export * from "./budget.repo";

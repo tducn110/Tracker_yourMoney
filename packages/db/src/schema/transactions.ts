@@ -2,12 +2,12 @@
 // TABLE 5: transactions — Nhật ký giao dịch tài chính (bảng cốt lõi)
 //
 // [v12.0-A] display_date DATE — ngày user tự chọn cho sổ cái, không có timezone confusion
-//           S2S Engine filters: WHERE display_date BETWEEN '2026-04-01' AND '2026-04-30'
+//           Budget Engine filters: WHERE display_date BETWEEN '2026-04-01' AND '2026-04-30'
 // [v12.0-B] Currency fields deferred to Phase 2 (VND-only MVP)
 // [v12.0-C] type enum includes 'transfer' for wallet-to-wallet moves
 // [FIX #4]  bigint mode: "string" — TiDB distributed ID safety
 //
-// ⚡ COMPOSITE INDEX (user_id, display_date) — CRITICAL for S2S Engine performance
+// ⚡ COMPOSITE INDEX (user_id, display_date) — CRITICAL for Budget Engine performance
 import {
   bigint, int, decimal, varchar, timestamp, date,
   mysqlTable, mysqlEnum, index, check,
@@ -37,14 +37,14 @@ export const transactions = mysqlTable("transactions", {
   displayDate: date("display_date", { mode: "string" }).notNull(),
 
   receiptUrl:  varchar("receipt_url", { length: 500 }),
-  source:      mysqlEnum("source", ["manual", "quick_add", "ocr", "import", "recurring"])
+  source:      mysqlEnum("source", ["manual", "quick_add", "ocr", "import", "recurring", "bill_payment", "goal_contribution"])
                  .notNull().default("manual"),
   
   // Idempotency: Khóa đúp từ DB — phòng thủ Cold Start Serverless
   // UNIQUE constraint đảm bảo cross-instance safety trên Vercel multi-region
   idempotencyKey: varchar("idempotency_key", { length: 255 }).unique(),
 
-  // Soft delete — query S2S phải luôn có: WHERE deleted_at IS NULL
+  // Soft delete — query Budget phải luôn có: WHERE deleted_at IS NULL
   deletedAt:   timestamp("deleted_at"),
   createdAt:   timestamp("created_at").notNull().defaultNow(),
   updatedAt:   timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
@@ -54,11 +54,11 @@ export const transactions = mysqlTable("transactions", {
   // exchangeRate: decimal("exchange_rate", { precision: 18, scale: 6 }).notNull().default("1.000000"),
   // baseAmount:   decimal("base_amount", { precision: 15, scale: 2 }).notNull(),
 }, (table) => ({
-  // ⚡ COMPOSITE INDEX — S2S Engine lifeblood
+  // ⚡ COMPOSITE INDEX — Budget Engine lifeblood
   userDateIdx:  index("idx_tx_user_date").on(table.userId, table.displayDate),
   userTypeIdx:  index("idx_tx_user_type").on(table.userId, table.type),
   userCatIdx:   index("idx_tx_user_cat").on(table.userId, table.categoryId),
-  // Covering index cho S2S monthly query
+  // Covering index cho Budget monthly query
   userMonthIdx: index("idx_tx_user_month").on(table.userId, table.displayDate, table.deletedAt),
   deletedIdx:   index("idx_tx_deleted").on(table.deletedAt),
   // CHECK: amount phải luôn dương

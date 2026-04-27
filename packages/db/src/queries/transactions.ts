@@ -4,7 +4,7 @@ import { db } from "../client";
 import { transactions, categories } from "../schema";
 import { and, eq, isNull, desc, sql, type SQL } from "drizzle-orm";
 
-// Get transactions for a user within a date range (used by S2S Engine)
+// Get transactions for a user within a date range (used by Budget Engine)
 export async function getMonthlyTransactions(
   userId: string,
   month: string, // "YYYY-MM"

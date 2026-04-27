@@ -19,7 +19,7 @@ export const notifications = mysqlTable("notifications", {
   type:      mysqlEnum("type", [
                "bill_due", "bill_overdue", "budget_warning", "budget_exceeded",
                "goal_completed", "goal_milestone", "low_balance",
-               "s2s_negative", "system", "tip",
+               "budget_negative", "system", "tip",
              ]).notNull(),
   title:     varchar("title", { length: 150 }).notNull(),
   body:      text("body").notNull(),

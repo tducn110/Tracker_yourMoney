@@ -49,13 +49,20 @@ export class GoalRepository extends BaseRepository {
     return row;
   }
 
-  async update(id: string, userId: string, data: Partial<NewGoal>): Promise<Goal> {
-    await this.typedDb
+  async update(id: string, userId: string, data: Partial<NewGoal>, tx?: DB): Promise<Goal> {
+    const client = tx || this.typedDb;
+    await client
       .update(goals)
       .set({ ...data, updatedAt: new Date() })
       .where(and(eq(goals.id, id), eq(goals.userId, userId)));
     
-    const row = await this.findById(id, userId);
+    // We should use the same client to find the record to maintain transaction isolation
+    const [row] = await client
+      .select()
+      .from(goals)
+      .where(and(eq(goals.id, id), eq(goals.userId, userId), isNull(goals.deletedAt)))
+      .limit(1);
+    
     if (!row) throw new Error("Goal not found after update");
     return row;
   }

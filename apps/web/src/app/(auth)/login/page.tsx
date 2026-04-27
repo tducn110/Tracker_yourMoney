@@ -44,8 +44,8 @@ export default function LoginPage() {
               <Sparkles size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-[20px]" style={{ color: '#1E293B' }}>S2S Finance</h1>
-              <p className="text-[12px]" style={{ color: '#64748B' }}>Safe-to-Spend Tracker</p>
+              <h1 className="font-bold text-[20px]" style={{ color: '#1E293B' }}>Finance Tracker</h1>
+              <p className="text-[12px]" style={{ color: '#64748B' }}>Budget-First Tracker</p>
             </div>
           </div>
 
@@ -97,7 +97,7 @@ export default function LoginPage() {
 
             <div className="flex items-center gap-4 py-2">
               <div className="flex-1 h-px bg-slate-200"></div>
-              <span className="text-[12px] font-medium text-slate-400 uppercase tracking-wider">S2S Finance Security</span>
+              <span className="text-[12px] font-medium text-slate-400 uppercase tracking-wider">Finance Tracker Security</span>
               <div className="flex-1 h-px bg-slate-200"></div>
             </div>
             
@@ -125,7 +125,7 @@ export default function LoginPage() {
           <div className="text-8xl mb-6">💰</div>
           <h2 className="text-[32px] font-bold mb-4">Kiểm soát tài chính</h2>
           <p className="text-[16px] opacity-90 leading-relaxed">
-            S2S Finance giúp bạn theo dõi thu chi, quản lý mục tiêu tiết kiệm và kiểm soát hóa đơn hàng tháng một cách thông minh.
+            Finance Tracker giúp bạn theo dõi thu chi, quản lý mục tiêu tiết kiệm và kiểm soát hóa đơn hàng tháng một cách thông minh.
           </p>
           <div className="mt-8 grid grid-cols-3 gap-4">
             {[

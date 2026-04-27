@@ -63,8 +63,8 @@ export class Container {
     this._aiService = new AIService(this._nlpAdapter);
     this._walletService = new WalletService(this._categoryRepo);
     this._analyticsService = new AnalyticsService();
-    this._billService = new BillService(this._billRepo);
-    this._goalService = new GoalService(this._goalRepo);
+    this._billService = new BillService(this._billRepo, this._transactionRepo);
+    this._goalService = new GoalService(this._goalRepo, this._transactionRepo, this._categoryRepo);
   }
 
   get categoryService() { return this._categoryService; }

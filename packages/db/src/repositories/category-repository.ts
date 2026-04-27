@@ -83,6 +83,26 @@ export class CategoryRepository extends BaseRepository {
   }
 
   /**
+   * Find a category by name and userId.
+   */
+  async findByName(name: string, userId: string, tx?: DB) {
+    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const [category] = await client
+      .select()
+      .from(categories)
+      .where(
+        and(
+          eq(categories.name, name),
+          or(isNull(categories.userId), eq(categories.userId, userId)),
+          isNull(categories.deletedAt)
+        )
+      )
+      .limit(1);
+    
+    return category || null;
+  }
+
+  /**
    * Soft delete a category.
    */
   async delete(id: number, userId: string, tx?: DB) {

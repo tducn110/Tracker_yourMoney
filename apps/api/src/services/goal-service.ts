@@ -4,8 +4,15 @@ import { db, notifications } from "@finance/db";
 import type { GoalRepository } from "@finance/db/src/repositories/goal.repo";
 import type { InsertGoal, UpdateGoal, ContributeGoal } from "@finance/shared-schemas";
 
+import type { TransactionRepository } from "@finance/db/src/repositories/transaction.repo";
+import type { CategoryRepository } from "@finance/db/src/repositories/category-repository";
+
 export class GoalService {
-  constructor(private readonly repository: GoalRepository) {}
+  constructor(
+    private readonly repository: GoalRepository,
+    private readonly transactionRepository: TransactionRepository,
+    private readonly categoryRepository: CategoryRepository
+  ) {}
 
   async getActiveGoals(userId: string) {
     return this.repository.findActive(userId);
@@ -45,26 +52,46 @@ export class GoalService {
       );
     }
 
-    const newSaved = new Decimal(goal.currentSaved).plus(new Decimal(input.amount));
-    const target   = new Decimal(goal.targetAmount);
-    const isComplete = newSaved.gte(target);
+    return await db.transaction(async (tx) => {
+      const newSaved = new Decimal(goal.currentSaved).plus(new Decimal(input.amount));
+      const target   = new Decimal(goal.targetAmount);
+      const isComplete = newSaved.gte(target);
 
-    const updated = await this.repository.update(goalId, userId, {
-      currentSaved: newSaved.toFixed(2),
-      ...(isComplete && { status: "completed", completedAt: new Date() }),
-    });
+      // 1. Update Goal
+      const updated = await this.repository.update(goalId, userId, {
+        currentSaved: newSaved.toFixed(2),
+        ...(isComplete && { status: "completed", completedAt: new Date() }),
+      }, tx);
 
-    if (isComplete) {
-      // @ts-ignore - Drizzle Proxy issue
-      await db.insert(notifications).values({
+      // 2. Find Savings Category
+      const savingsCategory = await this.categoryRepository.findByName("Tiết Kiệm", userId, tx);
+      if (!savingsCategory) {
+        throw new Error("Không tìm thấy danh mục 'Tiết Kiệm' để tạo giao dịch");
+      }
+
+      // 3. Create Transaction (Expense/Transfer)
+      await this.transactionRepository.create({
         userId: userId as any,
-        type: "goal_completed",
-        title: "🎉 Mục tiêu hoàn thành!",
-        body: `Chúc mừng! Bạn đã đạt mục tiêu "${goal.name}"`,
-      });
-    }
+        categoryId: savingsCategory.id,
+        amount: input.amount,
+        type: "expense", // Saving is considered an "expense" from cash wallet perspective
+        note: `Tiết kiệm cho mục tiêu: ${goal.name}`,
+        displayDate: new Date().toISOString().split('T')[0],
+        source: "goal_contribution",
+      }, tx);
 
-    return updated;
+      if (isComplete) {
+        // @ts-ignore - Drizzle Proxy issue
+        await tx.insert(notifications).values({
+          userId: userId as any,
+          type: "goal_completed",
+          title: "🎉 Mục tiêu hoàn thành!",
+          body: `Chúc mừng! Bạn đã đạt mục tiêu "${goal.name}"`,
+        });
+      }
+
+      return updated;
+    });
   }
 
   async updateGoal(userId: string, id: string, input: UpdateGoal) {

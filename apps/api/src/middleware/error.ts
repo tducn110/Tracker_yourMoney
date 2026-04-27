@@ -2,6 +2,7 @@
 // Global error handler — no stack traces to client (security)
 import { ErrorHandler } from "hono";
 import { ZodError } from "zod";
+import { logError } from "../lib/logger";
 
 export const errorHandler: ErrorHandler = (err, c) => {
   // Zod validation error → 400 with field details
@@ -20,9 +21,8 @@ export const errorHandler: ErrorHandler = (err, c) => {
   }
 
   // Generic error — log internally, return safe message
-  console.error("[API Error]", {
-    message: err.message,
-    stack: err.stack,
+  logError(err, {
+    event: "API_UNHANDLED_ERROR",
     path: c.req.path,
     method: c.req.method,
   });

@@ -44,7 +44,7 @@ export async function getMonthlySummary(
   };
 }
 
-// Get user settings (emergency buffer, etc.) for S2S calculation
+// Get user settings (emergency buffer, etc.) for Budget calculation
 export async function getUserFinancialConfig(userId: string) {
   const [settings] = await drizzle
     .select({
