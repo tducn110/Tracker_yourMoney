@@ -1,6 +1,6 @@
-# S2S Finance Documentation
+# Finance Tracker Documentation
 
-Chào mừng đến với hệ thống tài liệu của dự án S2S Finance Tracker V3. Để dễ dàng nắm bắt thông tin dự án và không bị lạc trong hệ thống doc, vui lòng đọc theo hướng dẫn dưới đây.
+Chào mừng đến với hệ thống tài liệu của dự án Finance Tracker V3. Để dễ dàng nắm bắt thông tin dự án và không bị lạc trong hệ thống doc, vui lòng đọc theo hướng dẫn dưới đây.
 
 ---
 
@@ -16,26 +16,25 @@ Hãy bắt đầu với thư mục `wiki/` - đây là "trái tim" của tài li
 - Đọc **`wiki/DATABASE_SCHEMA.md`** để nắm cấu trúc các bảng và quy tắc tài chính (Soft delete, Decimal).
 - Đọc **`wiki/QUICKSTART.md`** để biết cách chạy dự án ở local.
 
-### Bước 2: Nắm Bắt Định Hướng & Lộ Trình (Roadmaps & Plans)
+### Bước 2: Nắm Bắt Định Hướng & Lộ Trình (Roadmaps & Tasks)
 
-Sau khi hiểu dự án làm gì, hãy xem dự án đang đi đến đâu.
+- Mở thư mục **`tasks/`** -> Đọc **`ROADMAP.md`** để biết tiến độ tổng thể.
+- Xem các bản vẽ kỹ thuật chi tiết trong **`tasks/plans/`** cho từng chức năng cụ thể sắp làm.
 
-- Mở thư mục **`05_Master_Tasks_Hierarchy/`** -> Đọc **`ROADMAP.md`** để biết tiến độ tổng thể.
-- Mở các file Master Plan (như `S2S_Finance_50_Phase_Master_Plan.md`) để xem kế hoạch 50 Phase chi tiết.
-- Thư mục **`plans/`** chứa các bản vẽ kỹ thuật chi tiết cho từng chức năng cụ thể sắp làm.
+### Bước 3: Theo Dõi Tiến Độ Thực Tế & Phân Tích (Logs & Research)
 
-### Bước 3: Theo Dõi Tiến Độ Thực Tế (Daily/Feature Updates)
+- Vào **`logs/`**: Chứa các bản phân tích (Analysis) cục bộ theo ngày tháng (vd: `logs/2026/04/26/`).
+- Vào **`research/`**: Các phân tích chuyên sâu về hệ thống (Business Logic, Scalability).
 
-Khi cần biết hôm nay/tuần này dự án đã code thêm cái gì:
+### Bước 4: Vận Hành & Bảo Trì (Operations)
 
-- Vào **`update-feature/`**: Đọc log chi tiết của các tính năng vừa được hoàn thành.
-- Các thư mục log theo ngày (ví dụ: **`26/`**): Chứa các bản phân tích (Analysis) cục bộ do AI thực hiện vào ngày đó (vd: Tại sao load chậm, database operations,...).
+- Vào **`ops/deploy/`**: Tài liệu về luồng CI/CD, Git flow.
+- Vào **`ops/incidents/`**: Lịch sử phân tích và cách fix các bug phức tạp (Post-mortem).
+- Vào **`ops/checklists/`**: Các danh sách kiểm tra an toàn (QA, Security, Pre-launch).
 
-### Bước 4: Kiểm Tra Lỗi & Quy Trình Deploy (Troubleshooting & Ops)
+### Bước 5: Lưu Trữ (Archive)
 
-- Vào **`hot-fix/`**: Để xem lịch sử phân tích và cách fix các bug phức tạp (Cold Start, Type Error).
-- Vào **`deploy-git/`**: Khi cần chuẩn bị release (Tài liệu về luồng CI/CD, Git flow).
-- Vào **`check-list/`**: Dùng các checklist ở đây để đối chiếu trước khi merge code hoặc tung bản cập nhật.
+- Vào **`archive/updates/`**: Lưu trữ lịch sử cập nhật tính năng và hệ thống.
 
 ---
 
@@ -43,16 +42,15 @@ Khi cần biết hôm nay/tuần này dự án đã code thêm cái gì:
 
 Dưới đây là công dụng của các thư mục đang có trong `/doc`:
 
-| Thư mục                          | Mô tả công dụng                                                                                             |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **`wiki/`**                      | Tài liệu cốt lõi, lâu dài. Bắt buộc phải được update nếu thay đổi DB hoặc Architecture.                     |
-| **`05_Master_Tasks_Hierarchy/`** | Cấu trúc phân cấp Task lớn, Roadmap dài hạn của dự án.                                                      |
-| **`plans/`**                     | Nơi lưu các file Implementation Plan (Bản thiết kế kỹ thuật) trước khi bắt tay vào code.                    |
-| **`update-feature/`**            | Tài liệu ghi chú (log) quá trình làm một tính năng cụ thể.                                                  |
-| **`update/`**                    | Các thông báo cập nhật chung, thay đổi về stack hoặc recap hàng tháng.                                      |
-| **`hot-fix/`**                   | Phân tích Post-mortem cho các bug nghiêm trọng (Post-mortem).                                               |
-| **`deploy-git/`**                | Chứa kịch bản triển khai hệ thống (Deployment patterns, CI/CD).                                             |
-| **`check-list/`**                | Các danh sách kiểm tra an toàn (QA, Security, Pre-launch).                                                  |
-| **`[Ngày/Tháng/Năm]`**           | (Ví dụ `26/`) Các thư mục được sinh ra để lưu trữ các bài phân tích (Analysis) theo dòng thời gian thực tế. |
+| Thư mục          | Mô tả công dụng                                                                          |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| **`wiki/`**      | Tài liệu cốt lõi, lâu dài. Bắt buộc phải update nếu thay đổi DB hoặc Architecture.       |
+| **`tasks/`**     | Lộ trình (Roadmap), kế hoạch chi tiết (Plans) và danh sách công việc.                    |
+| **`ops/`**       | Quy trình vận hành: Deployment, Incident Management (Hotfixes), và Checklists.           |
+| **`logs/`**      | Nhật ký phân tích hệ thống theo thời gian (Ngày/Tháng/Năm).                             |
+| **`research/`**  | Các bài phân tích chuyên sâu về Business Logic, Scalability, và UI Gaps.                 |
+| **`archive/`**   | Lưu trữ các bản cập nhật cũ, log cũ không còn dùng thường xuyên.                         |
 
-> ⚠️ **Lưu ý cho Developer / AI Agents:** Khi tạo ra một tài liệu mới, hãy đảm bảo đặt nó vào đúng thư mục tương ứng theo bảng trên. Tuyệt đối không để rải rác ngoài thư mục gốc.
+---
+
+> ⚠️ **Lưu ý cho Developer / AI Agents:** Khi tạo ra một tài liệu mới, hãy đảm bảo đặt nó vào đúng thư mục tương ứng theo cấu trúc trên. Tuyệt đối không để rải rác ngoài thư mục gốc.
