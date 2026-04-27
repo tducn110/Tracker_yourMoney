@@ -1,9 +1,9 @@
-# 🏗️ S2S Finance System Architecture
+# 🏗️ Finance Tracker V3 System Architecture
 
-This document provides a high-level overview of the S2S Finance Tracker V3 architecture, based on automated analysis from GitNexus.
+This document provides a high-level overview of the Finance Tracker V3 architecture, based on automated analysis from GitNexus.
 
 ## 🌟 Overview
-S2S Finance is built as a TypeScript monorepo using **Turborepo**, designed for high performance, financial precision, and a premium user experience.
+Finance Tracker V3 is built as a TypeScript monorepo using **Turborepo**, designed for high performance, financial precision, and a premium user experience.
 
 ---
 
@@ -19,7 +19,7 @@ graph TD
 
     subgraph Backend [apps/api - Hono.js]
         Services["Business Logic (Services)"]
-        S2SEngine["S2S Calculation Engine"]
+        BudgetEngine["Budget-First Engine"]
         Middleware["Auth & Security Middleware"]
     end
 
@@ -35,7 +35,7 @@ graph TD
 
     UI --> Actions
     Actions --> Services
-    Services --> S2SEngine
+    Services --> BudgetEngine
     Services --> Repos
     Repos --> Drizzle
     Drizzle --> TiDB
@@ -52,7 +52,7 @@ Based on GitNexus clustering, the codebase is organized into these primary areas
 | Module | Responsibility |
 |--------|----------------|
 | **Ui** | React components, shadcn/ui, and Framer Motion animations. |
-| **Services** | Core business logic, including the S2S Engine and Transaction processing. |
+| **Services** | Core business logic, including the Budget Engine and Transaction processing. |
 | **Repositories** | Data access layer using Drizzle ORM to interact with TiDB. |
 | **Hooks** | TanStack Query hooks for data fetching and state management. |
 | **Actions** | Next.js Server Actions for handling form submissions and mutations. |
@@ -64,8 +64,8 @@ Based on GitNexus clustering, the codebase is organized into these primary areas
 ### 1. Transaction Creation Flow
 `CreateTransactionAction (web)` → `apiFetch (lib)` → `idempotency check (api)` → `TransactionService (api)` → `TransactionRepository (db)`
 
-### 2. S2S Data Display
-`DashboardPage (web)` → `useS2S hook (web)` → `FinanceService (api)` → `S2SEngine (api)` → `Response (VND formatted)`
+### 2. Budget Data Display
+`DashboardPage (web)` → `useBudgets hook (web)` → `FinanceService (api)` → `BudgetEngine (api)` → `Response (VND formatted)`
 
 ### 3. Authentication
 `LoginPage (web)` → `AuthAction (web)` → `AuthService (api)` → `JWT Sign (HttpOnly Cookie)`

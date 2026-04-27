@@ -122,7 +122,7 @@ Frontend (localhost:3000) và Backend (localhost:8787) khác origin → CORS err
 
 **Error Example:**
 ```
-Access to fetch at 'http://localhost:8787/api/s2s' from origin 'http://localhost:3000' 
+Access to fetch at 'http://localhost:8787/api/budget' from origin 'http://localhost:3000' 
 has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present.
 ```
 
@@ -132,7 +132,7 @@ has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is pres
 import { cors } from 'hono/cors';
 
 app.use('*', cors({
-  origin: ['http://localhost:3000', 'https://app.s2s-finance.com'],
+  origin: ['http://localhost:3000', 'https://app.budget-finance.com'],
   credentials: true,
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowHeaders: ['Content-Type', 'Authorization'],
@@ -156,19 +156,19 @@ export default {
 
 **Contingency Plan:**
 - Use Next.js API Routes as proxy (temporary)
-- Deploy backend to same domain (api.s2s-finance.com)
+- Deploy backend to same domain (api.budget-finance.com)
 
 **Status:** 🟢 Known solution available
 
 ---
 
-### RISK #4: S2S Calculation Performance
+### RISK #4: Budget Calculation Performance
 **Category:** Database & Performance  
 **Probability:** 🟡 Medium (40%)  
 **Impact:** 🔴 High
 
 **Description:**
-S2S calculation cần 5 queries riêng biệt → slow response time (>500ms).
+Budget calculation cần 5 queries riêng biệt → slow response time (>500ms).
 
 **Current Approach:**
 ```typescript
@@ -183,7 +183,7 @@ S2S calculation cần 5 queries riêng biệt → slow response time (>500ms).
 **Mitigation:**
 ```typescript
 // ✅ SOLUTION: Single query với UNION hoặc subqueries
-const s2sData = await db.execute(sql`
+const budgetData = await db.execute(sql`
   SELECT
     (SELECT COALESCE(SUM(amount), 0) FROM transactions 
      WHERE user_id = ${userId} AND type = 'income' AND ...) as totalIncome,
@@ -203,13 +203,13 @@ const s2sData = await db.execute(sql`
 import { Redis } from '@upstash/redis';
 const redis = Redis.fromEnv();
 
-const cacheKey = `s2s:${userId}:${month}`;
+const cacheKey = `budget:${userId}:${month}`;
 const cached = await redis.get(cacheKey);
 
 if (cached) return cached;
 
-const s2sData = await calculateS2S(userId, month);
-await redis.set(cacheKey, s2sData, { ex: 300 }); // 5 min TTL
+const budgetData = await calculateBudget(userId, month);
+await redis.set(cacheKey, budgetData, { ex: 300 }); // 5 min TTL
 ```
 
 **Contingency Plan:**
@@ -264,13 +264,13 @@ const shouldReduceMotion = useReducedMotion();
 **Impact:** 🟡 Medium
 
 **Description:**
-Khi tạo transaction mới, S2S data cần được refresh ngay lập tức → stale data issue.
+Khi tạo transaction mới, Budget data cần được refresh ngay lập tức → stale data issue.
 
 **Scenario:**
 ```
 1. User adds transaction "Ăn sáng 30k"
 2. Transaction created successfully
-3. Dashboard still shows old S2S value (cached)
+3. Dashboard still shows old Budget value (cached)
 4. User confused → "Where is my transaction?"
 ```
 
@@ -286,12 +286,12 @@ export function useCreateTransaction() {
     
     onSuccess: () => {
       // Invalidate all related queries
-      queryClient.invalidateQueries({ queryKey: ['s2s'] });
+      queryClient.invalidateQueries({ queryKey: ['budget'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
       
       // Or: Optimistic update
-      queryClient.setQueryData(['s2s', userId, month], (old: S2SData) => ({
+      queryClient.setQueryData(['budget', userId, month], (old: BudgetData) => ({
         ...old,
         totalExpense: old.totalExpense + newTransaction.amount,
         safeToSpend: old.safeToSpend - newTransaction.amount,
@@ -590,7 +590,7 @@ Prob Low  │  10  │      │  4   │
 1. 🔴 RISK #11 (JWT exposure)
 2. 🔴 RISK #2 (Token refresh race)
 3. 🔴 RISK #1 (Next.js migration)
-4. 🟡 RISK #4 (S2S performance)
+4. 🟡 RISK #4 (Budget performance)
 5. 🟡 RISK #6 (Cache invalidation)
 
 ---
@@ -611,7 +611,7 @@ Prob Low  │  10  │      │  4   │
 - [ ] Add rate limiting
 
 ### Before Production Deploy
-- [ ] Load test S2S calculation
+- [ ] Load test Budget calculation
 - [ ] Security audit (OWASP Top 10)
 - [ ] Penetration testing
 - [ ] Performance testing (Lighthouse)
@@ -638,7 +638,7 @@ Prob Low  │  10  │      │  4   │
 ### If Backend Performance Issues
 **Fallback:** Add Redis caching layer
 ```typescript
-// Cache S2S results for 5 minutes
+// Cache Budget results for 5 minutes
 // Cache transaction lists
 // Implement background jobs for heavy calculations
 ```
@@ -660,7 +660,7 @@ Prob Low  │  10  │      │  4   │
 | Planning | 16/04/2026 | ✅ Complete |
 | Migration | Week 1 end | Next.js compatibility |
 | API Integration | Week 2 end | CORS, auth, caching |
-| Performance | Week 3 end | S2S calculation, load testing |
+| Performance | Week 3 end | Budget calculation, load testing |
 | Security | Before production | Penetration testing, audit |
 | Post-launch | Weekly | Error monitoring, performance |
 

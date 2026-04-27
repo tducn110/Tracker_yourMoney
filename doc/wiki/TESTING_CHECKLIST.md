@@ -98,7 +98,7 @@ Checklist để kiểm tra sau khi migration hoàn thành.
 ### Main Dashboard (`/`)
 ```
 - [ ] Navigate to /
-- [ ] Check: S2S Hero Section renders
+- [ ] Check: Budget Hero Section renders
 - [ ] Check: Safe-to-spend amount displays
 - [ ] Check: Period tabs work (Ngày/Tuần/Tháng)
 - [ ] Check: Animations smooth
@@ -189,7 +189,7 @@ Checklist để kiểm tra sau khi migration hoàn thành.
 - [ ] Verify: Modal closes
 ```
 
-### S2S Hero Section
+### Budget Hero Section
 ```
 - [ ] Check: Displays prominently
 - [ ] Check: Amount animates on load
@@ -202,7 +202,7 @@ Checklist để kiểm tra sau khi migration hoàn thành.
 
 ### Cash Wallet Strip
 ```
-- [ ] Check: Displays below S2S
+- [ ] Check: Displays below Budget
 - [ ] Check: Current balance shows
 - [ ] Check: Incoming/Outgoing amounts
 - [ ] Check: Quick actions available

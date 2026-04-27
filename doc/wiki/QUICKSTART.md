@@ -22,7 +22,7 @@ Mở browser: **http://localhost:3000**
 |-------|-------------|
 | `/login` | Trang đăng nhập |
 | `/register` | Trang đăng ký |
-| `/` | Dashboard chính (S2S Hero + Widgets) |
+| `/` | Dashboard chính (Budget Hero + Widgets) |
 | `/transactions` | Danh sách giao dịch |
 | `/goals` | Quản lý mục tiêu tiết kiệm |
 | `/bills` | Theo dõi hóa đơn định kỳ |
@@ -37,7 +37,7 @@ Mở browser: **http://localhost:3000**
 
 ```
 /src/app/_components/
-├── s2s/S2SHeroSection.tsx          # Khoảng Chi Tiêu An Toàn
+├── budget/BudgetOverviewCard.tsx          # Khoảng Chi Tiêu An Toàn
 ├── wallet/CashWalletStrip.tsx      # Cash wallet widget
 ├── quick-add/
 │   ├── QuickInputBar.tsx           # Quick transaction input
@@ -52,7 +52,7 @@ Mở browser: **http://localhost:3000**
 
 ```tsx
 // In dashboard page
-import { S2SHeroSection } from '../_components/s2s/S2SHeroSection';
+import { BudgetOverviewCard } from '../_components/budget/BudgetOverviewCard';
 import { CashWalletStrip } from '../_components/wallet/CashWalletStrip';
 import { QuickInputBar } from '../_components/quick-add/QuickInputBar';
 ```

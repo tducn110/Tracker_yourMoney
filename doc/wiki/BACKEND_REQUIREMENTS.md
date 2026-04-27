@@ -26,10 +26,10 @@ Backend API cần cung cấp REST endpoints cho Frontend (Next.js 15) gọi qua 
 
 ---
 
-### 2. FINANCE (S2S Engine)
+### 2. FINANCE (Budget-First Engine)
 
 #### GET `/api/finance/safe-to-spend`
-**Mục đích:** Lấy thông tin S2S (Safe-to-Spend)
+**Mục đích:** Lấy thông tin Budget (Safe-to-Spend)
 
 **Query params:**
 ```typescript
@@ -60,14 +60,14 @@ month?: string  // "YYYY-MM", default: current month
 **Backend logic:**
 1. Parse `month` param (default: current month)
 2. Call `calculateSafeToSpend(userId, month)` service
-3. Return S2SResult
+3. Return BudgetResult
 
-**Reference:** `SYSTEM_ARCHITECTURE.md` → Section 4 → S2S Engine
+**Reference:** `SYSTEM_ARCHITECTURE.md` → Section 4 → Budget-First Engine
 
 ---
 
 #### POST `/api/finance/check-impact`
-**Mục đích:** Preview impact của transaction mới lên S2S
+**Mục đích:** Preview impact của transaction mới lên Budget
 
 **Request:**
 ```typescript
@@ -82,8 +82,8 @@ month?: string  // "YYYY-MM", default: current month
 {
   success: true,
   data: {
-    currentS2S: number,
-    newS2S: number,
+    currentBudget: number,
+    newBudget: number,
     impact: number,          // positive or negative
     newStatus: 'safe' | 'warning' | 'danger',
   }
@@ -170,7 +170,7 @@ limit?: number,       // default: 20, max: 100
 **Backend tasks:**
 1. Validate với Zod
 2. Insert vào `transactions` table
-3. Invalidate S2S cache (nếu có)
+3. Invalidate Budget cache (nếu có)
 4. Return created transaction
 
 ---
@@ -494,7 +494,7 @@ months?: number  // default: 6
       totalIncome: number,
       totalExpense: number,
       netSavings: number,
-      s2sBudget: number,
+      budgetBudget: number,
     }
   ]
 }
@@ -602,7 +602,7 @@ unreadOnly?: boolean
 import { cors } from 'hono/cors';
 
 app.use('*', cors({
-  origin: process.env.CLIENT_URL!,  // https://app.s2s-finance.com
+  origin: process.env.CLIENT_URL!,  // https://app.budget-finance.com
   credentials: true,
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowHeaders: ['Content-Type', 'Authorization'],
@@ -647,14 +647,14 @@ app.post('/api/transactions',
 
 ## 🗄️ BUSINESS LOGIC REQUIREMENTS
 
-### 1. S2S Calculation Service
-**File:** `apps/api/src/services/s2s-engine.ts`
+### 1. Budget Calculation Service
+**File:** `apps/api/src/services/budget-engine.ts`
 
-**Function:** `calculateSafeToSpend(userId: number, month: string): Promise<S2SResult>`
+**Function:** `calculateSafeToSpend(userId: number, month: string): Promise<BudgetResult>`
 
 **Logic:**
 ```
-S2S = Total_Income - Actual_Expense - Fixed_Costs_Pending - Goals_Allocation - Emergency_Buffer
+Budget = Total_Income - Actual_Expense - Fixed_Costs_Pending - Goals_Allocation - Emergency_Buffer
 
 WHERE:
 - Total_Income: SUM(transactions.amount WHERE type='income' AND month=X)
@@ -746,7 +746,7 @@ WHERE:
     "DATABASE_URL": "@database-url",
     "JWT_SECRET": "@jwt-secret",
     "OPENAI_API_KEY": "@openai-api-key",
-    "CLIENT_URL": "https://app.s2s-finance.com"
+    "CLIENT_URL": "https://app.budget-finance.com"
   }
 }
 ```
@@ -763,7 +763,7 @@ WHERE:
 - [ ] Create error handler middleware
 
 ### Phase 2: Finance API
-- [ ] Create S2S calculation service
+- [ ] Create Budget calculation service
 - [ ] Create `/api/finance/safe-to-spend` endpoint
 - [ ] Create `/api/finance/check-impact` endpoint
 
@@ -843,14 +843,14 @@ Tất cả các kiểu dữ liệu dưới đây được định nghĩa tại `
 }
 ```
 
-### 3. S2S Logic Scenario (Timeline)
+### 3. Budget Logic Scenario (Timeline)
 
 | Scenario | Logic xử lý |
 |----------|-------------|
-| **S2S Dư (Surplus)** | Tiền dư cuối tháng sẽ mặc định nằm trong Ví tiền mặt (vì không chi ra). Đầu tháng sau, S2S reset dựa trên thu nhập mới. |
-| **S2S Âm (Overbudget)** | UI hiển thị Đỏ. Người dùng cần giảm chi tiêu hoặc tăng thu nhập để bù đắp vào S2S của những ngày còn lại. |
-| **Timeline Today** | `(S2S_Tháng / Số_ngày_còn_lại)`. Giúp user biết hôm nay "được phép" tiêu bao nhiêu. |
-| **Timeline Week** | `(S2S_Tháng / Số_tuần_còn_lại)`. |
+| **Budget Dư (Surplus)** | Tiền dư cuối tháng sẽ mặc định nằm trong Ví tiền mặt (vì không chi ra). Đầu tháng sau, Budget reset dựa trên thu nhập mới. |
+| **Budget Âm (Overbudget)** | UI hiển thị Đỏ. Người dùng cần giảm chi tiêu hoặc tăng thu nhập để bù đắp vào Budget của những ngày còn lại. |
+| **Timeline Today** | `(Budget_Tháng / Số_ngày_còn_lại)`. Giúp user biết hôm nay "được phép" tiêu bao nhiêu. |
+| **Timeline Week** | `(Budget_Tháng / Số_tuần_còn_lại)`. |
 
 ---
 

@@ -1,4 +1,4 @@
-# S2S Finance — System Architecture & Project Overview
+# Finance Tracker — System Architecture & Project Overview
 
 > **Last updated:** April 13, 2026
 > **Version:** 11.0 (Monorepo Turborepo — Option A Confirmed)
@@ -9,16 +9,16 @@
 
 ## 1. PROJECT OVERVIEW
 
-**S2S Finance** (Safe-to-Spend) là ứng dụng quản lý tài chính cá nhân tập trung vào một chỉ số cốt lõi duy nhất: **"Bạn còn có thể tiêu bao nhiêu tiền hôm nay mà không phá vỡ kế hoạch tài chính?"**
+**Finance Tracker** (Safe-to-Spend) là ứng dụng quản lý tài chính cá nhân tập trung vào một chỉ số cốt lõi duy nhất: **"Bạn còn có thể tiêu bao nhiêu tiền hôm nay mà không phá vỡ kế hoạch tài chính?"**
 
-### Concept Core — Safe-to-Spend (S2S) Formula
+### Concept Core — Budget-First Formula
 
 ```
-S2S = Total_Income - Actual_Expense - Fixed_Costs_Pending - Goals_Allocation - Emergency_Buffer
+Budget = Total_Income - Actual_Expense - Fixed_Costs_Pending - Goals_Allocation - Emergency_Buffer
 ```
 
-- Màu **xanh lá** khi S2S > 0 → ngân sách an toàn
-- Màu **đỏ** khi S2S ≤ 0 → cảnh báo vượt ngân sách
+- Màu **xanh lá** khi Budget > 0 → ngân sách an toàn
+- Màu **đỏ** khi Budget ≤ 0 → cảnh báo vượt ngân sách
 
 ---
 
@@ -65,7 +65,7 @@ Bạn đã cấu trúc lại folder này để đảm bảo tính **Decoupled** 
 ```
 /apps/api/src/services/
 ├── adapters/        # Lớp Adapter (ví dụ: RegexNLPAdapter, OpenAIAdapter)
-├── services/        # Lớp Logic nghiệp vụ chính (TransactionService, S2SService...)
+├── services/        # Lớp Logic nghiệp vụ chính (TransactionService, BudgetService...)
 ├── lib/             # Các utility dùng riêng cho service layer
 └── container.ts     # DI Container: Khởi tạo và quản lý vòng đời của các Service.
 ```
@@ -100,7 +100,7 @@ class TransactionService {
 
 1. **Phase 1: Hardening (Completed)** — Loại bỏ `any`, chuẩn hóa Type Safety, xử lý nợ kỹ thuật tại Service Layer.
 2. **Phase 2: Auth & Security** — JWT flow Edge-compatible, Rate limiting via Upstash.
-3. **Phase 3: Core API Enhancement** — Triển khai logic S2S thời gian thực, quản lý Bills và Goals.
+3. **Phase 3: Core API Enhancement** — Triển khai logic Budget thời gian thực, quản lý Bills và Goals.
 4. **Phase 4: AI & Automation** — NLP Quick-add nâng cao (OpenAI) & Tự động tạo hóa đơn định kỳ (Worker logic).
 
 ---

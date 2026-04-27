@@ -10,7 +10,7 @@
 
 Finance Tracker V3 áp dụng **Behavioral Finance** principles vào UI/UX:
 
-1. **S2S là Hero** — Khoảng Chi Tiêu An Toàn là con số DUY NHẤT user cần quan tâm ngay khi mở app
+1. **Budget là Hero** — Khoảng Chi Tiêu An Toàn là con số DUY NHẤT user cần quan tâm ngay khi mở app
 2. **Demote Accounting Metrics** — Thu nhập, chi phí cố định, tiết kiệm là thứ yếu (subdued cards)
 3. **Cash Wallet Isolation** — Ví tiền mặt tách biệt hoàn toàn → tránh nhầm lẫn tâm lý
 4. **Status Color Psychology** — Xanh lá = an toàn, Vàng = cảnh báo, Đỏ = nguy hiểm
@@ -21,19 +21,19 @@ Finance Tracker V3 áp dụng **Behavioral Finance** principles vào UI/UX:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  HÀNG 1 — S2S HERO SECTION (full-width, dark, height ~2.5× card)   │
+│  HÀNG 1 — Budget HERO SECTION (full-width, dark, height ~2.5× card)   │
 │  • Element đầu tiên, KHÔNG có gì chen trước                         │
 │  • Dark gradient background (#0a0f1e → #111827)                     │
 │  • Ring chart + formula breakdown + period switcher                  │
 ├─────────────────────────────────────────────────────────────────────┤
 │  HÀNG 2 — 3 METRIC CARDS (demoted, subdued, gray bg)               │
 │  │ Thu Nhập Tháng │ Chi Phí Cố Định │ Cam Kết Tiết Kiệm │          │
-│  • Intentionally nhỏ hơn, ít nổi bật hơn S2S Hero                  │
+│  • Intentionally nhỏ hơn, ít nổi bật hơn Budget Hero                  │
 │  • Không icon lớn, không badge %, font mờ hơn                       │
 ├─────────────────────────────────────────────────────────────────────┤
 │  HÀNG 3 — CASH WALLET STRIP (isolated horizontal, amber)            │
 │  • Dải ngang mỏng, tách biệt hoàn toàn                             │
-│  • Badge "Không tính vào S2S" rõ ràng                               │
+│  • Badge "Không tính vào Budget" rõ ràng                               │
 │  • Quick Sync inline (không cần navigate)                            │
 ├────────────────────────────────────┬────────────────────────────────┤
 │  HÀNG 4 — CONTENT (Left 8/12)     │  HÀNG 4 — Bills (Right 4/12)  │
@@ -54,7 +54,7 @@ Finance Tracker V3 áp dụng **Behavioral Finance** principles vào UI/UX:
 
 | Component         | File                             | Vai trò                          |
 | ----------------- | -------------------------------- | -------------------------------- |
-| `S2SHeroSection`  | `components/S2SHeroSection.tsx`  | Hero Section chính — S2S display |
+| `BudgetOverviewCard`  | `components/BudgetOverviewCard.tsx`  | Hero Section chính — Budget display |
 | `CashWalletStrip` | `components/CashWalletStrip.tsx` | Cash wallet isolated strip       |
 | `Layout`          | `components/Layout.tsx`          | App shell với sidebar + header   |
 | `QuickAddModal`   | `components/QuickAddModal.tsx`   | Modal thêm transaction nhanh     |
@@ -75,19 +75,19 @@ Finance Tracker V3 áp dụng **Behavioral Finance** principles vào UI/UX:
 
 ---
 
-## S2S Hero Section Design Spec
+## Budget Hero Section Design Spec
 
 ### Layout
 
 ```tsx
-<S2SHeroSection>
+<BudgetOverviewCard>
   ├── Top Bar: [Shield Icon + Label] + [Period Switcher] ├── Main Body: │ ├──
   Left: Label + Big Amount + Status Badge + Formula │ └── Right: SVG Ring Chart
   (% usage) └── Formula Pills: Income − FixedExp − Savings − Buffer = Budget
-</S2SHeroSection>
+</BudgetOverviewCard>
 ```
 
-### Color System — S2S Status
+### Color System — Budget Status
 
 ```
 safe    (< 50%) → emerald-400 (#34d399) — ring + glow + status text
@@ -107,9 +107,9 @@ Animation: spring(1.6s, [0.34, 1.56, 0.64, 1])
 ### Period Switcher
 
 ```
-Hôm nay → s2s_remaining = daily_budget − spent_today
-Tuần    → s2s_remaining = weekly_budget − spent_this_week
-Tháng   → s2s_remaining = monthly_budget − spent_this_month (default)
+Hôm nay → budget_remaining = daily_budget − spent_today
+Tuần    → budget_remaining = weekly_budget − spent_this_week
+Tháng   → budget_remaining = monthly_budget − spent_this_month (default)
 ```
 
 ---
@@ -117,7 +117,7 @@ Tháng   → s2s_remaining = monthly_budget − spent_this_month (default)
 ## Cash Wallet Strip Design Spec
 
 ```
-[💳 Icon] [Tên + Timestamp] | [₫ Balance] [SPACER] [Badge: Không S2S] [Quick Sync btn]
+[💳 Icon] [Tên + Timestamp] | [₫ Balance] [SPACER] [Badge: Không Budget] [Quick Sync btn]
 ```
 
 - **Height:** ~56px (thin strip)
@@ -139,12 +139,12 @@ Tháng   → s2s_remaining = monthly_budget − spent_this_month (default)
 Khi backend ready, thay `USE_REAL_API = false` → `true`:
 
 ```typescript
-// GET /api/s2s/summary
-type S2SSummary = {
+// GET /api/budget/summary
+type BudgetSummary = {
   period: string;
-  s2sBudget: number;
-  s2sSpent: number;
-  s2sRemaining: number;
+  budgetBudget: number;
+  budgetSpent: number;
+  budgetRemaining: number;
   usagePercent: number;
   status: "safe" | "warning" | "danger";
   breakdown: {
@@ -203,8 +203,8 @@ type CreateTransaction = {
 
 ### Naming
 
-- Components: PascalCase (`S2SHeroSection`)
-- Files: kebab-case (`s2s-hero-section.tsx`) → **ngoại lệ**: hiện tại dùng PascalCase cho files
+- Components: PascalCase (`BudgetOverviewCard`)
+- Files: kebab-case (`budget-hero-section.tsx`) → **ngoại lệ**: hiện tại dùng PascalCase cho files
 - CSS: Tailwind utilities, không custom CSS classes
 - Colors: Inline style cho dynamic values (status-based), Tailwind cho static
 

@@ -1,4 +1,4 @@
-# S2S Finance — Database Schema (TiDB Serverless + Drizzle ORM) — Full Reference
+# Finance Tracker — Database Schema (TiDB Serverless + Drizzle ORM) — Full Reference
 
 > **Database Engine:** TiDB Serverless (MySQL 8.x compatible)
 > **ORM:** Drizzle ORM v0.30+ với `@tidbcloud/serverless` HTTP Driver
@@ -55,7 +55,7 @@ categories (user) ──── (N:1) users (nullable user_id)
 
 ```sql
 -- =====================================================
--- S2S FINANCE DATABASE — COMPLETE TABLE SCHEMA
+-- Finance Tracker DATABASE — COMPLETE TABLE SCHEMA
 -- TiDB Serverless (MySQL 8.x compatible)
 -- utf8mb4_unicode_ci | InnoDB-compatible
 -- =====================================================
@@ -102,7 +102,7 @@ CREATE TABLE users (
     INDEX idx_users_email    (email),
     INDEX idx_users_username (username),
     INDEX idx_users_active   (is_active, deleted_at)
-) COMMENT='Tài khoản người dùng S2S Finance';
+) COMMENT='Tài khoản người dùng Finance Tracker';
 
 
 -- =====================================================
@@ -199,7 +199,7 @@ CREATE TABLE categories (
 --   Họ có thể log giao dịch của tuần trước với đúng ngày đó → DATE là đúng ngữ nghĩa.
 --   KHÔNG có vấn đề timezone vì đây là ngày USER kiểm soát, không phải system clock.
 --   created_at TIMESTAMP (đã có sẵn) = audit trail khi nào record được tạo.
---   S2S Engine filter theo: display_date BETWEEN '2026-04-01' AND '2026-04-30'
+--   Budget-First Engine filter theo: display_date BETWEEN '2026-04-01' AND '2026-04-30'
 --
 -- [v12.0-B] Bỏ currency_code, exchange_rate, base_amount → Phase 2
 --   MVP = VND-only. Thêm 3 cột này khi expand multi-currency (migration script riêng).
@@ -443,7 +443,7 @@ CREATE TABLE notifications (
                    'goal_completed',
                    'goal_milestone',
                    'low_balance',
-                   's2s_negative',
+                   'budget_negative',
                    'system',
                    'tip'
                ) NOT NULL,
@@ -595,7 +595,7 @@ export const transactions = mysqlTable(
     // [v12.0-A] display_date: ngày user chọn để hiển thị trên sổ cái
     // Semantic: "Giao dịch này thuộc ngày nào?" — user kiểm soát, không phải system clock
     // User có thể nhập "hôm qua", "tuần trước" → không timezone confusion
-    // S2S Engine: WHERE display_date BETWEEN '2026-04-01' AND '2026-04-30'
+    // Budget-First Engine: WHERE display_date BETWEEN '2026-04-01' AND '2026-04-30'
     displayDate: date("display_date").notNull(),
 
     receiptUrl: varchar("receipt_url", { length: 500 }),
@@ -945,7 +945,7 @@ import { drizzle } from "drizzle-orm/tidb-serverless";
 import * as schema from "./schema";
 
 // DATABASE_URL format:
-// mysql://username:password@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/s2s_finance?ssl={"rejectUnauthorized":true}
+// mysql://username:password@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/budget_finance?ssl={"rejectUnauthorized":true}
 
 if (!process.env.DATABASE_URL) {
   throw new Error("[packages/db] DATABASE_URL is not set. Check .env.local");
@@ -1020,7 +1020,7 @@ transactions (most queried table):
   idx_tx_user_date           → GET transactions by user + display_date range  [v12.0-A]
   idx_tx_user_type           → COUNT income/expense/transfer by user  [v12.0-C]
   idx_tx_user_cat            → GROUP BY category
-  idx_tx_user_month          → S2S Engine: covering (userId, display_date, deleted_at)  [v12.0-A]
+  idx_tx_user_month          → Budget-First Engine: covering (userId, display_date, deleted_at)  [v12.0-A]
   idx_tx_deleted             → Cleanup / restore queries
 
 bills:
@@ -1129,7 +1129,7 @@ INSERT INTO cash_wallet (user_id, balance) VALUES (1, 500000.00);
 
 ```
 # TiDB Serverless HTTP Driver (bắt buộc cho Vercel Edge — không có TCP)
-DATABASE_URL=mysql://username:password@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/s2s_finance?ssl={"rejectUnauthorized":true}
+DATABASE_URL=mysql://username:password@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/budget_finance?ssl={"rejectUnauthorized":true}
 ```
 
 ### TiDB vs MySQL 8.x — Khác biệt quan trọng
