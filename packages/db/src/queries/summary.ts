@@ -1,6 +1,6 @@
 import { db, type Database } from "../client";
 import { transactions, bills, goals, userSettings } from "../schema";
-import { and, eq, isNull, sum, sql } from "drizzle-orm";
+import { and, eq, sum, sql } from "drizzle-orm";
 import { MySql2Database } from "drizzle-orm/mysql2";
 import * as schema from "../schema/index";
 
@@ -25,7 +25,6 @@ export async function getMonthlySummary(
     eq(transactions.userId, userId),
     sql`${transactions.displayDate} >= ${startDate}`,
     sql`${transactions.displayDate} <= ${endDate}`,
-    isNull(transactions.deletedAt),
   );
 
   const [incomeRow] = await drizzle
@@ -67,7 +66,6 @@ export async function getActiveBillsTotal(userId: string) {
       and(
         eq(bills.userId, userId),
         eq(bills.isActive, 1),
-        isNull(bills.deletedAt),
       ),
     );
 
@@ -83,7 +81,6 @@ export async function getActiveGoalsAllocation(userId: string) {
       and(
         eq(goals.userId, userId),
         eq(goals.status, "active"),
-        isNull(goals.deletedAt),
       ),
     );
 

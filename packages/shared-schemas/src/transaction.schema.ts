@@ -44,7 +44,6 @@ export const transactionResponseSchema = z.object({
   source:      z.string(),
   receiptUrl:  z.string().nullable(),
   createdAt:   z.coerce.date(),
-  deletedAt:   z.coerce.date().nullable(),
 });
 
 export type InsertTransaction    = z.infer<typeof insertTransactionSchema>;

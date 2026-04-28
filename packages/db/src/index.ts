@@ -15,5 +15,5 @@ export type { Transaction, NewTransaction } from "./schema/index";
 export type { User, NewUser } from "./schema/index";
 export type { Goal, NewGoal } from "./schema/index";
 export type { BillPayment, NewBillPayment } from "./schema/index";
-export type { CashWallet } from "./schema/index";
+export type { Wallet, NewWallet, WalletLog, NewWalletLog } from "./schema/index";
 export { traceStorage } from "./telemetry";

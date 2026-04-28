@@ -1,4 +1,4 @@
-import { eq, and, isNull, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { MySql2Database } from "drizzle-orm/mysql2";
 import * as schema from "../schema/index";
 import { bills, billPayments, type Bill, type NewBill, type BillPayment, type NewBillPayment } from "../schema/bills";
@@ -13,21 +13,21 @@ export class BillRepository extends BaseRepository {
     return this.typedDb
       .select()
       .from(bills)
-      .where(and(eq(bills.userId, userId), isNull(bills.deletedAt)));
+      .where(eq(bills.userId, userId));
   }
 
   async findActive(userId: string): Promise<Bill[]> {
     return this.typedDb
       .select()
       .from(bills)
-      .where(and(eq(bills.userId, userId), eq(bills.isActive, 1), isNull(bills.deletedAt)));
+      .where(and(eq(bills.userId, userId), eq(bills.isActive, 1)));
   }
 
   async findById(id: string, userId: string): Promise<Bill | undefined> {
     const [row] = await this.typedDb
       .select()
       .from(bills)
-      .where(and(eq(bills.id, id), eq(bills.userId, userId), isNull(bills.deletedAt)))
+      .where(and(eq(bills.id, id), eq(bills.userId, userId)))
       .limit(1);
     return row;
   }
@@ -36,7 +36,7 @@ export class BillRepository extends BaseRepository {
     const [row] = await this.typedDb
       .select()
       .from(bills)
-      .where(and(eq(bills.userId, userId), eq(bills.idempotencyKey, key), isNull(bills.deletedAt)))
+      .where(and(eq(bills.userId, userId), eq(bills.idempotencyKey, key)))
       .limit(1);
     return row;
   }
@@ -62,8 +62,7 @@ export class BillRepository extends BaseRepository {
 
   async delete(id: string, userId: string): Promise<void> {
     await this.typedDb
-      .update(bills)
-      .set({ deletedAt: new Date() })
+      .delete(bills)
       .where(and(eq(bills.id, id), eq(bills.userId, userId)));
   }
 

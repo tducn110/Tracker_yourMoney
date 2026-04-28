@@ -27,12 +27,11 @@ export const goals = mysqlTable("goals", {
   priority:            tinyint("priority").notNull().default(1), // 1=high, 2=medium, 3=low
   notes:               text("notes"),
   completedAt:         timestamp("completed_at"),
-  deletedAt:           timestamp("deleted_at"),
   createdAt:           timestamp("created_at").notNull().defaultNow(),
   updatedAt:           timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
   idempotencyKey:      varchar("idempotency_key", { length: 255 }).unique(),
 }, (table) => ({
-  userStatusIdx:   index("idx_goals_user_status").on(table.userId, table.status, table.deletedAt),
+  userStatusIdx:   index("idx_goals_user_status").on(table.userId, table.status),
   userDeadlineIdx: index("idx_goals_user_deadline").on(table.userId, table.deadline),
   // CHECK: amounts phải hợp lệ — target > 0, saved >= 0, monthly >= 0
   amountsCheck:    check("chk_goals_amounts",

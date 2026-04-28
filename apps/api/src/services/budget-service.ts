@@ -5,7 +5,7 @@ import {
   type NewBudget,
 } from "@finance/db/src/schema/budgets";
 import { transactions } from "@finance/db/src/schema/transactions";
-import { and, eq, isNull, sum, between, inArray, sql, desc } from "drizzle-orm";
+import { and, eq, sum, between, inArray, sql, desc } from "drizzle-orm";
 import Decimal from "decimal.js";
 
 export class BudgetService {
@@ -13,9 +13,7 @@ export class BudgetService {
     return db
       .select()
       .from(budgets)
-      .where(
-        and(eq(budgets.userId, userId), isNull(budgets.deletedAt)),
-      );
+      .where(eq(budgets.userId, userId));
   }
 
   async getBudgetSummary(userId: string) {
@@ -26,7 +24,6 @@ export class BudgetService {
         and(
           eq(budgets.userId, userId),
           eq(budgets.status, "active"),
-          isNull(budgets.deletedAt),
         ),
       );
 
@@ -72,7 +69,6 @@ export class BudgetService {
           eq(transactions.userId, userId),
           eq(transactions.type, "expense"),
           between(transactions.displayDate, minDate, maxDate),
-          isNull(transactions.deletedAt),
         )
       );
 
@@ -122,7 +118,6 @@ export class BudgetService {
           eq(transactions.userId, userId),
           eq(transactions.type, "income"),
           between(transactions.displayDate, incomeStart, incomeEnd),
-          isNull(transactions.deletedAt),
         ),
       );
 
@@ -147,7 +142,6 @@ export class BudgetService {
         and(
           eq(budgets.id, budgetId),
           eq(budgets.userId, userId),
-          isNull(budgets.deletedAt),
         ),
       )
       .limit(1);
@@ -173,7 +167,6 @@ export class BudgetService {
       eq(transactions.userId, userId),
       eq(transactions.type, "expense"),
       between(transactions.displayDate, budget.startDate, budget.endDate),
-      isNull(transactions.deletedAt),
     ];
     if (!budget.isAllCategories && categoryIds.length > 0) {
       txFilters.push(inArray(transactions.categoryId, categoryIds));
@@ -257,7 +250,6 @@ export class BudgetService {
         and(
           eq(budgets.id, budgetId),
           eq(budgets.userId, userId),
-          isNull(budgets.deletedAt),
         ),
       )
       .limit(1);
@@ -305,16 +297,14 @@ export class BudgetService {
         and(
           eq(budgets.id, budgetId),
           eq(budgets.userId, userId),
-          isNull(budgets.deletedAt),
         ),
       )
       .limit(1);
     if (!existing)
       throw Object.assign(new Error("Budget not found"), { code: "NOT_FOUND" });
     await db
-      .update(budgets)
-      .set({ deletedAt: new Date() })
-      .where(eq(budgets.id, budgetId));
+      .delete(budgets)
+      .where(and(eq(budgets.id, budgetId), eq(budgets.userId, userId)));
   }
 
   private async calculateSpent(budget: any): Promise<Decimal> {
@@ -330,7 +320,6 @@ export class BudgetService {
       eq(transactions.userId, budget.userId),
       eq(transactions.type, "expense"),
       between(transactions.displayDate, budget.startDate, budget.endDate),
-      isNull(transactions.deletedAt),
     ];
     if (!budget.isAllCategories && categoryIds.length > 0) {
       filters.push(inArray(transactions.categoryId, categoryIds));

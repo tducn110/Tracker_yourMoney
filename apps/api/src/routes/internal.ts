@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { timingSafeEqual } from "node:crypto";
-import { db, users, transactions, userSettings, cashWallet, refreshTokens } from "@finance/db";
+import { db, users, transactions, userSettings, wallets, refreshTokens } from "@finance/db";
 import { eq } from "@finance/db";
 import { ok, err, created } from "../lib/response";
 import { logError } from "../lib/logger";
@@ -56,7 +56,7 @@ internalRoutes.post("/seed-user", async (c) => {
 
       // Initialize Settings & Wallet using the auto-generated ID
       await tx.insert(userSettings).values({ userId: insertedUserId });
-      await tx.insert(cashWallet).values({ userId: insertedUserId });
+      await tx.insert(wallets).values({ userId: insertedUserId, name: "Ví Tiền Mặt", type: "cash", isDefault: 1 });
     });
     
     return created(c, { message: "User seeded successfully (Dynamic ID)", user: { id: String(insertedUserId), email } });
@@ -82,7 +82,7 @@ internalRoutes.post("/teardown-user", async (c) => {
       await tx.delete(transactions).where(eq(transactions.userId, userId));
       await tx.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
       await tx.delete(userSettings).where(eq(userSettings.userId, userId));
-      await tx.delete(cashWallet).where(eq(cashWallet.userId, userId));
+      await tx.delete(wallets).where(eq(wallets.userId, userId));
       await tx.delete(users).where(eq(users.id, userId));
     });
 

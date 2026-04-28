@@ -1,4 +1,4 @@
-import { eq, and, isNull, inArray } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { MySql2Database } from "drizzle-orm/mysql2";
 import * as schema from "../schema/index";
 import { budgets, budgetCategories, type Budget, type NewBudget } from "../schema/budgets";
@@ -13,7 +13,7 @@ export class BudgetRepository extends BaseRepository {
     return this.typedDb
       .select()
       .from(budgets)
-      .where(and(eq(budgets.userId, userId), isNull(budgets.deletedAt)));
+      .where(eq(budgets.userId, userId));
   }
 
   async findActive(userId: string): Promise<Budget[]> {
@@ -23,8 +23,7 @@ export class BudgetRepository extends BaseRepository {
       .where(
         and(
           eq(budgets.userId, userId),
-          eq(budgets.status, "active"),
-          isNull(budgets.deletedAt)
+          eq(budgets.status, "active")
         )
       );
   }
@@ -33,7 +32,7 @@ export class BudgetRepository extends BaseRepository {
     const [row] = await this.typedDb
       .select()
       .from(budgets)
-      .where(and(eq(budgets.id, id), eq(budgets.userId, userId), isNull(budgets.deletedAt)))
+      .where(and(eq(budgets.id, id), eq(budgets.userId, userId)))
       .limit(1);
     return row;
   }
@@ -104,8 +103,7 @@ export class BudgetRepository extends BaseRepository {
 
   async delete(id: string, userId: string): Promise<void> {
     await this.typedDb
-      .update(budgets)
-      .set({ deletedAt: new Date() })
+      .delete(budgets)
       .where(and(eq(budgets.id, id), eq(budgets.userId, userId)));
   }
 }

@@ -1,4 +1,4 @@
-import { and, eq, isNull, between } from "drizzle-orm";
+import { and, eq, between } from "drizzle-orm";
 import { MySql2Database } from "drizzle-orm/mysql2";
 import * as schema from "../schema/index";
 import { transactions, type Transaction, type NewTransaction } from "../schema/transactions";
@@ -38,8 +38,7 @@ export class TransactionRepository extends BaseRepository {
       .where(
         and(
           eq(transactions.id, id),
-          eq(transactions.userId, userId),
-          isNull(transactions.deletedAt)
+          eq(transactions.userId, userId)
         )
       )
       .limit(1);
@@ -58,8 +57,7 @@ export class TransactionRepository extends BaseRepository {
       .where(
         and(
           eq(transactions.idempotencyKey, key),
-          eq(transactions.userId, userId),
-          isNull(transactions.deletedAt)
+          eq(transactions.userId, userId)
         )
       )
       .limit(1);
@@ -75,10 +73,7 @@ export class TransactionRepository extends BaseRepository {
     const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
     
     return client.query.transactions.findMany({
-      where: and(
-        eq(transactions.userId, userId),
-        isNull(transactions.deletedAt)
-      ),
+      where: eq(transactions.userId, userId),
       with: {
         category: {
           columns: {
@@ -103,8 +98,7 @@ export class TransactionRepository extends BaseRepository {
       .where(
         and(
           eq(transactions.userId, userId),
-          between(transactions.displayDate, startDate, endDate),
-          isNull(transactions.deletedAt)
+          between(transactions.displayDate, startDate, endDate)
         )
       )
       .orderBy(transactions.displayDate);
@@ -121,8 +115,7 @@ export class TransactionRepository extends BaseRepository {
       .where(
         and(
           eq(transactions.id, id),
-          eq(transactions.userId, userId),
-          isNull(transactions.deletedAt)
+          eq(transactions.userId, userId)
         )
       );
     
@@ -130,13 +123,12 @@ export class TransactionRepository extends BaseRepository {
   }
 
   /**
-   * Soft delete a transaction.
+   * Hard delete a transaction.
    */
   async delete(id: string, userId: string, tx?: DB) {
     const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
     await client
-      .update(transactions)
-      .set({ deletedAt: new Date() })
+      .delete(transactions)
       .where(
         and(
           eq(transactions.id, id),

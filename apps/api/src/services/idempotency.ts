@@ -1,31 +1,48 @@
 // apps/api/src/services/idempotency.ts
-// L1 Cache Adapter for Idempotency — Throttles duplicate requests using In-Memory Map
-// Can be easily swapped with Redis/Upstash KV in production.
+import { db } from "@finance/db";
+import { transactions, bills, goals } from "@finance/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
 
-const MEMORY_KV = new Map<string, { expiresAt: number }>();
-
-export const IdempotencyStorageAdapter = {
-  async get(key: string): Promise<boolean> {
-    const record = MEMORY_KV.get(key);
-    if (!record) return false;
-    if (Date.now() > record.expiresAt) {
-      MEMORY_KV.delete(key);
-      return false;
-    }
-    return true;
-  },
-
-  async set(key: string, ttlSeconds: number = 300): Promise<void> {
-    MEMORY_KV.set(key, { expiresAt: Date.now() + ttlSeconds * 1000 });
-  },
-
-  // Cleanup job meant to be run periodically
-  cleanUpStaleKeys() {
-    const now = Date.now();
-    for (const [key, val] of MEMORY_KV.entries()) {
-      if (now > val.expiresAt) {
-        MEMORY_KV.delete(key);
-      }
-    }
+/**
+ * Service này hỗ trợ kiểm tra tính idempotent (không trùng lặp) 
+ * cho các giao dịch tài chính quan trọng.
+ */
+export class IdempotencyService {
+  /**
+   * Kiểm tra xem một key đã tồn tại trong bảng transactions chưa
+   */
+  async findTransactionByKey(userId: string, key: string) {
+    return await db.query.transactions.findFirst({
+      where: and(
+        eq(transactions.userId, userId),
+        eq(transactions.idempotencyKey, key)
+      ),
+    });
   }
-};
+
+  /**
+   * Kiểm tra xem một key đã tồn tại trong bảng bills chưa
+   */
+  async findBillByKey(userId: string, key: string) {
+    return await db.query.bills.findFirst({
+      where: and(
+        eq(bills.userId, userId),
+        eq(bills.idempotencyKey, key)
+      ),
+    });
+  }
+
+  /**
+   * Kiểm tra xem một key đã tồn tại trong bảng goals chưa
+   */
+  async findGoalByKey(userId: string, key: string) {
+    return await db.query.goals.findFirst({
+      where: and(
+        eq(goals.userId, userId),
+        eq(goals.idempotencyKey, key)
+      ),
+    });
+  }
+}
+
+export const idempotencyService = new IdempotencyService();

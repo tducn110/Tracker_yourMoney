@@ -29,14 +29,12 @@ export const bills = mysqlTable("bills", {
   autoPay:    tinyint("auto_pay").notNull().default(0),
   isActive:   tinyint("is_active").notNull().default(1),
   notes:      text("notes"),
-  deletedAt:  timestamp("deleted_at"),
   createdAt:  timestamp("created_at").notNull().defaultNow(),
   updatedAt:  timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
   idempotencyKey: varchar("idempotency_key", { length: 255 }).unique(),
 }, (table) => ({
   userIdx:       index("idx_bills_user").on(table.userId, table.isActive),
   userDueDayIdx: index("idx_bills_user_dueday").on(table.userId, table.dueDay),
-  deletedIdx:    index("idx_bills_deleted").on(table.deletedAt),
   amountCheck:   check("chk_bills_amount_positive", sql`amount > 0`),
   dueDayCheck:   check("chk_bills_due_day", sql`due_day BETWEEN 1 AND 31`),
 }));

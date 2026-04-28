@@ -2,7 +2,7 @@
 // Drizzle query builders for transactions — thay thế View v_category_spending_current
 import { db } from "../client";
 import { transactions, categories } from "../schema";
-import { and, eq, isNull, desc, sql, type SQL } from "drizzle-orm";
+import { and, eq, desc, sql, type SQL } from "drizzle-orm";
 
 // Get transactions for a user within a date range (used by Budget Engine)
 export async function getMonthlyTransactions(
@@ -20,10 +20,8 @@ export async function getMonthlyTransactions(
     .where(
       and(
         eq(transactions.userId, userId),
-        // Use sql to avoid type mismatch between string and date column in some drizzle versions
         sql`${transactions.displayDate} >= ${startDate}`,
         sql`${transactions.displayDate} <= ${endDate}`,
-        isNull(transactions.deletedAt), // ← Soft delete filter — ALWAYS required
       ),
     )
     .orderBy(desc(transactions.displayDate));
@@ -45,7 +43,6 @@ export async function getTransactionsPaginated(
 
   const filters: SQL[] = [
     eq(transactions.userId, userId),
-    isNull(transactions.deletedAt),
   ];
 
   if (month) {
