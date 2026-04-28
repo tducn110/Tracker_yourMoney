@@ -71,6 +71,27 @@
       "when": 1777306604784,
       "tag": "0009_remove_budget_wallets",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1777308311346,
+      "tag": "0010_hard_delete_cleanup",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1777314827701,
+      "tag": "0011_silly_karnak",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1775940000000,
+      "tag": "0012_sync_schema_to_erd",
+      "breakpoints": true
     }
   ]
 }
