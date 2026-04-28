@@ -6,6 +6,7 @@
     "dev": "tsc --watch",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:status": "tsx src/scripts/check-status.ts",
     "db:stamp": "tsx src/scripts/sync-migration-metadata.ts",
     "db:push": "node -e \"if(process.env.NODE_ENV==='production') { console.error('FATAL: db:push is disabled in production. Use db:migrate instead.'); process.exit(1); }\" && drizzle-kit push",
     "db:studio": "drizzle-kit studio",

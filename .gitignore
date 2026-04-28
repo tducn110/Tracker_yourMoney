@@ -1,19 +1,61 @@
-node_modules
-.codersinflow
-.vscode
-.env
-.venv
-.codex
-out
-dist
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# Testing
+coverage/
+test-results/
+
+# Production / Build
+dist/
+build/
+.next/
+out/
 *.vsix
-.claude
-.DS_Store
-*.log
-*.tmp
-__pycache__
-*.pyc
+*.tsbuildinfo
+
+# Turbo
+.turbo/
+
+# Environments
+.env
 .env.local
-.next
-.turbo
-.gitnexus/lbug
+.env.development.local
+.env.test.local
+.env.production.local
+.dev.vars
+
+# Debug logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDEs / Tools
+.vscode/
+.idea/
+.claude/
+.antigravity/
+.agent/
+.gitnexus/
+!.gitnexus/config.json
+.codersinflow/
+.codex/
+*.tmp
+
+# Cloudflare / Wrangler
+.wrangler/
+
+# Vercel
+.vercel/
+
+# Python (if any)
+__pycache__/
+*.pyc
+.venv/

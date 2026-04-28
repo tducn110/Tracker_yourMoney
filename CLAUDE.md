@@ -1,43 +1,68 @@
-<!-- gitnexus:start -->
-# GitNexus — Code Intelligence
+# CLAUDE.md
 
-This project is indexed by GitNexus as **finance-for-me-local** (1890 symbols, 3002 relationships, 20 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This file provides guidance to Claudex when working with code in this repository.
 
-> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
+## Monorepo (Turborepo + pnpm)
 
-## Always Do
+- `apps/api` — Hono REST API (port 3001), stateless handlers, Firebase auth
+- `apps/web` — Next.js 15 App Router dashboard (port 3000), TanStack Query, shadcn/ui + Tailwind
+- `packages/db` — Drizzle ORM schema, migrations, repositories
+- `packages/shared-schemas` — Zod validation schemas shared by API and Web
+- `packages/api-client` — Typed Axios-based API client consumed by the frontend
+- `packages/cache` — In-memory cache used by the API
 
-- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
-- **MUST run `gitnexus_detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows.
-- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
-- When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
-- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`.
+## Commands
 
-## Never Do
+```bash
+pnpm dev              # Start all apps (turbo dev)
+pnpm build            # Build all
+pnpm lint             # ESLint all
+pnpm typecheck        # tsc --noEmit all
+pnpm test             # Run all tests (vitest for API, playwright for web)
 
-- NEVER edit a function, class, or method without first running `gitnexus_impact` on it.
-- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
-- NEVER rename symbols with find-and-replace — use `gitnexus_rename` which understands the call graph.
-- NEVER commit changes without running `gitnexus_detect_changes()` to check affected scope.
+# Run a single API test
+cd apps/api && npx vitest run path/to/test.test.ts
 
-## Resources
+# Run a single Playwright test
+cd apps/web && npx playwright test -g "test name"
 
-| Resource | Use for |
-|----------|---------|
-| `gitnexus://repo/finance-for-me-local/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/finance-for-me-local/clusters` | All functional areas |
-| `gitnexus://repo/finance-for-me-local/processes` | All execution flows |
-| `gitnexus://repo/finance-for-me-local/process/{name}` | Step-by-step execution trace |
+# DB operations (run from packages/db)
+cd packages/db && pnpm db:generate   # Generate Drizzle migrations from schema changes
+cd packages/db && pnpm db:migrate    # Apply pending migrations
+cd packages/db && pnpm db:seed       # Seed demo data
+cd packages/db && pnpm db:studio     # Open Drizzle Studio
+cd packages/db && pnpm db:status     # Check infrastructure health
 
-## CLI
+# Local MySQL via Docker (alternative to TiDB)
+docker-compose up -d
+```
 
-| Task | Read this skill file |
-|------|---------------------|
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
+## Architecture
 
-<!-- gitnexus:end -->
+### Request lifecycle
+Correlation ID middleware → Auth middleware (Firebase session cookie via `jose`) → Zod validation (`@hono/zod-validator`) → Route → Service → Repository (Drizzle) → TiDB
+
+### Service layer & DI
+All services are wired in `apps/api/src/services/container.ts`. Routes import proxy wrappers (e.g., `transactionService`, `billService`) that delegate to the container singleton. The container supports `initialize(dbInstance)` for test isolation.
+
+### Money handling (critical)
+- Database columns are `DECIMAL(15,2)`
+- JSON transport uses **strings** for monetary values (never floats)
+- All arithmetic uses `Decimal.js`, not native JS numbers
+- Display formatting uses `Intl.NumberFormat`
+
+### Idempotency
+All mutations (`POST`, `PUT`, `DELETE`) require an `Idempotency-Key` header. Keys are stored with a UNIQUE constraint in the DB. Duplicate requests return 409 or the cached result — this defends against serverless cold-start retries.
+
+### Soft delete
+All financial records use `deleted_at` timestamps rather than physical deletion. Ledger entries (`transactions`) are immutable events.
+
+### Bill & Goal financial integrity
+`BillService.payBill()` and `GoalService.contribute()` are wrapped in `db.transaction()`. Each mutation atomically creates a corresponding ledger entry (`transactions` table) with the appropriate `source` field (`bill_payment` or `goal_contribution`).
+
+### Environment
+- `.env` and `.env.local` are loaded via `dotenv` only in non-production. In production, env vars must be injected by the platform.
+- Required vars: `DATABASE_URL`, `FIREBASE_*`, `JWT_SECRET`, `E2E_ADMIN_SECRET`
+- `E2E_ADMIN_SECRET` — used by test/internal routes to bypass auth (test-only). Internal routes are only mounted when `NODE_ENV=test`.
+- Sentry is lazy-loaded only when `SENTRY_DSN` is set.
+- BigInt serialization is polyfilled globally for TiDB IDs.

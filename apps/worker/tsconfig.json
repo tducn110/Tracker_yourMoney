@@ -5,7 +5,7 @@
     "rootDir": "src",
     "lib": ["ESNext"],
     "module": "CommonJS",
-    "moduleResolution": "Node",
+    "types": ["node"],
     "isolatedModules": false
   },
   "include": ["src/**/*"],
