@@ -1,5 +1,5 @@
 import { db, transactions, categories } from "@finance/db";
-import { eq, and, gte, lte, isNull, sum, desc, sql } from "@finance/db";
+import { eq, and, gte, lte, sum, desc, sql } from "@finance/db";
 import Decimal from "decimal.js";
 
 interface CategorySpending {
@@ -37,7 +37,6 @@ export class AnalyticsService {
           eq(transactions.type, "expense"),
           gte(transactions.displayDate, startDate),
           lte(transactions.displayDate, endDate),
-          isNull(transactions.deletedAt)
         )
       )
       .groupBy(transactions.categoryId, categories.name, categories.icon, categories.color)
@@ -76,7 +75,6 @@ export class AnalyticsService {
           eq(transactions.userId, userId as any),
           gte(transactions.displayDate, startDate),
           lte(transactions.displayDate, endDate),
-          isNull(transactions.deletedAt)
         )
       )
       .groupBy(sql`month`, transactions.type);

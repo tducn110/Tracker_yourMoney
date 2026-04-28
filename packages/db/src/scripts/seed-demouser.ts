@@ -9,7 +9,7 @@ dotenv.config({ path: envPath });
 
 import { MySql2Database } from "drizzle-orm/mysql2";
 import * as schema from "../schema/index";
-import { db, users, userSettings, cashWallet, categories, transactions, bills, goals } from "../index";
+import { db, users, userSettings, wallets, categories, transactions, bills, goals } from "../index";
 import { eq } from "drizzle-orm";
 
 const typedDb = db as unknown as MySql2Database<typeof schema>;
@@ -51,11 +51,21 @@ async function seed() {
     currency: "VND",
   }).onDuplicateKeyUpdate({ set: { monthlyBudget: "25000000" } });
 
-  await typedDb.insert(cashWallet).values({
+  // Upsert default wallet
+  await typedDb.insert(wallets).values({
     userId: userId,
+    name: "Ví Tiền Mặt",
+    type: "cash",
     initialBalance: "1500000",
     balance: "1500000",
+    isDefault: 1,
+    icon: "💵",
   }).onDuplicateKeyUpdate({ set: { balance: "1500000" } });
+
+  // Get wallet id for transactions
+  const [defaultWallet] = await typedDb.select({ id: wallets.id }).from(wallets)
+    .where(eq(wallets.userId, userId as any)).limit(1);
+  const walletId = defaultWallet?.id;
 
   // 3. Categories
   console.log("Seeding categories...");
@@ -98,6 +108,7 @@ async function seed() {
   for (const tx of mockTransactions) {
     await typedDb.insert(transactions).values({
       userId: userId,
+      walletId: walletId as any,
       categoryId: catMap[tx.category] || catMap["Khác"],
       amount: tx.amount,
       type: tx.type,

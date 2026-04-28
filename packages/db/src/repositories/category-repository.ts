@@ -7,6 +7,7 @@ import { BaseRepository, type DB } from "./base-repository";
 /**
  * Repository for Category operations.
  * Decouples database logic from business services.
+ * NOTE: isNull(categories.userId) is intentional — it identifies SYSTEM categories (userId = NULL).
  */
 export class CategoryRepository extends BaseRepository {
   // Helper to get a typed database instance to avoid union issues with select/insert overloads
@@ -23,10 +24,7 @@ export class CategoryRepository extends BaseRepository {
       .select()
       .from(categories)
       .where(
-        and(
-          or(isNull(categories.userId), eq(categories.userId, userId)),
-          isNull(categories.deletedAt)
-        )
+        or(isNull(categories.userId), eq(categories.userId, userId))
       )
       .orderBy(categories.sortOrder);
   }
@@ -42,8 +40,7 @@ export class CategoryRepository extends BaseRepository {
       .where(
         and(
           eq(categories.id, id),
-          or(isNull(categories.userId), eq(categories.userId, userId)),
-          isNull(categories.deletedAt)
+          or(isNull(categories.userId), eq(categories.userId, userId))
         )
       )
       .limit(1);
@@ -74,8 +71,7 @@ export class CategoryRepository extends BaseRepository {
       .where(
         and(
           eq(categories.id, id),
-          eq(categories.userId, userId),
-          isNull(categories.deletedAt)
+          eq(categories.userId, userId)
         )
       );
     
@@ -93,8 +89,7 @@ export class CategoryRepository extends BaseRepository {
       .where(
         and(
           eq(categories.name, name),
-          or(isNull(categories.userId), eq(categories.userId, userId)),
-          isNull(categories.deletedAt)
+          or(isNull(categories.userId), eq(categories.userId, userId))
         )
       )
       .limit(1);
@@ -103,13 +98,12 @@ export class CategoryRepository extends BaseRepository {
   }
 
   /**
-   * Soft delete a category.
+   * Hard delete a user category.
    */
   async delete(id: number, userId: string, tx?: DB) {
     const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
     await client
-      .update(categories)
-      .set({ deletedAt: new Date() })
+      .delete(categories)
       .where(
         and(
           eq(categories.id, id),

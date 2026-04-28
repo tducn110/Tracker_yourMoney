@@ -1,5 +1,5 @@
 import { db, categories } from "@finance/db";
-import { eq, and, sql, like, isNull } from "@finance/db";
+import { eq, and, sql, like } from "@finance/db";
 import type { INLPAdapter, NLPParsedResult } from "./adapters/nlp-adapter";
 
 interface NLPResult extends NLPParsedResult {
@@ -24,7 +24,6 @@ export class AIService {
       .where(
         and(
           like(categories.name, `%${keyword}%`),
-          isNull(categories.deletedAt)
         )
       )
       .limit(1);

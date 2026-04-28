@@ -18,7 +18,6 @@ export const categories = mysqlTable("categories", {
   color:     varchar("color", { length: 7 }).notNull().default("#6B7280"),
   isDefault: tinyint("is_default").notNull().default(0),
   sortOrder: int("sort_order").notNull().default(0),
-  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 }, (table) => ({

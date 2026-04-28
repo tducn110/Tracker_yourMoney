@@ -1,5 +1,5 @@
 // packages/db/src/repositories/analytics.repo.ts
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { MySql2Database } from "drizzle-orm/mysql2";
 import * as schema from "../schema/index";
 import { transactions, bills, goals, userSettings } from "../schema";
@@ -24,7 +24,6 @@ export class AnalyticsRepository extends BaseRepository {
       eq(transactions.userId, userId),
       sql`${transactions.displayDate} >= ${startDate}`,
       sql`${transactions.displayDate} <= ${endDate}`,
-      isNull(transactions.deletedAt),
     );
 
     const rows = await client
@@ -69,7 +68,6 @@ export class AnalyticsRepository extends BaseRepository {
         and(
           eq(bills.userId, userId),
           eq(bills.isActive, 1),
-          isNull(bills.deletedAt),
         ),
       );
     const row = rows[0];
@@ -88,7 +86,6 @@ export class AnalyticsRepository extends BaseRepository {
         and(
           eq(goals.userId, userId),
           eq(goals.status, "active"),
-          isNull(goals.deletedAt),
         ),
       );
     const row = rows[0];

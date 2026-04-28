@@ -20,10 +20,9 @@ export const budgets = mysqlTable(
     status: mysqlEnum("status", ["active", "finished"]).default("active").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
-    deletedAt: timestamp("deleted_at"),
   },
   (table) => ({
-    userIdStatusIdx: index("idx_budgets_user_status").on(table.userId, table.status, table.deletedAt),
+    userIdStatusIdx: index("idx_budgets_user_status").on(table.userId, table.status),
     userIdPeriodIdx: index("idx_budgets_user_period").on(table.userId, table.startDate, table.endDate),
   })
 );
@@ -34,6 +33,7 @@ export const budgetCategories = mysqlTable(
     id: bigint("id", { mode: "number" }).primaryKey().autoincrement().$type<string>(),
     budgetId: bigint("budget_id", { mode: "number" }).notNull().references(() => budgets.id, { onDelete: "cascade", onUpdate: "cascade" }).$type<string>(),
     categoryId: int("category_id").notNull().references(() => categories.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    allocatedAmount: decimal("allocated_amount", { precision: 15, scale: 2 }).notNull().default("0.00"),
   },
   (table) => ({
     budgetCategoriesIdx: index("idx_budget_categories").on(table.budgetId, table.categoryId),

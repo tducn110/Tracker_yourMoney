@@ -15,13 +15,19 @@ import {
 import { sql, relations } from "drizzle-orm";
 import { users } from "./users";
 import { categories } from "./categories";
+import { wallets } from "./wallet";
+import { goals } from "./goals";
 
 export const transactions = mysqlTable("transactions", {
   id:          bigint("id", { mode: "bigint", unsigned: true }).$type<string>().autoincrement().primaryKey(),
   userId:      bigint("user_id", { mode: "bigint", unsigned: true }).$type<string>().notNull()
                  .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  walletId:    bigint("wallet_id", { mode: "bigint", unsigned: true }).$type<string>().notNull()
+                 .references(() => wallets.id, { onDelete: "restrict", onUpdate: "cascade" }),
   categoryId:  int("category_id", { unsigned: true }).notNull()
                  .references(() => categories.id, { onDelete: "restrict", onUpdate: "cascade" }),
+  goalId:      bigint("goal_id", { mode: "bigint", unsigned: true }).$type<string>()
+                 .references(() => goals.id, { onDelete: "set null", onUpdate: "cascade" }),
 
   // Decimal Trap: amount từ DB là string → dùng new Decimal(tx.amount) tại service layer
   // KHÔNG .toNumber() trực tiếp
@@ -44,8 +50,6 @@ export const transactions = mysqlTable("transactions", {
   // UNIQUE constraint đảm bảo cross-instance safety trên Vercel multi-region
   idempotencyKey: varchar("idempotency_key", { length: 255 }).unique(),
 
-  // Soft delete — query Budget phải luôn có: WHERE deleted_at IS NULL
-  deletedAt:   timestamp("deleted_at"),
   createdAt:   timestamp("created_at").notNull().defaultNow(),
   updatedAt:   timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 
@@ -59,8 +63,7 @@ export const transactions = mysqlTable("transactions", {
   userTypeIdx:  index("idx_tx_user_type").on(table.userId, table.type),
   userCatIdx:   index("idx_tx_user_cat").on(table.userId, table.categoryId),
   // Covering index cho Budget monthly query
-  userMonthIdx: index("idx_tx_user_month").on(table.userId, table.displayDate, table.deletedAt),
-  deletedIdx:   index("idx_tx_deleted").on(table.deletedAt),
+  userMonthIdx: index("idx_tx_user_month").on(table.userId, table.displayDate),
   // CHECK: amount phải luôn dương
   amountCheck:  check("chk_tx_amount_positive", sql`amount > 0`),
 }));
@@ -79,5 +82,13 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
   user: one(users, {
     fields: [transactions.userId],
     references: [users.id],
+  }),
+  wallet: one(wallets, {
+    fields: [transactions.walletId],
+    references: [wallets.id],
+  }),
+  goal: one(goals, {
+    fields: [transactions.goalId],
+    references: [goals.id],
   }),
 }));

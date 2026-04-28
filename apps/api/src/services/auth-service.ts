@@ -2,7 +2,7 @@
 // Auth operations — login, register, refresh, logout
 // Passwords: bcryptjs cost=12. Tokens: jose (Edge-compatible).
 // Refresh tokens: SHA-256 hashed before DB storage.
-import { db, users, userSettings, cashWallet, refreshTokens } from "@finance/db";
+import { db, users, userSettings, wallets, refreshTokens } from "@finance/db";
 import { eq, and, isNull, gt } from "@finance/db";
 import { signAccessToken, signRefreshToken, verifyToken } from "../lib/jwt";
 import { verifyFirebaseIdToken } from "../lib/firebase-auth";
@@ -72,7 +72,7 @@ export async function socialLogin(
         const newUserId = insertId.toString();
         
         await tx.insert(userSettings).values({ userId: newUserId as any });
-        await tx.insert(cashWallet).values({ userId: newUserId as any });
+        await tx.insert(wallets).values({ userId: newUserId as any, name: "Ví Tiền Mặt", type: "cash", isDefault: 1 });
       });
 
       [user] = await db

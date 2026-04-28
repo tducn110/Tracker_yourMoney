@@ -1,4 +1,4 @@
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { MySql2Database } from "drizzle-orm/mysql2";
 import * as schema from "../schema/index";
 import { goals, type Goal, type NewGoal } from "../schema/goals";
@@ -13,21 +13,21 @@ export class GoalRepository extends BaseRepository {
     return this.typedDb
       .select()
       .from(goals)
-      .where(and(eq(goals.userId, userId), isNull(goals.deletedAt)));
+      .where(eq(goals.userId, userId));
   }
 
   async findActive(userId: string): Promise<Goal[]> {
     return this.typedDb
       .select()
       .from(goals)
-      .where(and(eq(goals.userId, userId), eq(goals.status, "active"), isNull(goals.deletedAt)));
+      .where(and(eq(goals.userId, userId), eq(goals.status, "active")));
   }
 
   async findById(id: string, userId: string): Promise<Goal | undefined> {
     const [row] = await this.typedDb
       .select()
       .from(goals)
-      .where(and(eq(goals.id, id), eq(goals.userId, userId), isNull(goals.deletedAt)))
+      .where(and(eq(goals.id, id), eq(goals.userId, userId)))
       .limit(1);
     return row;
   }
@@ -36,7 +36,7 @@ export class GoalRepository extends BaseRepository {
     const [row] = await this.typedDb
       .select()
       .from(goals)
-      .where(and(eq(goals.userId, userId), eq(goals.idempotencyKey, key), isNull(goals.deletedAt)))
+      .where(and(eq(goals.userId, userId), eq(goals.idempotencyKey, key)))
       .limit(1);
     return row;
   }
@@ -56,11 +56,10 @@ export class GoalRepository extends BaseRepository {
       .set({ ...data, updatedAt: new Date() })
       .where(and(eq(goals.id, id), eq(goals.userId, userId)));
     
-    // We should use the same client to find the record to maintain transaction isolation
     const [row] = await client
       .select()
       .from(goals)
-      .where(and(eq(goals.id, id), eq(goals.userId, userId), isNull(goals.deletedAt)))
+      .where(and(eq(goals.id, id), eq(goals.userId, userId)))
       .limit(1);
     
     if (!row) throw new Error("Goal not found after update");
@@ -69,8 +68,7 @@ export class GoalRepository extends BaseRepository {
 
   async delete(id: string, userId: string): Promise<void> {
     await this.typedDb
-      .update(goals)
-      .set({ deletedAt: new Date() })
+      .delete(goals)
       .where(and(eq(goals.id, id), eq(goals.userId, userId)));
   }
 }
