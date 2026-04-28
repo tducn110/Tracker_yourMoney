@@ -85,6 +85,13 @@
       "when": 1777314827701,
       "tag": "0011_silly_karnak",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1775940000000,
+      "tag": "0012_sync_schema_to_erd",
+      "breakpoints": true
     }
   ]
 }
