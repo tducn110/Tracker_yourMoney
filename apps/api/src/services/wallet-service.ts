@@ -24,6 +24,19 @@ export class WalletService {
     });
   }
 
+  /** Get the user's default wallet (first by isDefault, then by creation date). */
+  async getDefaultWallet(userId: string) {
+    const [wallet] = await db
+      .select()
+      .from(wallets)
+      .where(and(eq(wallets.userId, userId as any), isNull(wallets.deletedAt)))
+      .orderBy(desc(wallets.isDefault))
+      .limit(1);
+    if (!wallet) return null;
+    const netChange = new Decimal(wallet.balance).minus(new Decimal(wallet.initialBalance));
+    return { ...wallet, netChange: netChange.toFixed(2) };
+  }
+
   /** Get a single wallet by id. */
   async getWallet(userId: string, walletId: string) {
     const [wallet] = await db

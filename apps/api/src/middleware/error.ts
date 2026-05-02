@@ -21,11 +21,7 @@ export const errorHandler: ErrorHandler = (err, c) => {
   }
 
   // Generic error — log internally, return safe message
-  logError(err, {
-    event: "API_UNHANDLED_ERROR",
-    path: c.req.path,
-    method: c.req.method,
-  });
+  logError(err, c.req.path, c.req.method, c.get("correlationId") ?? "unknown");
 
   return c.json({
     success: false,

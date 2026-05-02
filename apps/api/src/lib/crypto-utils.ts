@@ -98,7 +98,7 @@ export async function verifyPassword(password: string, storedHash: string): Prom
     // Constant-time comparison
     return currentHash === originalHash;
   } catch (e) {
-    logError(e, { event: "E2E_CRYPTO_ERROR", details: e });
+    logError(e, "crypto", "verifyHmac", "unknown");
     return false;
   }
 }

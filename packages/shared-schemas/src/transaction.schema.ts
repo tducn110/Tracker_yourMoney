@@ -14,6 +14,7 @@ const decimalString = z
 
 // ── Insert ─────────────────────────────────────────────────────────
 export const insertTransactionSchema = z.object({
+  walletId:    z.string(),  // Required: user must choose which wallet
   categoryId:  z.number().int().positive(),
   amount:      decimalString,
   type:        z.enum(["income", "expense", "transfer"]),

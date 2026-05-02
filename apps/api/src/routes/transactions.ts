@@ -19,6 +19,7 @@ const querySchema = z.object({
 
 const quickAddSchema = z.object({
   text: z.string().min(1),
+  walletId: z.string(),
   categoryId: z.coerce.number().optional(),
 });
 
@@ -41,7 +42,7 @@ export const transactionRoutes = new Hono<{ Variables: { userId: string, correla
   .post("/quick", zValidator("json", quickAddSchema), async (c) => {
     const userId = c.get("userId");
     const correlationId = c.get("correlationId");
-    const { text, categoryId } = c.req.valid("json");
+    const { text, walletId, categoryId } = c.req.valid("json");
     const idempotencyKey = c.req.header("Idempotency-Key");
     
     if (idempotencyKey) {
@@ -56,9 +57,10 @@ export const transactionRoutes = new Hono<{ Variables: { userId: string, correla
     }
 
     try {
-      const tx = await transactionService.quickAdd(userId, text, { 
+      const tx = await transactionService.quickAdd(userId, text, {
+        walletId,
         categoryId,
-        idempotencyKey 
+        idempotencyKey
       });
       return created(c, {
         success: true,

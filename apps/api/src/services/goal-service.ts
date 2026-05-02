@@ -72,6 +72,7 @@ export class GoalService {
       // 3. Create Transaction (Expense/Transfer)
       await this.transactionRepository.create({
         userId: userId as any,
+        walletId: input.walletId as any,
         categoryId: savingsCategory.id,
         amount: input.amount,
         type: "expense", // Saving is considered an "expense" from cash wallet perspective
