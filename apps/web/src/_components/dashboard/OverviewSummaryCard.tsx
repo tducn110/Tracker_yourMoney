@@ -11,6 +11,7 @@ import { useBudgetSummary } from '@/_lib/hooks/use-budgets';
 import { formatCurrency } from '@finance/api-client';
 import { useWallet } from '@/app/context/WalletContext';
 import Link from 'next/link';
+import { useTranslations } from '@/locales';
 
 interface StatConfig {
   icon: React.ReactNode;
@@ -70,6 +71,7 @@ function StatCell({ icon, label, value, sublabel, colorText, colorBg, colorBorde
 }
 
 export function OverviewSummaryCard() {
+  const t = useTranslations();
   const { data: budgetData } = useBudgetSummary();
   const total_income = budgetData?.totalIncome ?? '0';
   const total_expense = budgetData?.totalSpent ?? '0';
@@ -80,9 +82,9 @@ export function OverviewSummaryCard() {
   const stats: StatConfig[] = [
     {
       icon: <TrendingUp size={13} className="text-emerald-600" />,
-      label: 'Thu nhập',
+      label: t('dashboard.overview.income'),
       value: formatCurrency(String(total_income), "vi-VN"),
-      sublabel: 'Tháng 4/2026',
+      sublabel: t('dashboard.overview.thisMonth'),
       colorText: '#059669',
       colorBg: '#ecfdf5',
       colorBorder: '#a7f3d0',
@@ -90,18 +92,18 @@ export function OverviewSummaryCard() {
     },
     {
       icon: <TrendingDown size={13} className="text-red-500" />,
-      label: 'Chi tiêu',
+      label: t('dashboard.overview.expense'),
       value: formatCurrency(String(total_expense), "vi-VN"),
-      sublabel: 'Tháng 4/2026',
+      sublabel: t('dashboard.overview.thisMonth'),
       colorText: '#dc2626',
       colorBg: '#fef2f2',
       colorBorder: '#fecaca',
     },
     {
       icon: <Wallet size={13} className="text-blue-600" />,
-      label: 'Ví của tôi',
+      label: t('dashboard.overview.myWallet'),
       value: formatCurrency(String(totalBalance), "vi-VN"),
-      sublabel: `${walletCount} tài khoản · Nhấn để xem`,
+      sublabel: `${walletCount} ${t('dashboard.overview.accounts')} · ${t('dashboard.overview.tapToView')}`,
       colorText: '#2563eb',
       colorBg: '#eff6ff',
       colorBorder: '#bfdbfe',

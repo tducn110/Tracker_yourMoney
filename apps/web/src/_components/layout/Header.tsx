@@ -10,19 +10,21 @@ import { useState } from 'react';
 import { Bell, Search, Plus, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthProvider';
+import { useTranslations } from '@/locales';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ROUTE_TITLES: Record<string, string> = {
-  '/':             'Tổng Quan',
-  '/transactions': 'Giao Dịch',
-  '/budgets':      'Ngân Sách',
-  '/goals':        'Mục Tiêu',
-  '/bills':        'Hóa Đơn',
-  '/analytics':    'Phân Tích',
-  '/settings':     'Cài Đặt',
-  '/wallets':      'Ví Tiền',
-};
+const getRouteTitles = (t: (key: string) => string): Record<string, string> => ({
+  '/':             t('nav.overview'),
+  '/transactions': t('nav.transactions'),
+  '/budgets':      t('nav.budgets'),
+  '/goals':        t('nav.goals'),
+  '/bills':        t('nav.bills'),
+  '/analytics':    t('nav.analytics'),
+  '/settings':     t('nav.settings'),
+  '/wallets':      t('nav.wallets'),
+});
+
 
 // ─── Icon button ──────────────────────────────────────────────────────────────
 
@@ -49,9 +51,10 @@ function IconButton({
 // ─── HomeGreeting ─────────────────────────────────────────────────────────────
 
 function HomeGreeting() {
+  const t = useTranslations();
   const hour = new Date().getHours();
   const greeting =
-    hour < 12 ? 'Chào buổi sáng' : hour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
+    hour < 12 ? t('header.greeting.morning') : hour < 18 ? t('header.greeting.afternoon') : t('header.greeting.evening');
 
   return (
     <div>
@@ -72,11 +75,13 @@ interface HeaderProps {
 }
 
 export function Header({ onQuickAddClick }: HeaderProps) {
+  const t = useTranslations();
   const { user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
 
   const isHome    = pathname === '/';
+  const ROUTE_TITLES = getRouteTitles(t);
   const pageTitle = ROUTE_TITLES[pathname] ?? 'S2S Finance';
 
   return (
@@ -94,13 +99,13 @@ export function Header({ onQuickAddClick }: HeaderProps) {
         {/* Right: actions */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Search toggle */}
-          <IconButton onClick={() => setSearchOpen((v) => !v)} title="Tìm kiếm">
+          <IconButton onClick={() => setSearchOpen((v) => !v)} title={t('header.search.tooltip')}>
             {searchOpen ? <X size={17} /> : <Search size={17} />}
           </IconButton>
 
           {/* Notifications */}
           <div className="relative">
-            <IconButton title="Thông báo">
+            <IconButton title={t('header.notifications')}>
               <Bell size={17} />
             </IconButton>
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white pointer-events-none" />
@@ -113,7 +118,7 @@ export function Header({ onQuickAddClick }: HeaderProps) {
             style={{ background: 'linear-gradient(135deg, #4361ee, #6366f1)' }}
           >
             <Plus size={15} />
-            <span>Thêm nhanh</span>
+            <span>{t('header.quickAdd')}</span>
           </button>
 
           {/* Avatar placeholder */}
@@ -137,7 +142,7 @@ export function Header({ onQuickAddClick }: HeaderProps) {
             <Search size={16} className="text-gray-400 shrink-0" />
             <input
               type="text"
-              placeholder="Tìm kiếm giao dịch, mục tiêu, hóa đơn..."
+              placeholder={t('header.search.placeholder')}
               className="flex-1 bg-transparent outline-none text-[14px] text-gray-900 placeholder:text-gray-400"
               autoFocus={searchOpen}
             />

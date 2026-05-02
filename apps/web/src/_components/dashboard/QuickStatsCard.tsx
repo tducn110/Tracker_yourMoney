@@ -4,8 +4,10 @@ import { TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import { useBudgetSummary } from '@/_lib/hooks/use-budgets';
 import { formatCurrency } from '@finance/api-client';
 import Decimal from 'decimal.js';
+import { useTranslations } from '@/locales';
 
 export function QuickStatsCard() {
+  const t = useTranslations();
   const { data: budgetData, isLoading } = useBudgetSummary();
 
   if (isLoading) {
@@ -30,20 +32,20 @@ export function QuickStatsCard() {
       <div className="bg-emerald-50 rounded-xl p-3.5 border border-emerald-100">
         <div className="flex items-center gap-1.5 mb-1">
           <TrendingUp size={13} className="text-emerald-600" />
-          <p className="text-[10px] font-black text-emerald-700 uppercase tracking-wide">Thu nhập</p>
+          <p className="text-[10px] font-black text-emerald-700 uppercase tracking-wide">{t('dashboard.overview.income')}</p>
         </div>
         <p className="text-[16px] font-black text-emerald-700">{formatCurrency(income)}</p>
-        <p className="text-[10px] font-bold text-emerald-500 mt-0.5">Tháng này</p>
+        <p className="text-[10px] font-bold text-emerald-500 mt-0.5">{t('dashboard.overview.thisMonth')}</p>
       </div>
 
       {/* Expense */}
       <div className="bg-red-50 rounded-xl p-3.5 border border-red-100">
         <div className="flex items-center gap-1.5 mb-1">
           <TrendingDown size={13} className="text-red-500" />
-          <p className="text-[10px] font-black text-red-700 uppercase tracking-wide">Chi tiêu</p>
+          <p className="text-[10px] font-black text-red-700 uppercase tracking-wide">{t('dashboard.overview.expense')}</p>
         </div>
         <p className="text-[16px] font-black text-red-600">{formatCurrency(expense)}</p>
-        <p className="text-[10px] font-bold text-red-400 mt-0.5">Tháng này</p>
+        <p className="text-[10px] font-bold text-red-400 mt-0.5">{t('dashboard.overview.thisMonth')}</p>
       </div>
     </div>
   );

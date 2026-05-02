@@ -11,44 +11,49 @@ import { useRouter } from 'next/navigation';
 import { useGoals } from '@/_lib/hooks/finance';
 import { formatCurrency, Goal } from '@finance/api-client';
 import Decimal from 'decimal.js';
+import { useTranslations } from '@/locales';
 
 // ─── Goal Row ─────────────────────────────────────────────────────────────────
 
-const statusMeta: Record<string, { label: string; bg: string; color: string; Icon: any }> = {
-  active: {
-    label: 'Đang chạy',
-    bg: '#eff6ff',
-    color: '#2563eb',
-    Icon: Target,
-  },
-  completed: {
-    label: 'Hoàn thành',
-    bg: '#d1fae5',
-    color: '#059669',
-    Icon: CheckCircle2,
-  },
-  paused: {
-    label: 'Tạm dừng',
-    bg: '#f3f4f6',
-    color: '#6b7280',
-    Icon: PauseCircle,
-  },
-  cancelled: {
-    label: 'Đã hủy',
-    bg: '#fee2e2',
-    color: '#ef4444',
-    Icon: PauseCircle,
-  }
-};
-
 function GoalRow({ goal }: { goal: Goal }) {
   const router = useRouter();
-  
+  const t = useTranslations();
+
+  const getStatusMeta = (status: string) => {
+    const meta: Record<string, { label: string; bg: string; color: string; Icon: any }> = {
+      active: {
+        label: t('dashboard.goals.status.active'),
+        bg: '#eff6ff',
+        color: '#2563eb',
+        Icon: Target,
+      },
+      completed: {
+        label: t('dashboard.goals.status.completed'),
+        bg: '#d1fae5',
+        color: '#059669',
+        Icon: CheckCircle2,
+      },
+      paused: {
+        label: t('dashboard.goals.status.paused'),
+        bg: '#f3f4f6',
+        color: '#6b7280',
+        Icon: PauseCircle,
+      },
+      cancelled: {
+        label: t('dashboard.goals.status.cancelled'),
+        bg: '#fee2e2',
+        color: '#ef4444',
+        Icon: PauseCircle,
+      }
+    };
+    return meta[status] || meta['active'];
+  };
+
   const current = new Decimal(goal.currentSaved);
   const target = new Decimal(goal.targetAmount);
   const percent = target.isZero() ? 0 : Math.min(100, Math.round(current.dividedBy(target).times(100).toNumber()));
   
-  const meta = statusMeta[goal.status] || statusMeta['active'];
+  const meta = getStatusMeta(goal.status);
 
   // Progress color
   const barColor =
@@ -109,6 +114,7 @@ function GoalRow({ goal }: { goal: Goal }) {
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export function DashboardGoalsCard() {
+  const t = useTranslations();
   const router = useRouter();
   const { data: goalsData, isLoading } = useGoals();
   const goals = Array.isArray(goalsData) ? goalsData : [];
@@ -121,13 +127,13 @@ export function DashboardGoalsCard() {
           <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center">
             <Target size={14} className="text-violet-600" />
           </div>
-          <h2 className="text-[14px] font-black text-gray-900">Mục tiêu tiết kiệm</h2>
+          <h2 className="text-[14px] font-black text-gray-900">{t('dashboard.goals.savingsGoals')}</h2>
         </div>
         <button
           onClick={() => router.push('/goals')}
           className="flex items-center gap-1 text-[12px] font-bold text-blue-600 hover:text-blue-700 transition-colors"
         >
-          Tất cả <ChevronRight size={14} />
+          {t('dashboard.goals.viewAll')} <ChevronRight size={14} />
         </button>
       </div>
 
@@ -137,7 +143,7 @@ export function DashboardGoalsCard() {
         <div className="p-2">
           {goals.length === 0 ? (
             <div className="py-8 text-center text-[12px] text-gray-500 font-medium">
-              Chưa có mục tiêu nào.
+              {t('dashboard.goals.noGoals')}
             </div>
           ) : (
             goals.slice(0, 3).map((goal) => (
@@ -153,7 +159,7 @@ export function DashboardGoalsCard() {
             className="w-full flex items-center justify-center gap-2 text-[12px] font-bold text-blue-600 hover:text-blue-700 transition-colors py-1"
           >
             <Plus size={14} />
-            Thêm mục tiêu mới
+            {t('dashboard.goals.addNew')}
           </button>
         </div>
       </div>

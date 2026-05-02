@@ -4,9 +4,11 @@ import { CalendarDays, Loader2 } from 'lucide-react';
 import { useBills } from '@/_lib/hooks/finance';
 import { formatCurrency, Bill } from '@finance/api-client';
 import Decimal from 'decimal.js';
+import { useTranslations } from '@/locales';
 
 export function FixedExpensesCard() {
   const { data: apiBills = [], isLoading } = useBills();
+  const t = useTranslations();
   
   if (isLoading) {
     return (
@@ -30,7 +32,7 @@ export function FixedExpensesCard() {
           <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center">
             <CalendarDays size={14} className="text-gray-600" />
           </div>
-          <h3 className="text-[13px] font-black text-gray-900">Chi phí cố định</h3>
+          <h3 className="text-[13px] font-black text-gray-900">{t('dashboard.fixedExpenses.title')}</h3>
         </div>
         <span className="text-[12px] font-black text-gray-700">
           {formatCurrency(totalMonthly.toNumber())}

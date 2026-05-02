@@ -24,27 +24,32 @@ import { SidebarLogo } from './sidebar/SidebarLogo';
 import { SidebarNavItem } from './sidebar/SidebarNavItem';
 import { SidebarUserCard } from './sidebar/SidebarUserCard';
 
+import { useTranslations } from '@/locales';
+
 // ─── Nav config ───────────────────────────────────────────────────────────────
 
-export const navItems = [
-  { path: '/',             icon: LayoutDashboard, label: 'Tổng Quan',  exact: true,  color: '#4361ee' },
-  { path: '/transactions', icon: ListOrdered,      label: 'Giao Dịch',  exact: false, color: '#10b981' },
-  { path: '/wallets',      icon: Wallet,           label: 'Ví Tiền',    exact: false, color: '#f59e0b' },
-  { path: '/budgets',      icon: PiggyBank,        label: 'Ngân Sách',  exact: false, color: '#8b5cf6' },
-  { path: '/goals',        icon: Target,           label: 'Mục Tiêu',   exact: false, color: '#06b6d4' },
-  { path: '/bills',        icon: Receipt,          label: 'Hóa Đơn',   exact: false, color: '#ef4444' },
-  { path: '/analytics',   icon: BarChart3,         label: 'Phân Tích',  exact: false, color: '#0ea5e9' },
-  { path: '/settings',    icon: Settings,           label: 'Cài Đặt',   exact: false, color: '#6b7280' },
+export const getNavItems = (t: (key: string) => string) => [
+  { path: '/',             icon: LayoutDashboard, label: t('nav.overview'),  exact: true,  color: '#4361ee' },
+  { path: '/transactions', icon: ListOrdered,      label: t('nav.transactions'),  exact: false, color: '#10b981' },
+  { path: '/wallets',      icon: Wallet,           label: t('nav.wallets'),    exact: false, color: '#f59e0b' },
+  { path: '/budgets',      icon: PiggyBank,        label: t('nav.budgets'),  exact: false, color: '#8b5cf6' },
+  { path: '/goals',        icon: Target,           label: t('nav.goals'),   exact: false, color: '#06b6d4' },
+  { path: '/bills',        icon: Receipt,          label: t('nav.bills'),   exact: false, color: '#ef4444' },
+  { path: '/analytics',   icon: BarChart3,         label: t('nav.analytics'),  exact: false, color: '#0ea5e9' },
+  { path: '/settings',    icon: Settings,           label: t('nav.settings'),   exact: false, color: '#6b7280' },
 ];
 
 // ─── Desktop Sidebar ──────────────────────────────────────────────────────────
 
 export function Sidebar() {
+  const t = useTranslations();
   const [open, setOpen] = useState(true);
   const pathname = usePathname();
 
   const isActive = (path: string, exact?: boolean) =>
     exact ? pathname === path : pathname.startsWith(path);
+
+  const navItems = getNavItems(t);
 
   return (
     <aside
@@ -82,7 +87,9 @@ export function Sidebar() {
 // ─── Mobile Bottom Nav ─────────────────────────────────────────────────────────
 
 export function MobileBottomNav() {
+  const t = useTranslations();
   const pathname = usePathname();
+  const navItems = getNavItems(t);
   const mobileItems = navItems.slice(0, 5);
 
   const isActive = (path: string, exact?: boolean) =>
