@@ -7,7 +7,7 @@ import Decimal from 'decimal.js';
 import { useTranslations } from '@/locales';
 
 export function QuickStatsCard() {
-  const t = useTranslations();
+  const { t } = useTranslations();
   const { data: budgetData, isLoading } = useBudgetSummary();
 
   if (isLoading) {

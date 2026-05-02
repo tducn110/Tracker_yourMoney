@@ -10,12 +10,12 @@
  * Removed: MultiWalletStrip (ví lớn)
  */
 
-import { SimpleQuickInput }        from '@/_components/quick-add/SimpleQuickInput';
-import { OverviewSummaryCard }     from '@/_components/dashboard/OverviewSummaryCard';
-import { BudgetGrid }              from '@/_components/budgets/BudgetGrid';
-import { DashboardGoalsCard }      from '@/_components/dashboard/DashboardGoalsCard';
-import { RecentTransactionsCard }  from '@/_components/dashboard/RecentTransactionsCard';
-import { UpcomingBillsCard }       from '@/_components/dashboard/UpcomingBillsCard';
+import { SimpleQuickInput }        from '@/components/quick-add/SimpleQuickInput';
+import { OverviewSummaryCard }     from '@/components/dashboard/OverviewSummaryCard';
+import { BudgetGrid }              from '@/components/budgets/BudgetGrid';
+import { DashboardGoalsCard }      from '@/components/dashboard/DashboardGoalsCard';
+import { RecentTransactionsCard }  from '@/components/dashboard/RecentTransactionsCard';
+import { UpcomingBillsCard }       from '@/components/dashboard/UpcomingBillsCard';
 
 export default function DashboardPage() {
   return (

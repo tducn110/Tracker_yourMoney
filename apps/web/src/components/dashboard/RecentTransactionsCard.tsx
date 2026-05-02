@@ -127,7 +127,7 @@ const DISPLAY_LIMIT = 10;
 
 export function RecentTransactionsCard() {
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslations();
   const [filter, setFilter] = useState<FilterType>('all');
   
   const { data: transactionsData, isLoading } = useTransactions({ limit: DISPLAY_LIMIT * 2 });

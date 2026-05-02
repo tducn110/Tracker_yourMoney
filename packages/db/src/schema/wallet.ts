@@ -27,6 +27,7 @@ export const wallets = mysqlTable("wallets", {
   icon:           varchar("icon", { length: 50 }).notNull().default("💵"),
   color:          varchar("color", { length: 7 }).notNull().default("#6B7280"),
   isDefault:      tinyint("is_default").notNull().default(0),
+  version:        int("version").notNull().default(0),
   deletedAt:      timestamp("deleted_at"),
   lastSyncedAt:   timestamp("last_synced_at"),
   createdAt:      timestamp("created_at").notNull().defaultNow(),

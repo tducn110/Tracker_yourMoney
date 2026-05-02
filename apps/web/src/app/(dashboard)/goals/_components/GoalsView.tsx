@@ -2,9 +2,9 @@
 
 import { Target, Plus, TrendingUp } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Button } from '@/_components/ui/button';
-import { Skeleton } from '@/_components/ui/skeleton';
-import { EmptyState } from '@/_components/EmptyState';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/EmptyState';
 import confetti from 'canvas-confetti';
 import { formatCurrency, Goal } from '@finance/api-client';
 import Decimal from 'decimal.js';

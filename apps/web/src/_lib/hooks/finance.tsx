@@ -61,6 +61,9 @@ export function useQuickAdd() {
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
     },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || 'Không thể thêm giao dịch');
+    },
   });
 }
 
@@ -88,6 +91,9 @@ export function useCreateCategory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || 'Không thể tạo danh mục');
+    },
   });
 }
 
@@ -103,6 +109,9 @@ export function useUpdateCategory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || 'Không thể cập nhật danh mục');
+    },
   });
 }
 
@@ -117,6 +126,9 @@ export function useDeleteCategory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || 'Không thể xoá danh mục');
     },
   });
 }
@@ -226,49 +238,10 @@ export function useUpdateTransaction() {
 }
 
 /**
- * Mutation: Delete Transaction
+ * Note: Transactions are immutable ledger entries.
+ * Deletion has been intentionally removed. To reverse a transaction,
+ * create a reversal (opposite type) instead.
  */
-export function useDeleteTransaction() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (id: string) => {
-      return transactionsAPI.delete(id);
-    },
-    
-    // ⚡ OPTIMISTIC UI
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['transactions'] });
-      const previousTransactions = queryClient.getQueryData(['transactions']);
-
-      queryClient.setQueryData(['transactions'], (old: any) => {
-        if (!Array.isArray(old)) return old;
-        return old.filter((tx: any) => tx.id !== id);
-      });
-
-      return { previousTransactions };
-    },
-    // 🛡️ ROLLBACK
-    onError: (err: any, id, context) => {
-      if (context?.previousTransactions) {
-        queryClient.setQueryData(['transactions'], context.previousTransactions);
-      }
-      const correlationId = err.data?.error?.correlationId;
-      toast.error(
-        <div className="flex flex-col gap-1">
-          <span className="font-semibold">Xóa thất bại</span>
-          <span className="text-xs opacity-80">Mã tham chiếu: {correlationId || 'N/A'}</span>
-        </div>
-      );
-    },
-    // 🔄 SYNC
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
-      queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
-    },
-  });
-}
 
 /**
  * Hook: Goals List
@@ -294,6 +267,9 @@ export function useCreateGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || 'Không thể tạo mục tiêu');
     },
   });
 }
@@ -354,6 +330,9 @@ export function useDeleteGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || 'Không thể xoá mục tiêu');
     },
   });
 }
@@ -440,6 +419,9 @@ export function useCreateBill() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bills'] });
     },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || 'Không thể tạo hoá đơn');
+    },
   });
 }
 
@@ -457,6 +439,9 @@ export function usePayBill() {
       queryClient.invalidateQueries({ queryKey: ['bills'] });
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || 'Không thể thanh toán hoá đơn');
     },
   });
 }
@@ -501,6 +486,9 @@ export function useUpdateCashWallet() {
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
     },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || 'Không thể cập nhật số dư');
+    },
   });
 }
 
@@ -517,6 +505,9 @@ export function useTransfer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || 'Không thể chuyển tiền');
     },
   });
 }
@@ -569,6 +560,9 @@ export function useLogin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
     },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || 'Đăng nhập thất bại');
+    },
   });
 }
 
@@ -579,6 +573,9 @@ export function useRegister() {
   return useMutation({
     mutationFn: (data: RegisterData) => {
       return authAPI.register(data);
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || 'Đăng ký thất bại');
     },
   });
 }

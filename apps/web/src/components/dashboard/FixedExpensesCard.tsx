@@ -8,7 +8,7 @@ import { useTranslations } from '@/locales';
 
 export function FixedExpensesCard() {
   const { data: apiBills = [], isLoading } = useBills();
-  const t = useTranslations();
+  const { t } = useTranslations();
   
   if (isLoading) {
     return (

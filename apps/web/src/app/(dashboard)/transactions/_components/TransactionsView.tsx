@@ -10,8 +10,8 @@ import {
   ReceiptText,
 } from 'lucide-react';
 import { formatCurrency, Transaction } from '@finance/api-client';
-import { Skeleton } from '@/_components/ui/skeleton';
-import { EmptyState } from '@/_components/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/EmptyState';
 import Decimal from 'decimal.js';
 
 export type FilterType = 'all' | 'income' | 'expense';

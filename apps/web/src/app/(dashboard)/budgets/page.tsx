@@ -7,8 +7,8 @@
 
 import { useState } from 'react';
 import { Plus, PiggyBank, Archive, TrendingUp, TrendingDown, Wallet, Loader2 } from 'lucide-react';
-import { BudgetCard } from '@/_components/budgets/BudgetCard';
-import { BudgetFormModal, type BudgetFormData } from '@/_components/budgets/BudgetFormModal';
+import { BudgetCard } from '@/components/budgets/BudgetCard';
+import { BudgetFormModal, type BudgetFormData } from '@/components/budgets/BudgetFormModal';
 import { toast } from 'sonner';
 import { useBudgets, useBudgetSummary, useCreateBudget, useUpdateBudget, useDeleteBudget } from '@/_lib/hooks/use-budgets';
 import { formatCurrency, Budget } from '@finance/api-client';

@@ -14,7 +14,7 @@ import Decimal from 'decimal.js';
 import { useTranslations } from '@/locales';
 
 export function TopGoalCard() {
-  const t = useTranslations();
+  const { t } = useTranslations();
   const router = useRouter();
   const { data: goals = [], isLoading } = useGoals();
   

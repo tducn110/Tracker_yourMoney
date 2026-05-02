@@ -1,8 +1,9 @@
 'use client';
 
-import { Sidebar, MobileBottomNav } from '@/_components/layout/Sidebar';
-import { Header } from '@/_components/layout/Header';
-import { QuickAddModal } from '@/_components/quick-add/QuickAddModal';
+import { Sidebar, MobileBottomNav } from '@/components/layout/Sidebar';
+import { Header } from '@/components/layout/Header';
+import { QuickAddModal } from '@/components/quick-add/QuickAddModal';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useState } from 'react';
 import { Toaster } from 'sonner';
 
@@ -23,7 +24,9 @@ export default function DashboardLayout({
         <Header onQuickAddClick={() => setIsQuickAddOpen(true)} />
 
         <main className="flex-1 overflow-y-auto">
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </main>
       </div>
 
