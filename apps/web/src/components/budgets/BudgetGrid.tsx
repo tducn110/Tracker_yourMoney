@@ -8,8 +8,9 @@
 
 import { ChevronRight, Layers, CalendarDays, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useBudgets, useBudgetSummary, useBudgetDetail } from '@/_lib/hooks/use-budgets';
+import { useBudgets, useBudgetSummary } from '@/_lib/hooks/use-budgets';
 import { formatCurrency, Budget } from '@finance/api-client';
+import Decimal from 'decimal.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -35,9 +36,25 @@ const periodLabel: Record<string, string> = {
 function BudgetSummaryBanner() {
   const { data: summaryData, isLoading } = useBudgetSummary();
 
-  if (isLoading || !summaryData) {
+  if (isLoading) {
     return (
       <div className="rounded-2xl h-[200px] shadow-sm animate-pulse" style={{ background: '#1e293b' }} />
+    );
+  }
+
+  if (!summaryData) {
+    return (
+      <div
+        className="rounded-2xl p-5 shadow-sm relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f4c81 100%)',
+        }}
+      >
+        <div className="flex flex-col items-center justify-center text-center min-h-[160px]">
+          <p className="text-[24px] font-black text-white mb-1">0 ₫</p>
+          <p className="text-[12px] font-bold text-blue-300">Chưa có ngân sách nào</p>
+        </div>
+      </div>
     );
   }
 
@@ -115,17 +132,12 @@ function BudgetSummaryBanner() {
 
 function FeaturedBudgetCard({ budget }: { budget: Budget }) {
   const router = useRouter();
-  const { data: detailData, isLoading } = useBudgetDetail(budget.id);
+  const spent = new Decimal(budget.spent || '0');
+  const target = new Decimal(budget.targetAmount);
+  const left = target.minus(spent);
+  const percent = target.isZero() ? 0 : spent.div(target).times(100).toDecimalPlaces(0).toNumber();
+  const numericLeft = left.toNumber();
 
-  if (isLoading || !detailData) {
-    return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm h-[200px] animate-pulse" />
-    );
-  }
-
-  const { spent, left, percent } = detailData;
-  const numericLeft = parseFloat(left || '0');
-  
   const status = getStatusBadge(percent);
   const progressColor = getProgressColor(percent);
   const amountColor = numericLeft < 0 ? '#dc2626' : '#111827';
@@ -193,7 +205,7 @@ function FeaturedBudgetCard({ budget }: { budget: Budget }) {
               className="text-[32px] font-black leading-none"
               style={{ color: amountColor }}
             >
-              {numericLeft < 0 ? '−' : ''}{formatCurrency(left.replace('-', ''))}
+              {numericLeft < 0 ? '−' : ''}{formatCurrency(left.abs())}
             </span>
             <span className="text-[13px] font-bold text-gray-400">còn lại</span>
           </div>
@@ -260,9 +272,9 @@ export function BudgetGrid() {
   const { data: budgetsData } = useBudgets();
   const budgets = budgetsData || [];
 
-  // Lấy budget mới nhất
   const activeBudgets = budgets.filter((b) => b.status === 'active');
   const latestBudget = activeBudgets.length > 0 ? activeBudgets[activeBudgets.length - 1] : null;
+  const hasAnyBudget = budgets.length > 0;
 
   return (
     <section>
@@ -274,22 +286,30 @@ export function BudgetGrid() {
           </div>
           <h2 className="text-[14px] font-black text-gray-900">Ngân sách</h2>
         </div>
-        <button
-          onClick={() => router.push('/budgets')}
-          className="text-[12px] font-black text-blue-600 hover:text-blue-700 flex items-center gap-1"
-        >
-          Tất cả <ChevronRight size={14} />
-        </button>
+        {hasAnyBudget && (
+          <button
+            onClick={() => router.push('/budgets')}
+            className="text-[12px] font-black text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          >
+            Tất cả <ChevronRight size={14} />
+          </button>
+        )}
       </div>
 
       {/* Summary Banner */}
       <BudgetSummaryBanner />
 
-      {/* Latest Budget + Create CTA */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 items-stretch">
-        {latestBudget && <FeaturedBudgetCard budget={latestBudget} />}
-        <BudgetCreateCTA />
-      </div>
+      {/* Featured Budget + CTA, or just CTA if no budgets */}
+      {hasAnyBudget ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 items-stretch">
+          {latestBudget && <FeaturedBudgetCard budget={latestBudget} />}
+          <BudgetCreateCTA />
+        </div>
+      ) : (
+        <div className="mt-3">
+          <BudgetCreateCTA />
+        </div>
+      )}
     </section>
   );
 }

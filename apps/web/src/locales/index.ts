@@ -2,10 +2,12 @@ import vi from './vi.json';
 
 export type LocaleTranslations = typeof vi;
 
+export type TranslationFn = (key: string) => string;
+
 // For now, we only support Vietnamese. 
 // We can expand this to read from contexts or other JSONs later.
-export function useTranslations() {
-  const t = (key: string) => {
+export function useTranslations(): TranslationFn & { t: TranslationFn } {
+  const t: TranslationFn = (key: string) => {
     const keys = key.split('.');
     let result: any = vi;
     for (const k of keys) {
@@ -18,5 +20,7 @@ export function useTranslations() {
     return result as string;
   };
 
-  return { t };
+  const result = t as TranslationFn & { t: TranslationFn };
+  result.t = t;
+  return result;
 }

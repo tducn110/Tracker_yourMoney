@@ -10,10 +10,66 @@ import Decimal from "decimal.js";
 
 export class BudgetService {
   async getBudgets(userId: string) {
-    return db
+    const userBudgets = await db
       .select()
       .from(budgets)
       .where(eq(budgets.userId, userId));
+
+    if (userBudgets.length === 0) return [];
+
+    // Batch compute spent per budget (3 queries total, no N+1)
+    const budgetIds = userBudgets.map((b) => b.id);
+    const allBudgetCats = await db
+      .select()
+      .from(budgetCategories)
+      .where(inArray(budgetCategories.budgetId, budgetIds));
+
+    const budgetCatMap = new Map<string, number[]>();
+    for (const bc of allBudgetCats) {
+      const bid = String(bc.budgetId);
+      if (!budgetCatMap.has(bid)) budgetCatMap.set(bid, []);
+      budgetCatMap.get(bid)!.push(Number(bc.categoryId));
+    }
+
+    let minDate = userBudgets[0].startDate;
+    let maxDate = userBudgets[0].endDate;
+    for (const b of userBudgets) {
+      if (b.startDate < minDate) minDate = b.startDate;
+      if (b.endDate > maxDate) maxDate = b.endDate;
+    }
+
+    const allTxs = await db
+      .select()
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.type, "expense"),
+          between(transactions.displayDate, minDate, maxDate),
+        ),
+      );
+
+    return userBudgets.map((budget) => {
+      const bCatIds = budgetCatMap.get(String(budget.id)) || [];
+      const bTxs = allTxs.filter((tx) => {
+        const inDate =
+          tx.displayDate >= budget.startDate &&
+          tx.displayDate <= budget.endDate;
+        if (!inDate) return false;
+        if (budget.isAllCategories) return true;
+        return bCatIds.includes(Number(tx.categoryId));
+      });
+
+      const spent = bTxs.reduce(
+        (sum, tx) => sum.plus(new Decimal(tx.amount)),
+        new Decimal(0),
+      );
+
+      return {
+        ...budget,
+        spent: spent.toFixed(2),
+      };
+    });
   }
 
   async getBudgetSummary(userId: string) {

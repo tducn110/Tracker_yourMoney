@@ -1,4 +1,4 @@
-# Database Analysis Report — S2S Finance Tracker V3
+# Database Analysis Report — Finance Tracker V3
 
 **Date:** 2026-04-29  
 **Scope:** `packages/db/` directory (schema, migrations, repositories, queries)  

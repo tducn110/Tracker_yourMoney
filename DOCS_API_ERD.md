@@ -1,4 +1,4 @@
-# ERD & API Documentation (S2S Finance)
+# ERD & API Documentation (Finance Tracker)
 
 Contrary to the assumption, the project actually has a very well-defined **Database Schema (ERD)** and a comprehensive set of **API Endpoints** already implemented. The business logic has been stabilized around the **Ledger-First** and **Budget-First** models.
 
@@ -76,7 +76,7 @@ The API is built with Hono and grouped into the following modules:
 - `DELETE /:id`: Soft delete.
 
 ### 3. Budgets (`/api/budgets`)
-- `GET /summary`: Get S2S (Safe-to-Spend) status and budget usage.
+- `GET /summary`: Get budget status and budget usage.
 - `GET /`: List budgets.
 - `POST /`: Create/Update budget.
 
@@ -95,7 +95,7 @@ The API is built with Hono and grouped into the following modules:
 ## 💡 Business Logic Maturity
 
 The logic is now **Clear and Hardened**:
-1.  **Budget-First**: The UI focuses on "How much can I spend today?" (S2S).
+1.  **Budget-First**: The UI focuses on "How much can I spend today?".
 2.  **Ledger-First**: Every financial movement (even paying a bill or saving for a goal) **MUST** result in a `transaction` record. This ensures the "Spent" amount in budgets is always accurate.
 3.  **Atomic Operations**: All multi-step processes (e.g., paying a bill + creating a transaction) are wrapped in database transactions.
 

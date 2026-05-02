@@ -4,7 +4,7 @@ const API_BASE_URL = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_AP
 const API_TIMEOUT = 15000;
 
 /**
- * S2S API Client - Shared Logic
+ * API Client - Shared Logic
  */
 
 const isObject = (o: any): o is Record<string, any> => 
@@ -77,7 +77,7 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     const data = toCamel(response.data);
-    // Automatically unwrap the standard S2S response envelope
+    // Automatically unwrap the standard response envelope
     if (data && typeof data === 'object' && data.success === true && data.data !== undefined) {
       return data.data;
     }

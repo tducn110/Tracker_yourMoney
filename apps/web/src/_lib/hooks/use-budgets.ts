@@ -7,27 +7,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { budgetAPI } from "@finance/api-client";
 import type { Budget, BudgetSummary, BudgetDetail } from "@finance/api-client";
 
-import { z } from "zod";
-import Decimal from "decimal.js";
-
-const BudgetSummarySchema = z.object({
-  totalLimit: z.string(),
-  totalSpent: z.string(),
-  left: z.string(),
-  percent: z.number(),
-  totalIncome: z.string().optional(),
-  projectedSpending: z.string().optional(),
-});
-
-import { MOCK_BUDGETS, MOCK_BUDGET_SUMMARY } from "../mock-data";
-
 export function useBudgets() {
   return useQuery<Budget[]>({
     queryKey: ["budgets"],
     queryFn: async () => {
       return budgetAPI.list();
     },
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -37,7 +23,7 @@ export function useBudgetSummary() {
     queryFn: async () => {
       return budgetAPI.summary();
     },
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -48,6 +34,7 @@ export function useBudgetDetail(id: string) {
       return budgetAPI.getDetail(id);
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

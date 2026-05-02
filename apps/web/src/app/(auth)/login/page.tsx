@@ -42,7 +42,7 @@ export default function LoginPage() {
 
       {/* Left - Form */}
       <div className="flex-1 flex items-center justify-center p-8 relative z-10">
-        <div className="w-full max-w-md bg-white/60 backdrop-blur-xl p-10 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/80">
+        <div className="w-full max-w-md bg-white/60 backdrop-blur-xl p-10 rounded-4xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/80">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20" style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}>
               <Sparkles size={20} className="text-white" />

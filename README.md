@@ -1,4 +1,4 @@
-# S2S Finance — The Purified Finance Tracker
+# Finance Tracker — The Purified Budget-First App
 
 A robust, high-performance personal finance management system built with a **Budget-First** philosophy. Designed for the Edge, hardened for accuracy.
 

@@ -1,6 +1,6 @@
 # Kế Hoạch Triển Khai Finance Tracker V3 (Từ ERD)
 
-Tài liệu này là bản kế hoạch chi tiết để chuyển đổi các thực thể (Entities) từ `doc/wiki/erd.md` thành mã nguồn thực tế trong dự án S2S Finance Tracker V3.
+Tài liệu này là bản kế hoạch chi tiết để chuyển đổi các thực thể (Entities) từ `doc/wiki/erd.md` thành mã nguồn thực tế trong dự án Finance Tracker V3.
 
 Dự án sử dụng cấu trúc Monorepo (Next.js, Hono, Drizzle ORM, TiDB Serverless).
 
@@ -82,7 +82,7 @@ Nơi chứa logic nghiệp vụ, tính toán tiền tệ (Sử dụng `Decimal.j
 - **`transaction-service.ts`**: 
   - Đảm bảo tính toán Idempotency (Không xử lý trùng lặp request).
   - Khi tạo Transaction, phải gọi `wallet-service` để trừ/cộng tiền, đồng thời ghi log vào `wallet_logs`.
-- **`s2s-engine.ts`**: Tính toán Safe-To-Spend (Tổng thu nhập - Chi phí cố định - Bills - Goals).
+- **`budget-engine.ts`**: Tính toán Budget (Tổng thu nhập - Chi phí cố định - Bills - Goals).
 - **`bill-service.ts`**: Logic Auto-pay hoặc nhắc nhở.
 - **`goal-service.ts`**: Tính toán tiến độ Goal.
 - **`container.ts`**: Dependency Injection container khai báo tất cả các services.
@@ -100,7 +100,7 @@ Cung cấp API cho Frontend, bảo vệ bởi Auth Middleware (`userId`).
 - **`/bills/*`** (`bills.ts`): CRUD hóa đơn.
 - **`/goals/*`** (`goals.ts`): CRUD mục tiêu.
 - **`/budgets/*`** (`budgets.ts`): CRUD ngân sách.
-- **`/s2s/*`** (`s2s.ts`): Lấy thông tin Safe-to-Spend summary.
+- **`/budget/*`** (`budget.ts`): Lấy thông tin Budget summary.
 
 ---
 
@@ -111,7 +111,7 @@ Cung cấp API cho Frontend, bảo vệ bởi Auth Middleware (`userId`).
 - **Hooks (`apps/web/src/_lib/hooks/`)**:
   - `useWallets.ts`
   - `useTransactions.ts`
-  - `useS2SSummary.ts` (Sử dụng Optimistic UI mạnh mẽ).
+  - `useBudgetSummary.ts` (Sử dụng Optimistic UI mạnh mẽ).
 - **Components (`apps/web/src/_components/`)**:
   - Tạo các form thao tác tiền tệ.
   - Xây dựng UI danh sách giao dịch, ví, hóa đơn, mục tiêu.
@@ -123,4 +123,4 @@ Cung cấp API cho Frontend, bảo vệ bởi Auth Middleware (`userId`).
 2. **Idempotency**: Mọi API dạng `POST/PUT/PATCH` ảnh hưởng đến tiền tệ đều cần `Idempotency-Key` header.
 3. **Soft Delete**: Các repository chỉ sử dụng `UPDATE deleted_at = NOW()` thay vì `DELETE` thực sự.
 4. **Application-Level Isolation**: Mọi truy vấn DB phải luôn có `.where(eq(table.userId, currentUserId))`.
-5. **GitNexus Impact Analysis**: Trước khi sửa các logic dùng chung (như `s2s-engine.ts`), phải chạy GitNexus để đánh giá phạm vi ảnh hưởng.
+5. **GitNexus Impact Analysis**: Trước khi sửa các logic dùng chung (như `budget-engine.ts`), phải chạy GitNexus để đánh giá phạm vi ảnh hưởng.

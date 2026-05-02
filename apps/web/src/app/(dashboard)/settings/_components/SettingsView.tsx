@@ -376,7 +376,7 @@ export function SettingsView({
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 outline-none"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Số tiền dự phòng sẽ được trừ vào S2S
+                Số tiền dự phòng sẽ được trừ vào ngân sách an toàn
               </p>
             </div>
           </div>
