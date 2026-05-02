@@ -10,10 +10,12 @@ interface BillsViewProps {
   isLoading: boolean;
   activeBills: Bill[];
   totalMonthly: Decimal;
-  // Handlers for later like onAddBill, onMarkAsPaid
+  onAddBill?: (data: Record<string, unknown>) => void;
+  onPayBill?: (billId: string, amount: string) => void;
+  isMutating?: boolean;
 }
 
-export function BillsView({ isLoading, activeBills, totalMonthly }: BillsViewProps) {
+export function BillsView({ isLoading, activeBills, totalMonthly, onAddBill, onPayBill, isMutating }: BillsViewProps) {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -23,7 +25,11 @@ export function BillsView({ isLoading, activeBills, totalMonthly }: BillsViewPro
             Quản lý các khoản chi cố định hàng tháng
           </p>
         </div>
-        <Button className="bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 hover:border-blue-300 shadow-sm rounded-xl font-black text-[13px] px-5 transition-all">
+        <Button
+          onClick={() => onAddBill?.({})}
+          disabled={isMutating}
+          className="bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 hover:border-blue-300 shadow-sm rounded-xl font-black text-[13px] px-5 transition-all"
+        >
           <Plus size={16} className="mr-2 text-blue-600" />
           Thêm Hóa Đơn
         </Button>
@@ -121,6 +127,11 @@ export function BillsView({ isLoading, activeBills, totalMonthly }: BillsViewPro
                         <Button
                           size="sm"
                           variant="ghost"
+                          disabled={isMutating}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onPayBill?.(bill.id, bill.amount);
+                          }}
                           className="mt-2 h-8 rounded-lg bg-emerald-50/50 text-emerald-600 border border-emerald-100/50 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 shadow-xs transition-all font-black text-[11px] uppercase tracking-tight group"
                         >
                           <Check

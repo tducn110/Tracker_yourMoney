@@ -50,9 +50,9 @@ export const transactionsAPI = {
     apiClient.post<Transaction>('/api/v1/transactions', data, { 
       headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {} 
     }) as unknown as Promise<Transaction>,
-  quickAdd: (text: string, options?: { categoryId?: number; idempotencyKey?: string }) => 
-    apiClient.post<Transaction>('/api/v1/transactions/quick', 
-      { text, categoryId: options?.categoryId },
+  quickAdd: (text: string, options?: { walletId: string; categoryId?: number; idempotencyKey?: string }) =>
+    apiClient.post<Transaction>('/api/v1/transactions/quick',
+      { text, walletId: options?.walletId, categoryId: options?.categoryId },
       { headers: options?.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {} }
     ) as unknown as Promise<Transaction>,
   update: (id: string, data: Partial<Transaction>) => 
@@ -69,8 +69,8 @@ export const goalsAPI = {
     }) as unknown as Promise<Goal>,
   update: (id: string, data: Partial<Goal>) => apiClient.put<Goal>(`/api/v1/goals/${id}`, data) as unknown as Promise<Goal>,
   delete: (id: string) => apiClient.delete(`/api/v1/goals/${id}`) as unknown as Promise<void>,
-  contribute: (id: string, amount: string | number, idempotencyKey?: string) => 
-    apiClient.post<Goal>(`/api/v1/goals/${id}/contribute`, { amount }, {
+  contribute: (id: string, data: { walletId: string; amount: string | number }, idempotencyKey?: string) =>
+    apiClient.post<Goal>(`/api/v1/goals/${id}/contribute`, data, {
       headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
     }) as unknown as Promise<Goal>,
 };
@@ -83,7 +83,7 @@ export const billsAPI = {
     }) as unknown as Promise<Bill>,
   update: (id: string, data: Partial<Bill>) => apiClient.put<Bill>(`/api/v1/bills/${id}`, data) as unknown as Promise<Bill>,
   delete: (id: string) => apiClient.delete(`/api/v1/bills/${id}`) as unknown as Promise<void>,
-  pay: (id: string, data: { amount: string | number; paymentDate: string; note?: string }, idempotencyKey?: string) =>
+  pay: (id: string, data: { walletId: string; amount: string | number; paymentDate: string; note?: string }, idempotencyKey?: string) =>
     apiClient.patch<any>(`/api/v1/bills/${id}/pay`, data, {
       headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
     }) as unknown as Promise<any>,
@@ -97,11 +97,18 @@ export const analyticsAPI = {
 };
 
 export const walletAPI = {
-  getCash: () => apiClient.get<{ balance: string }>('/api/v1/wallet/cash') as unknown as Promise<{ balance: string }>,
-  updateCash: (newBalance: string, note?: string, idempotencyKey?: string) => 
-    apiClient.put<{ balance: string }>('/api/v1/wallet/cash', { newBalance, note }, {
+  list: () => apiClient.get<any[]>('/api/v1/wallet') as unknown as Promise<any[]>,
+  getCash: () => apiClient.get<any>('/api/v1/wallet/cash') as unknown as Promise<any>,
+  updateCash: (newBalance: string, note?: string, idempotencyKey?: string) =>
+    apiClient.put('/api/v1/wallet/cash', { newBalance, note }, {
       headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
-    }) as unknown as Promise<{ balance: string }>,
+    }) as unknown as Promise<any>,
+  create: (data: Record<string, unknown>) =>
+    apiClient.post('/api/v1/wallet', data) as unknown as Promise<any>,
+  update: (id: string, data: Record<string, unknown>) =>
+    apiClient.put(`/api/v1/wallet/${id}`, data) as unknown as Promise<any>,
+  delete: (id: string) =>
+    apiClient.delete(`/api/v1/wallet/${id}`) as unknown as Promise<void>,
 };
 
 export const categoriesAPI = {

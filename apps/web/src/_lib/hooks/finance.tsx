@@ -35,14 +35,10 @@ export function useTransactions(params?: { limit?: number; offset?: number; cate
   return useQuery({
     queryKey: ['transactions', params],
     queryFn: async () => {
-      // const response = await transactionsAPI.list(params);
-      // const txs = response.transactions || response;
-      // return txs || [];
-      await new Promise(r => setTimeout(r, 600));
-      return MOCK_TRANSACTIONS;
+      const data = await transactionsAPI.list(params);
+      return data.transactions || data || [];
     },
     retry: (failureCount, error: any) => {
-      // Don't retry on unauthorized errors
       if (error?.status === 401) return false;
       return failureCount < 3;
     },
@@ -54,14 +50,11 @@ export function useTransactions(params?: { limit?: number; offset?: number; cate
  */
 export function useQuickAdd() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async (text: string) => {
-      // Generate idempotency key for this specific action
+    mutationFn: async ({ text, walletId }: { text: string; walletId: string }) => {
       const idempotencyKey = crypto.randomUUID();
-      // return transactionsAPI.quickAdd(text, { idempotencyKey });
-      await new Promise(r => setTimeout(r, 1000));
-      return { success: true };
+      return transactionsAPI.quickAdd(text, { walletId, idempotencyKey });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -78,14 +71,7 @@ export function useCategories() {
   return useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: async () => {
-      // return categoriesAPI.list();
-      return [
-        { id: 1, name: 'Ăn uống', icon: '🍜', color: '#f87171', type: 'expense' },
-        { id: 2, name: 'Thu nhập', icon: '💰', color: '#34d399', type: 'income' },
-        { id: 3, name: 'Di chuyển', icon: '🚗', color: '#60a5fa', type: 'expense' },
-        { id: 4, name: 'Tiền ích', icon: '⚡', color: '#fbbf24', type: 'expense' },
-        { id: 5, name: 'Mua sắm', icon: '🛍️', color: '#f472b6', type: 'expense' },
-      ] as Category[];
+      return categoriesAPI.list();
     },
   });
 }
@@ -99,9 +85,7 @@ export function useCreateTransaction() {
   return useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
       const idempotencyKey = crypto.randomUUID();
-      // return transactionsAPI.create(data, idempotencyKey);
-      await new Promise(r => setTimeout(r, 800));
-      return { success: true };
+      return transactionsAPI.create(data, idempotencyKey);
     },
     // ⚡ OPTIMISTIC UI: Update cache immediately
     onMutate: async (newTx) => {
@@ -157,9 +141,7 @@ export function useUpdateTransaction() {
   
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
-      // return transactionsAPI.update(id, data);
-      await new Promise(r => setTimeout(r, 800));
-      return { success: true };
+      return transactionsAPI.update(id, data);
     },
     
     // ⚡ OPTIMISTIC UI
@@ -206,9 +188,7 @@ export function useDeleteTransaction() {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      // return transactionsAPI.delete(id);
-      await new Promise(r => setTimeout(r, 500));
-      return { success: true };
+      return transactionsAPI.delete(id);
     },
     
     // ⚡ OPTIMISTIC UI
@@ -252,9 +232,7 @@ export function useGoals() {
   return useQuery({
     queryKey: ['goals'],
     queryFn: async () => {
-      // return goalsAPI.list();
-      await new Promise(r => setTimeout(r, 700));
-      return MOCK_GOALS;
+      return goalsAPI.list();
     },
   });
 }
@@ -267,9 +245,7 @@ export function useCreateGoal() {
   return useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
       const idempotencyKey = crypto.randomUUID();
-      // return goalsAPI.create(data, idempotencyKey);
-      await new Promise(r => setTimeout(r, 800));
-      return { success: true };
+      return goalsAPI.create(data, idempotencyKey);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
@@ -285,9 +261,7 @@ export function useUpdateGoal() {
   
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
-      // return goalsAPI.update(id, data);
-      await new Promise(r => setTimeout(r, 800));
-      return { success: true };
+      return goalsAPI.update(id, data);
     },
     
     // ⚡ OPTIMISTIC UI
@@ -331,9 +305,7 @@ export function useDeleteGoal() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // return goalsAPI.delete(id);
-      await new Promise(r => setTimeout(r, 500));
-      return { success: true };
+      return goalsAPI.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
@@ -348,14 +320,13 @@ export function useContributeGoal() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, amount }: { id: string; amount: string | number }) => {
+    mutationFn: async ({ id, data }: { id: string; data: { walletId: string; amount: string | number } }) => {
       const idempotencyKey = crypto.randomUUID();
-      // return goalsAPI.contribute(id, amount, idempotencyKey);
-      await new Promise(r => setTimeout(r, 800));
-      return { success: true };
+      return goalsAPI.contribute(id, data, idempotencyKey);
     },
     // ⚡ OPTIMISTIC UI
-    onMutate: async ({ id, amount }) => {
+    onMutate: async ({ id, data }) => {
+      const amount = data.amount;
       await queryClient.cancelQueries({ queryKey: ['goals'] });
       const previousGoals = queryClient.getQueryData(['goals']);
 
@@ -406,10 +377,7 @@ export function useBills() {
   return useQuery({
     queryKey: ['bills'],
     queryFn: async () => {
-      // const data = await billsAPI.list();
-      // return data || [];
-      await new Promise(r => setTimeout(r, 500));
-      return MOCK_BILLS;
+      return billsAPI.list();
     },
   });
 }
@@ -422,9 +390,7 @@ export function useCreateBill() {
   return useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
       const idempotencyKey = crypto.randomUUID();
-      // return billsAPI.create(data, idempotencyKey);
-      await new Promise(r => setTimeout(r, 800));
-      return { success: true };
+      return billsAPI.create(data, idempotencyKey);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bills'] });
@@ -438,11 +404,9 @@ export function useCreateBill() {
 export function usePayBill() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: { amount: string | number; paymentDate: string; note?: string } }) => {
+    mutationFn: async ({ id, data }: { id: string; data: { walletId: string; amount: string | number; paymentDate: string; note?: string } }) => {
       const idempotencyKey = crypto.randomUUID();
-      // return billsAPI.pay(id, data, idempotencyKey);
-      await new Promise(r => setTimeout(r, 800));
-      return { success: true };
+      return billsAPI.pay(id, data, idempotencyKey);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bills'] });
@@ -455,13 +419,21 @@ export function usePayBill() {
 /**
  * Hook: Cash Wallet
  */
+export function useWallets() {
+  return useQuery<any[]>({
+    queryKey: ['wallets'],
+    queryFn: async () => {
+      return walletAPI.list();
+    },
+    staleTime: 60 * 1000,
+  });
+}
+
 export function useCashWallet() {
   return useQuery({
     queryKey: ['wallet', 'cash'],
     queryFn: async () => {
-      // return walletAPI.getCash();
-      await new Promise(r => setTimeout(r, 400));
-      return MOCK_CASH_WALLET;
+      return walletAPI.getCash();
     },
     retry: (failureCount, error: any) => {
       if (error?.status === 401) return false;
@@ -478,9 +450,7 @@ export function useUpdateCashWallet() {
   return useMutation({
     mutationFn: async ({ newBalance, note }: { newBalance: string; note?: string }) => {
       const idempotencyKey = crypto.randomUUID();
-      // return walletAPI.updateCash(newBalance, note, idempotencyKey);
-      await new Promise(r => setTimeout(r, 800));
-      return { success: true };
+      return walletAPI.updateCash(newBalance, note, idempotencyKey);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
@@ -496,10 +466,7 @@ export function useCategorySpending(month?: string) {
   return useQuery<CategorySpending[]>({
     queryKey: ['analytics', 'categories', month],
     queryFn: async () => {
-      // const data = await analyticsAPI.categorySpending(month);
-      // return data || [];
-      await new Promise(r => setTimeout(r, 900));
-      return MOCK_CATEGORY_SPENDING;
+      return analyticsAPI.categorySpending(month);
     },
   });
 }
@@ -511,10 +478,7 @@ export function useMonthlyTrend(months: number = 6) {
   return useQuery<MonthlyTrend[]>({
     queryKey: ['analytics', 'trends', months],
     queryFn: async () => {
-      // const data = await analyticsAPI.monthlyTrend(months);
-      // return data || [];
-      await new Promise(r => setTimeout(r, 1000));
-      return MOCK_MONTHLY_TREND;
+      return analyticsAPI.monthlyTrend(months);
     },
   });
 }
@@ -526,8 +490,7 @@ export function useUser() {
   return useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
-      // return authAPI.me();
-      return MOCK_USER;
+      return authAPI.me();
     },
   });
 }

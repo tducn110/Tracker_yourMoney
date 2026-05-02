@@ -9,12 +9,7 @@
 
 import { useState, useRef } from 'react';
 import { Plus, Wallet as WalletIcon, GripVertical, ArrowUpDown } from 'lucide-react';
-import {
-  mockWallets,
-  type MockWallet,
-  getTotalWalletBalance,
-  getDefaultWallet,
-} from '@/app/context/WalletContext';
+import { useWallet, type MockWallet } from '@/app/context/WalletContext';
 import { formatCurrency } from '@finance/api-client';
 import { WalletCard } from './WalletCard';
 import { WalletSyncModal } from './WalletSyncModal';
@@ -125,28 +120,32 @@ function WalletStripHeader({ total, walletCount, reorderMode, onToggleReorder }:
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function MultiWalletStrip() {
-  const [wallets, setWallets]         = useState<MockWallet[]>(mockWallets);
-  const [activeId, setActiveId]       = useState<string>(getDefaultWallet(mockWallets).id);
+  const { wallets, totalBalance, defaultWallet, updateWallet } = useWallet();
+  const [activeId, setActiveId]       = useState<string | null>(null);
   const [syncTarget, setSyncTarget]   = useState<MockWallet | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [dragOverId, setDragOverId]   = useState<string | null>(null);
   const dragItemRef                   = useRef<string | null>(null);
 
-  const total = getTotalWalletBalance(wallets);
+  // Set active wallet once data loads
+  if (activeId === null && defaultWallet) {
+    setActiveId(defaultWallet.id);
+  }
 
   // ── Sync ──
 
-  const handleSyncConfirm = (walletId: string, newBalance: number) => {
-    const now = new Date().toLocaleString('vi-VN', {
-      hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit',
-    });
-    setWallets((prev) =>
-      prev.map((w) => (w.id === walletId ? { ...w, balance: newBalance, lastSynced: now } : w))
-    );
+  const handleSyncConfirm = async (walletId: string, newBalance: number) => {
+    await updateWallet(walletId, { balance: newBalance } as Partial<MockWallet>);
     setSyncTarget(null);
   };
 
   // ── Drag & Drop (HTML5 native) ──
+  // Note: reorder only affects visual order locally; API does not persist wallet order
+
+  const [localOrder, setLocalOrder] = useState<string[] | null>(null);
+  const orderedWallets = localOrder
+    ? localOrder.map((id) => wallets.find((w) => w.id === id)!).filter(Boolean)
+    : wallets;
 
   const handleDragStart = (id: string) => (e: React.DragEvent) => {
     dragItemRef.current = id;
@@ -164,14 +163,13 @@ export function MultiWalletStrip() {
     const sourceId = dragItemRef.current;
     if (!sourceId || sourceId === targetId) return;
 
-    setWallets((prev) => {
-      const arr = [...prev];
-      const fromIdx = arr.findIndex((w) => w.id === sourceId);
-      const toIdx   = arr.findIndex((w) => w.id === targetId);
-      const [item]  = arr.splice(fromIdx, 1);
-      arr.splice(toIdx, 0, item);
-      return arr;
-    });
+    const base = localOrder ?? wallets.map((w) => w.id);
+    const fromIdx = base.indexOf(sourceId);
+    const toIdx   = base.indexOf(targetId);
+    const arr = [...base];
+    const [item]  = arr.splice(fromIdx, 1);
+    arr.splice(toIdx, 0, item);
+    setLocalOrder(arr);
     setDragOverId(null);
     dragItemRef.current = null;
   };
@@ -185,7 +183,7 @@ export function MultiWalletStrip() {
     <>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <WalletStripHeader
-          total={total}
+          total={totalBalance}
           walletCount={wallets.length}
           reorderMode={reorderMode}
           onToggleReorder={() => setReorderMode((v) => !v)}
@@ -202,7 +200,7 @@ export function MultiWalletStrip() {
 
         {/* Wallet cards */}
         <div className={`p-4 grid grid-cols-2 md:grid-cols-4 gap-3 ${reorderMode ? 'select-none' : ''}`}>
-          {wallets.map((wallet) => (
+          {orderedWallets.map((wallet) => (
             <DraggableWalletCard
               key={wallet.id}
               wallet={wallet}

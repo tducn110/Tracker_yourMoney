@@ -12,6 +12,9 @@ interface GoalsViewProps {
   activeGoals: Goal[];
   completedGoals: Goal[];
   onGoalClick: (goal: Goal) => void;
+  onAddGoal?: (data: Record<string, unknown>) => void;
+  onContribute?: (goalId: string, amount: string) => void;
+  isMutating?: boolean;
 }
 
 export function GoalsView({
@@ -19,6 +22,9 @@ export function GoalsView({
   activeGoals,
   completedGoals,
   onGoalClick,
+  onAddGoal,
+  onContribute,
+  isMutating,
 }: GoalsViewProps) {
   return (
     <div className="p-6 space-y-6">
@@ -29,7 +35,7 @@ export function GoalsView({
             Lập kế hoạch và đạt mục tiêu tài chính
           </p>
         </div>
-        <Button>
+        <Button onClick={() => onAddGoal?.({})} disabled={isMutating}>
           <Plus size={16} className="mr-2" />
           Thêm Mục Tiêu
         </Button>
@@ -103,13 +109,24 @@ export function GoalsView({
                       </span>
                     </div>
 
-                    <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
                       <div className="flex items-center gap-2 text-xs text-gray-500">
                         <TrendingUp size={14} />
                         <span>
                           +{formatCurrency(monthlyContribution, "vi-VN")}/tháng
                         </span>
                       </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const amt = goal.monthlyContribution || '100000';
+                          onContribute?.(goal.id, amt);
+                        }}
+                        disabled={isMutating}
+                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-md transition-colors"
+                      >
+                        + Đóng góp
+                      </button>
                     </div>
                   </motion.div>
                 );

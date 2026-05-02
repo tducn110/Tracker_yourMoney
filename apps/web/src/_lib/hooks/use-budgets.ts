@@ -25,9 +25,7 @@ export function useBudgets() {
   return useQuery<Budget[]>({
     queryKey: ["budgets"],
     queryFn: async () => {
-      // return budgetAPI.list();
-      await new Promise(r => setTimeout(r, 500)); // Simulate network
-      return MOCK_BUDGETS;
+      return budgetAPI.list();
     },
     staleTime: 60 * 1000,
   });
@@ -37,17 +35,7 @@ export function useBudgetSummary() {
   return useQuery<BudgetSummary>({
     queryKey: ["budgets", "summary"],
     queryFn: async () => {
-      /*
-      const data = await budgetAPI.summary();
-      const result = BudgetSummarySchema.safeParse(data);
-      if (!result.success) {
-        console.error("Budget Data Mismatch:", result.error);
-        return data;
-      }
-      return result.data as BudgetSummary;
-      */
-      await new Promise(r => setTimeout(r, 800)); // Simulate network
-      return MOCK_BUDGET_SUMMARY;
+      return budgetAPI.summary();
     },
     staleTime: 60 * 1000,
   });
@@ -57,26 +45,7 @@ export function useBudgetDetail(id: string) {
   return useQuery<BudgetDetail>({
     queryKey: ["budgets", id],
     queryFn: async () => {
-      // return budgetAPI.getDetail(id);
-      await new Promise(r => setTimeout(r, 400));
-      const budget = MOCK_BUDGETS.find(b => b.id === id) || MOCK_BUDGETS[0];
-      
-      // Calculate derived mock values
-      const spent = id === "1" ? "14500000" : id === "2" ? "3500000" : "8000000";
-      const target = new Decimal(budget.targetAmount);
-      const spentDec = new Decimal(spent);
-      
-      return {
-        ...budget,
-        spent: spentDec.toFixed(2),
-        left: target.minus(spentDec).toFixed(2),
-        percent: Math.round(spentDec.div(target).times(100).toNumber()),
-        recommendedDaily: 500000,
-        projectedSpending: 15000000,
-        daysElapsed: 15,
-        daysRemaining: 15,
-        transactions: [],
-      };
+      return budgetAPI.getDetail(id);
     },
     enabled: !!id,
   });

@@ -395,53 +395,65 @@ function WalletItemCard({ wallet, onEdit, onDelete, onSetDefault }: WalletItemCa
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function WalletsPage() {
-  const { wallets, totalBalance, addWallet, updateWallet, deleteWallet, setDefaultWallet } = useWallet();
+  const { wallets, totalBalance, addWallet, updateWallet, deleteWallet, setDefaultWallet, isLoading } = useWallet();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editWallet, setEditWallet] = useState<MockWallet | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [isMutating, setIsMutating] = useState(false);
 
-  const handleSave = (data: {
+  const handleSave = async (data: {
     name: string; type: WalletType; balance: string; icon: string;
     colorHex: string; accountNumber: string; isDefault: boolean;
   }) => {
     const bal = parseFloat(data.balance.replace(/\./g, '').replace(/,/g, '')) || 0;
-    if (editWallet) {
-      updateWallet(editWallet.id, {
-        name: data.name,
-        type: data.type,
-        balance: bal,
-        icon: data.icon,
-        colorHex: data.colorHex,
-        accountNumber: data.accountNumber || undefined,
-        isDefault: data.isDefault,
-      });
-      if (data.isDefault) setDefaultWallet(editWallet.id);
-      toast.success(`✅ Đã cập nhật ví "${data.name}"`);
-      setEditWallet(null);
-    } else {
-      const newW = addWallet({
-        name: data.name,
-        type: data.type,
-        balance: bal,
-        icon: data.icon,
-        colorHex: data.colorHex,
-        accountNumber: data.accountNumber || undefined,
-        isDefault: data.isDefault,
-      });
-      toast.success(`🎉 Đã thêm ví "${data.name}" — ${formatCurrency(String(bal), "vi-VN")}`);
-      setIsAddOpen(false);
+    setIsMutating(true);
+    try {
+      if (editWallet) {
+        await updateWallet(editWallet.id, {
+          name: data.name,
+          type: data.type,
+          balance: bal,
+          icon: data.icon,
+          colorHex: data.colorHex,
+          accountNumber: data.accountNumber || undefined,
+          isDefault: data.isDefault,
+        });
+        if (data.isDefault) await setDefaultWallet(editWallet.id);
+        toast.success(`Đã cập nhật ví "${data.name}"`);
+        setEditWallet(null);
+      } else {
+        await addWallet({
+          name: data.name,
+          type: data.type,
+          balance: bal,
+          icon: data.icon,
+          colorHex: data.colorHex,
+          accountNumber: data.accountNumber || undefined,
+          isDefault: data.isDefault,
+        });
+        toast.success(`Đã thêm ví "${data.name}"`);
+        setIsAddOpen(false);
+      }
+    } catch (e: any) {
+      toast.error('Lỗi: ' + (e?.message || 'Không thể lưu ví'));
+    } finally {
+      setIsMutating(false);
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const w = wallets.find((x) => x.id === id);
     if (!w) return;
     if (wallets.length <= 1) {
       toast.error('Phải có ít nhất 1 ví');
       return;
     }
-    deleteWallet(id);
-    toast.success(`🗑️ Đã xoá ví "${w.name}"`);
+    try {
+      await deleteWallet(id);
+      toast.success(`Đã xoá ví "${w.name}"`);
+    } catch (e: any) {
+      toast.error('Lỗi: ' + (e?.message || 'Không thể xoá ví'));
+    }
     setConfirmDeleteId(null);
   };
 
@@ -530,9 +542,9 @@ export default function WalletsPage() {
                     wallet={wallet}
                     onEdit={() => setEditWallet(wallet)}
                     onDelete={() => setConfirmDeleteId(wallet.id)}
-                    onSetDefault={() => {
-                      setDefaultWallet(wallet.id);
-                      toast.success(`⭐ Đã đặt "${wallet.name}" làm ví mặc định`);
+                    onSetDefault={async () => {
+                      await setDefaultWallet(wallet.id);
+                      toast.success(`Đã đặt "${wallet.name}" làm ví mặc định`);
                     }}
                   />
                 ))}
