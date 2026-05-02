@@ -6,6 +6,7 @@
  * Removed: Budget Summary
  */
 
+import { useMemo } from 'react';
 import { TrendingUp, TrendingDown, Wallet, ChevronRight } from 'lucide-react';
 import { useBudgetSummary } from '@/_lib/hooks/use-budgets';
 import { formatCurrency } from '@finance/api-client';
@@ -79,7 +80,7 @@ export function OverviewSummaryCard() {
   const { wallets, totalBalance } = useWallet();
   const walletCount = wallets.length;
 
-  const stats: StatConfig[] = [
+  const stats: StatConfig[] = useMemo(() => [
     {
       icon: <TrendingUp size={13} className="text-emerald-600" />,
       label: t('dashboard.overview.income'),
@@ -109,7 +110,7 @@ export function OverviewSummaryCard() {
       colorBorder: '#bfdbfe',
       href: '/wallets',
     },
-  ];
+  ], [total_income, total_expense, totalBalance, walletCount, t]);
 
   return (
     <div className="space-y-2">

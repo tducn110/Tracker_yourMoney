@@ -198,8 +198,8 @@
 | 10 | `goals` | — | Savings targets with 4-value status |
 | 11 | `budgets` | — | Budget periods with `walletScope` |
 | 12 | `budget_categories` | — | Category allocations with `allocatedAmount` |
-| 13 | `notifications` | — | Phase 2 (schema ready, not yet active) |
-| 14 | `audit_logs` | — | Phase 2 (schema ready, not yet active) |
+| 13 | `notifications` | — | Phase 20 — Active (NotificationBell + 4 hooks + API routes) |
+| 14 | `audit_logs` | — | Phase 8 — Active (auditMiddleware fire-and-forget) |
 
 ### Migrations Applied (13)
 
@@ -245,9 +245,49 @@
 
 ---
 
+## Phase 1-2 Completion (2026-05-02 → 2026-05-03)
+
+After PR #33, the remaining Phase 1 and Phase 2 items were completed:
+
+### Migration 0014 — Indexes + audit_logs + notifications tables
+- `idx_tx_user_type_date` on `transactions` (userId, type, displayDate)
+- `idx_bills_user_freq` on `bills` (userId, frequency)
+- `CREATE TABLE audit_logs` (if not already present)
+- `CREATE TABLE notifications` (if not already present)
+
+### Phase 8 — Audit Trail
+- `apps/api/src/middleware/audit.ts` — fire-and-forget audit logging
+- Mounted in `index.ts` after authMiddleware
+- Logs all POST/PUT/PATCH/DELETE to `audit_logs` table
+
+### Phase 9 — Rate Limiting
+- `rateLimitMiddleware` applied to all v1 routes
+- Global: 100 req/min, Auth: 10 req/min, Mutations: 30 req/min
+
+### Phase 15 — Recurring Bills Worker
+- `apps/worker/src/index.ts` — hourly cron, auto-pay with wallet deduction
+- Uses DB transaction for atomic bill_payment + transaction creation
+
+### Phase 16 — Budget-First Refactoring
+- Backend: batch-computed `spent` in `getBudgets()` (3 queries for all budgets, no N+1)
+- Frontend: `budgets/[id]/page.tsx` wired to real API (no mock data)
+- Backend: `getBudgetDetail` returns categories with names/icons via JOIN
+
+### Phase 17 — User Settings
+- `apps/api/src/routes/user.ts` — GET/PUT /api/v1/user/settings
+- `SettingsContainer.tsx` wired to `useUserSettings`/`useUpdateUserSettings`
+
+### Phase 20 — Notification System
+- `apps/api/src/routes/notifications.ts` — list, unread-count, mark-read, mark-all-read
+- `NotificationBell` component in Header with real-time badge + dropdown
+- `useUnreadCount` refetches every 60s
+
 ## Verification
 
 - `cd packages/db && pnpm typecheck` — must pass
+- `pnpm typecheck` — 0 errors (all 7 packages)
+- `pnpm test` — 30/30 API tests passed
 - Schema files match ERD (`doc/wiki/erd.md`) — verified in Phase 1
 - Migration 0012 executed: 31/31 statements successful
+- Migration 0014 created (pending apply)
 - All 14 tables present in production TiDB

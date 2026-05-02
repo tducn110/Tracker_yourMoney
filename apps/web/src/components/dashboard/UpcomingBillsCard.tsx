@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { ArrowRight, Receipt } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useBills } from '@/_lib/hooks/finance';
@@ -12,10 +13,11 @@ export function UpcomingBillsCard() {
   const { data: billsData, isLoading } = useBills();
   const allBills = Array.isArray(billsData) ? (billsData as Bill[]) : [];
   
-  // Filter for active bills
-  const activeBills = allBills.filter((b) => b.status === 'active');
-  // Sort by next due date
-  activeBills.sort((a, b) => new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime());
+  const activeBills = useMemo(() => {
+    const active = allBills.filter((b) => b.status === 'active');
+    active.sort((a, b) => new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime());
+    return active;
+  }, [allBills]);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden h-full flex flex-col">

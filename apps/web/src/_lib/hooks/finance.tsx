@@ -40,6 +40,7 @@ export function useTransactions(params?: { limit?: number; offset?: number; cate
       const data = await transactionsAPI.list(params);
       return data.transactions || data || [];
     },
+    staleTime: 5 * 60 * 1000,
     retry: (failureCount, error: any) => {
       if (error?.status === 401) return false;
       return failureCount < 3;
@@ -78,6 +79,7 @@ export function useCategories() {
     queryFn: async () => {
       return categoriesAPI.list();
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -254,6 +256,7 @@ export function useGoals() {
     queryFn: async () => {
       return goalsAPI.list();
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -405,6 +408,7 @@ export function useBills() {
     queryFn: async () => {
       return billsAPI.list();
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -467,6 +471,7 @@ export function useCashWallet() {
     queryFn: async () => {
       return walletAPI.getCash();
     },
+    staleTime: 5 * 60 * 1000,
     retry: (failureCount, error: any) => {
       if (error?.status === 401) return false;
       return failureCount < 3;
@@ -523,6 +528,7 @@ export function useCategorySpending(month?: string) {
     queryFn: async () => {
       return analyticsAPI.categorySpending(month);
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -535,6 +541,7 @@ export function useMonthlyTrend(months: number = 6) {
     queryFn: async () => {
       return analyticsAPI.monthlyTrend(months);
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -547,6 +554,7 @@ export function useUser() {
     queryFn: async () => {
       return authAPI.me();
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 
