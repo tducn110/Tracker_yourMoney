@@ -77,6 +77,51 @@ export function useCategories() {
 }
 
 /**
+ * Mutation: Create Category
+ */
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name: string; type: string; icon?: string; color?: string; sortOrder?: number }) => {
+      return categoriesAPI.create(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    },
+  });
+}
+
+/**
+ * Mutation: Update Category
+ */
+export function useUpdateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: { name?: string; type?: string; icon?: string; color?: string; sortOrder?: number } }) => {
+      return categoriesAPI.update(id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    },
+  });
+}
+
+/**
+ * Mutation: Delete Category
+ */
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      return categoriesAPI.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    },
+  });
+}
+
+/**
  * Mutation: Create Transaction
  */
 export function useCreateTransaction() {
@@ -455,6 +500,23 @@ export function useUpdateCashWallet() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
+    },
+  });
+}
+
+/**
+ * Mutation: Internal Transfer (Wallet → Wallet)
+ */
+export function useTransfer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { fromWalletId: string; toWalletId: string; amount: string; note?: string }) => {
+      const idempotencyKey = crypto.randomUUID();
+      return walletAPI.transfer(data, idempotencyKey);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
   });
 }

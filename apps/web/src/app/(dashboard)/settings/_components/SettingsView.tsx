@@ -1,16 +1,16 @@
 'use client';
 
-import { User, Bell, DollarSign, Save } from 'lucide-react';
+import { useState } from 'react';
+import { User, Bell, DollarSign, Save, Tags, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
 import { formatCurrency } from '@finance/api-client';
 import { Button } from '@/_components/ui/button';
-import { toast } from 'sonner';
+import type { Category } from '@finance/api-client';
+
+const CATEGORY_ICONS = ['🍔', '🚗', '🏠', '🎮', '📚', '💊', '👕', '🎬', '✈️', '💼', '🎁', '🐾', '📱', '💡', '🛒', '🏥', '🎓', '☕', '🎵', '💻'];
+const CATEGORY_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899', '#6b7280'];
 
 interface SettingsViewProps {
-  user: {
-    fullName?: string;
-    full_name?: string;
-    email?: string;
-  };
+  user: { fullName?: string; full_name?: string; email?: string };
   isLoading?: boolean;
   emergencyBuffer: number;
   setEmergencyBuffer: (val: number) => void;
@@ -19,7 +19,254 @@ interface SettingsViewProps {
   pushNotifications: boolean;
   setPushNotifications: (val: boolean) => void;
   onSave: () => void;
+  categories: Category[];
+  categoriesLoading: boolean;
+  isMutatingCategories: boolean;
+  onCreateCategory: (data: { name: string; type: string; icon?: string; color?: string }) => void;
+  onUpdateCategory: (id: number, data: { name?: string; type?: string; icon?: string; color?: string }) => void;
+  onDeleteCategory: (id: number) => void;
 }
+
+// ─── Category Form (inline add/edit) ──────────────────────────────────────────
+
+interface CategoryFormData { name: string; type: 'income' | 'expense'; icon: string; color: string; }
+
+function CategoryForm({
+  initial,
+  onSave,
+  onCancel,
+}: {
+  initial?: Category;
+  onSave: (data: CategoryFormData) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState(initial?.name ?? '');
+  const [type, setType] = useState<'income' | 'expense'>((initial?.type as 'income' | 'expense') ?? 'expense');
+  const [icon, setIcon] = useState(initial?.icon ?? '📦');
+  const [color, setColor] = useState(initial?.color ?? '#6b7280');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    onSave({ name: name.trim(), type, icon, color });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="p-4 rounded-xl border-2 border-blue-200 bg-blue-50/30 space-y-3">
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Tên danh mục"
+          autoFocus
+          className="flex-1 h-10 px-3 rounded-lg border border-gray-200 focus:border-blue-400 outline-none text-[13px] font-bold text-gray-800 bg-white"
+        />
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value as 'income' | 'expense')}
+          className="h-10 px-3 rounded-lg border border-gray-200 focus:border-blue-400 outline-none text-[13px] font-bold text-gray-800 bg-white"
+        >
+          <option value="expense">Chi tiêu</option>
+          <option value="income">Thu nhập</option>
+        </select>
+      </div>
+
+      {/* Icon picker */}
+      <div>
+        <p className="text-[10px] font-bold text-gray-400 mb-1.5">Biểu tượng</p>
+        <div className="flex flex-wrap gap-1">
+          {CATEGORY_ICONS.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => setIcon(emoji)}
+              className={`w-8 h-8 rounded-lg text-sm flex items-center justify-center transition-all ${
+                icon === emoji ? 'bg-white border-2 border-blue-400 scale-110' : 'hover:bg-white/60 border-2 border-transparent'
+              }`}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Color picker */}
+      <div>
+        <p className="text-[10px] font-bold text-gray-400 mb-1.5">Màu sắc</p>
+        <div className="flex flex-wrap gap-1.5">
+          {CATEGORY_COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setColor(c)}
+              className="w-7 h-7 rounded-full border-[3px] transition-all"
+              style={{
+                backgroundColor: c,
+                borderColor: color === c ? '#fff' : c,
+                boxShadow: color === c ? `0 0 0 3px ${c}40` : 'none',
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-2 pt-1">
+        <button type="button" onClick={onCancel} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-bold text-gray-500 hover:bg-gray-100">
+          <X size={12} /> Huỷ
+        </button>
+        <button type="submit" className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-bold text-white bg-blue-500 hover:bg-blue-600">
+          <Check size={12} /> {initial ? 'Cập nhật' : 'Thêm'}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// ─── Category Row ─────────────────────────────────────────────────────────────
+
+function CategoryRow({
+  category,
+  onUpdate,
+  onDelete,
+}: {
+  category: Category;
+  onUpdate: (id: number, data: { name?: string; type?: string; icon?: string; color?: string }) => void;
+  onDelete: (id: number) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+
+  if (editing) {
+    return (
+      <CategoryForm
+        initial={category}
+        onSave={(data) => { onUpdate(category.id, data); setEditing(false); }}
+        onCancel={() => setEditing(false)}
+      />
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group">
+      <div className="flex items-center gap-3">
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+          style={{ backgroundColor: category.color + '20' }}
+        >
+          {category.icon || '📦'}
+        </div>
+        <div>
+          <p className="text-[13px] font-bold text-gray-800">{category.name}</p>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+            category.type === 'income'
+              ? 'bg-emerald-50 text-emerald-600'
+              : 'bg-orange-50 text-orange-600'
+          }`}>
+            {category.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={() => setEditing(true)}
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+        >
+          <Pencil size={12} />
+        </button>
+        <button
+          onClick={() => onDelete(category.id)}
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50"
+        >
+          <Trash2 size={12} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Category Management Section ──────────────────────────────────────────────
+
+function CategorySection({
+  categories,
+  isLoading,
+  isMutating,
+  onCreate,
+  onUpdate,
+  onDelete,
+}: {
+  categories: Category[];
+  isLoading: boolean;
+  isMutating: boolean;
+  onCreate: (data: { name: string; type: string; icon?: string; color?: string }) => void;
+  onUpdate: (id: number, data: { name?: string; type?: string; icon?: string; color?: string }) => void;
+  onDelete: (id: number) => void;
+}) {
+  const [showForm, setShowForm] = useState(false);
+
+  const incomeCats = categories.filter((c) => c.type === 'income');
+  const expenseCats = categories.filter((c) => c.type === 'expense');
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Tags size={20} className="text-gray-600" />
+          <h2 className="font-bold text-gray-800">Danh mục</h2>
+          {!isLoading && (
+            <span className="text-[11px] font-bold text-gray-400">({categories.length})</span>
+          )}
+        </div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          disabled={isMutating}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors disabled:opacity-50"
+        >
+          <Plus size={13} /> Thêm danh mục
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="mb-4">
+          <CategoryForm
+            onSave={(data) => { onCreate(data); setShowForm(false); }}
+            onCancel={() => setShowForm(false)}
+          />
+        </div>
+      )}
+
+      {isLoading ? (
+        <p className="text-[12px] text-gray-400 py-4 text-center">Đang tải...</p>
+      ) : categories.length === 0 ? (
+        <p className="text-[12px] text-gray-400 py-4 text-center">Chưa có danh mục nào. Thêm danh mục đầu tiên!</p>
+      ) : (
+        <div className="space-y-4">
+          {expenseCats.length > 0 && (
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Chi tiêu</p>
+              <div className="divide-y divide-gray-50">
+                {expenseCats.map((cat) => (
+                  <CategoryRow key={cat.id} category={cat} onUpdate={onUpdate} onDelete={onDelete} />
+                ))}
+              </div>
+            </div>
+          )}
+          {incomeCats.length > 0 && (
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Thu nhập</p>
+              <div className="divide-y divide-gray-50">
+                {incomeCats.map((cat) => (
+                  <CategoryRow key={cat.id} category={cat} onUpdate={onUpdate} onDelete={onDelete} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Settings View ──────────────────────────────────────────────────────
 
 export function SettingsView({
   user,
@@ -31,6 +278,12 @@ export function SettingsView({
   pushNotifications,
   setPushNotifications,
   onSave,
+  categories,
+  categoriesLoading,
+  isMutatingCategories,
+  onCreateCategory,
+  onUpdateCategory,
+  onDeleteCategory,
 }: SettingsViewProps) {
 
   return (
@@ -90,6 +343,16 @@ export function SettingsView({
               </div>
             </div>
           </div>
+
+          {/* Category Management */}
+          <CategorySection
+            categories={categories}
+            isLoading={categoriesLoading}
+            isMutating={isMutatingCategories}
+            onCreate={onCreateCategory}
+            onUpdate={onUpdateCategory}
+            onDelete={onDeleteCategory}
+          />
 
           {/* Financial Settings */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">

@@ -213,4 +213,118 @@ export class WalletService {
       .limit(1);
     return log;
   }
+
+  /**
+   * Internal Transfer: move funds from one wallet to another.
+   * Creates 2 transactions (expense from source, income to target) atomically.
+   */
+  async transfer(userId: string, input: {
+    fromWalletId: string;
+    toWalletId: string;
+    amount: string;
+    note?: string;
+    idempotencyKey?: string;
+  }) {
+    const { fromWalletId, toWalletId, amount, note, idempotencyKey } = input;
+
+    if (fromWalletId === toWalletId) {
+      throw Object.assign(new Error("Không thể chuyển tiền vào cùng một ví"), { code: "BAD_REQUEST" });
+    }
+
+    const source = await this.getWallet(userId, fromWalletId);
+    if (!source) throw Object.assign(new Error("Không tìm thấy ví nguồn"), { code: "NOT_FOUND" });
+
+    const target = await this.getWallet(userId, toWalletId);
+    if (!target) throw Object.assign(new Error("Không tìm thấy ví đích"), { code: "NOT_FOUND" });
+
+    const amt = new Decimal(amount);
+    if (amt.lessThanOrEqualTo(0)) {
+      throw Object.assign(new Error("Số tiền chuyển phải lớn hơn 0"), { code: "BAD_REQUEST" });
+    }
+
+    const sourceBefore = new Decimal(source.balance);
+    if (sourceBefore.lessThan(amt)) {
+      throw Object.assign(new Error("Số dư ví nguồn không đủ"), { code: "BAD_REQUEST" });
+    }
+
+    const targetBefore = new Decimal(target.balance);
+    const sourceAfter = sourceBefore.minus(amt);
+    const targetAfter = targetBefore.plus(amt);
+
+    // Find "Transfer" category or default to "Khác"
+    const allCats = await this.categoryRepository.findAll(userId);
+    const transferCat = allCats.find((c: any) =>
+      c.name.toLowerCase().includes("chuyển") || c.name.toLowerCase().includes("transfer")
+    );
+    const catId = transferCat?.id ?? 1; // fallback to category ID 1
+
+    await db.transaction(async (tx: any) => {
+      // Debit: expense from source wallet
+      const [txOut] = await tx.insert(transactions).values({
+        userId: userId as any,
+        walletId: fromWalletId as any,
+        categoryId: catId,
+        amount: amt.toFixed(2),
+        type: "expense",
+        note: note ? `Chuyển đến ${target.name}: ${note}` : `Chuyển đến ${target.name}`,
+        displayDate: new Date().toISOString().split('T')[0],
+        source: "transfer",
+        idempotencyKey: idempotencyKey ? `${idempotencyKey}_out` : undefined,
+      });
+
+      // Credit: income to target wallet
+      await tx.insert(transactions).values({
+        userId: userId as any,
+        walletId: toWalletId as any,
+        categoryId: catId,
+        amount: amt.toFixed(2),
+        type: "income",
+        note: note ? `Nhận từ ${source.name}: ${note}` : `Nhận từ ${source.name}`,
+        displayDate: new Date().toISOString().split('T')[0],
+        source: "transfer",
+        idempotencyKey: idempotencyKey ? `${idempotencyKey}_in` : undefined,
+      });
+
+      // Update source wallet balance
+      await tx.update(wallets).set({
+        balance: sourceAfter.toFixed(2),
+        updatedAt: new Date(),
+      }).where(and(eq(wallets.id, fromWalletId as any), eq(wallets.userId, userId as any)));
+
+      // Update target wallet balance
+      await tx.update(wallets).set({
+        balance: targetAfter.toFixed(2),
+        updatedAt: new Date(),
+      }).where(and(eq(wallets.id, toWalletId as any), eq(wallets.userId, userId as any)));
+
+      // Audit logs
+      const txOutId = txOut.lastInsertId?.toString() || String(txOut[0]?.insertId) || null;
+      await tx.insert(walletLogs).values({
+        walletId: fromWalletId as any,
+        userId: userId as any,
+        transactionId: txOutId as any,
+        balanceBefore: sourceBefore.toFixed(2),
+        balanceAfter: sourceAfter.toFixed(2),
+        difference: amt.negated().toFixed(2),
+        note: note ? `Chuyển tiền đến ${target.name}: ${note}` : `Chuyển tiền đến ${target.name}`,
+        idempotencyKey: idempotencyKey ? `${idempotencyKey}_log_out` : undefined,
+      });
+
+      await tx.insert(walletLogs).values({
+        walletId: toWalletId as any,
+        userId: userId as any,
+        transactionId: txOutId as any,
+        balanceBefore: targetBefore.toFixed(2),
+        balanceAfter: targetAfter.toFixed(2),
+        difference: amt.toFixed(2),
+        note: note ? `Nhận tiền từ ${source.name}: ${note}` : `Nhận tiền từ ${source.name}`,
+        idempotencyKey: idempotencyKey ? `${idempotencyKey}_log_in` : undefined,
+      });
+    });
+
+    return {
+      source: await this.getWallet(userId, fromWalletId),
+      target: await this.getWallet(userId, toWalletId),
+    };
+  }
 }

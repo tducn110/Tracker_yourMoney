@@ -12,8 +12,10 @@ import { useState } from 'react';
 import {
   Plus, Star, Trash2, Pencil, Wallet as WalletIcon,
   CreditCard, Banknote, PiggyBank, CheckCircle2, X, RefreshCw,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { useWallet, WalletType, walletTypeLabel, MockWallet } from '@/app/context/WalletContext';
+import { useTransfer } from '@/_lib/hooks/finance';
 import { formatCurrency } from '@finance/api-client';
 import { toast } from 'sonner';
 
@@ -304,6 +306,165 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
   );
 }
 
+// ─── Transfer Modal ────────────────────────────────────────────────────────────
+
+interface TransferModalProps {
+  isOpen: boolean;
+  wallets: MockWallet[];
+  onClose: () => void;
+  onTransfer: (fromId: string, toId: string, amount: string, note?: string) => void;
+}
+
+function TransferModal({ isOpen, wallets, onClose, onTransfer }: TransferModalProps) {
+  const [fromId, setFromId] = useState('');
+  const [toId, setToId] = useState('');
+  const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('');
+
+  if (!isOpen) return null;
+
+  const formatAmount = (val: string) => {
+    const digits = val.replace(/\D/g, '');
+    if (!digits) return '';
+    return new Intl.NumberFormat('vi-VN').format(parseInt(digits, 10));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fromId || !toId) {
+      toast.error('Vui lòng chọn ví nguồn và ví đích');
+      return;
+    }
+    if (fromId === toId) {
+      toast.error('Không thể chuyển vào cùng một ví');
+      return;
+    }
+    const raw = parseInt(amount.replace(/\./g, '').replace(/,/g, ''), 10);
+    if (!raw || raw <= 0) {
+      toast.error('Số tiền không hợp lệ');
+      return;
+    }
+    onTransfer(fromId, toId, String(raw), note || undefined);
+  };
+
+  const fromWallet = wallets.find((w) => w.id === fromId);
+  const filteredTo = wallets.filter((w) => w.id !== fromId);
+
+  return (
+    <div className="fixed inset-0 z-60 flex items-end sm:items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[420px] max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center">
+              <ArrowLeftRight size={16} className="text-violet-600" />
+            </div>
+            <div>
+              <h2 className="text-[15px] font-black text-gray-900">Chuyển Tiền</h2>
+              <p className="text-[11px] font-bold text-gray-400">Giữa các ví</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* From wallet */}
+          <div>
+            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider mb-1.5">
+              Ví nguồn
+            </label>
+            <select
+              value={fromId}
+              onChange={(e) => { setFromId(e.target.value); setToId(''); }}
+              className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:border-violet-400 outline-none text-[13px] font-bold text-gray-800 bg-gray-50 focus:bg-white transition-all"
+            >
+              <option value="">-- Chọn ví --</option>
+              {wallets.map((w) => (
+                <option key={w.id} value={w.id}>{w.icon} {w.name} ({formatCurrency(String(w.balance), "vi-VN")})</option>
+              ))}
+            </select>
+          </div>
+
+          {/* To wallet */}
+          <div>
+            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider mb-1.5">
+              Ví đích
+            </label>
+            <select
+              value={toId}
+              onChange={(e) => setToId(e.target.value)}
+              disabled={!fromId}
+              className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:border-violet-400 outline-none text-[13px] font-bold text-gray-800 bg-gray-50 focus:bg-white transition-all disabled:opacity-40"
+            >
+              <option value="">-- Chọn ví --</option>
+              {filteredTo.map((w) => (
+                <option key={w.id} value={w.id}>{w.icon} {w.name} ({formatCurrency(String(w.balance), "vi-VN")})</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Amount */}
+          <div>
+            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider mb-1.5">
+              Số tiền
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={amount}
+                onChange={(e) => setAmount(formatAmount(e.target.value))}
+                placeholder="0"
+                className="w-full h-11 pl-4 pr-9 rounded-xl border border-gray-200 focus:border-violet-400 outline-none text-[15px] font-black text-gray-800 placeholder:font-normal placeholder:text-gray-400 bg-gray-50 focus:bg-white transition-all"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-bold text-gray-400">₫</span>
+            </div>
+            {fromWallet && amount && (
+              <p className="text-[10px] font-bold text-gray-400 mt-1">
+                Số dư ví nguồn: {formatCurrency(String(fromWallet.balance), "vi-VN")}
+              </p>
+            )}
+          </div>
+
+          {/* Note */}
+          <div>
+            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider mb-1.5">
+              Ghi chú <span className="font-normal normal-case">(tuỳ chọn)</span>
+            </label>
+            <input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="VD: Chuyển tiền tiết kiệm"
+              className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:border-violet-400 outline-none text-[13px] font-bold text-gray-800 placeholder:font-normal placeholder:text-gray-400 bg-gray-50 focus:bg-white transition-all"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 h-11 rounded-xl border border-gray-200 text-[13px] font-black text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Huỷ
+            </button>
+            <button
+              type="submit"
+              className="flex-1 h-11 rounded-xl text-[13px] font-black text-white bg-violet-500 hover:bg-violet-600 transition-all active:scale-95"
+              style={{ boxShadow: '0 4px 14px #8b5cf640' }}
+            >
+              Chuyển tiền
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ─── Wallet Card ──────────────────────────────────────────────────────────────
 
 interface WalletItemCardProps {
@@ -396,10 +557,12 @@ function WalletItemCard({ wallet, onEdit, onDelete, onSetDefault }: WalletItemCa
 
 export default function WalletsPage() {
   const { wallets, totalBalance, addWallet, updateWallet, deleteWallet, setDefaultWallet, isLoading } = useWallet();
+  const transferMutation = useTransfer();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editWallet, setEditWallet] = useState<MockWallet | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isMutating, setIsMutating] = useState(false);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
 
   const handleSave = async (data: {
     name: string; type: WalletType; balance: string; icon: string;
@@ -457,6 +620,16 @@ export default function WalletsPage() {
     setConfirmDeleteId(null);
   };
 
+  const handleTransfer = async (fromId: string, toId: string, amount: string, note?: string) => {
+    try {
+      await transferMutation.mutateAsync({ fromWalletId: fromId, toWalletId: toId, amount, note });
+      toast.success('Chuyển tiền thành công!');
+      setIsTransferOpen(false);
+    } catch (e: any) {
+      toast.error('Lỗi: ' + (e?.message || 'Không thể chuyển tiền'));
+    }
+  };
+
   // Group by type
   const byType = (Object.keys(walletTypeLabel) as WalletType[]).reduce<Record<WalletType, MockWallet[]>>(
     (acc, t) => {
@@ -479,13 +652,23 @@ export default function WalletsPage() {
               <span className="text-blue-600">{formatCurrency(String(totalBalance), "vi-VN")}</span>
             </p>
           </div>
-          <button
-            onClick={() => setIsAddOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-black text-white transition-all active:scale-95"
-            style={{ backgroundColor: '#4361ee', boxShadow: '0 4px 12px #4361ee40' }}
-          >
-            <Plus size={15} /> Thêm ví
-          </button>
+          <div className="flex items-center gap-2">
+            {wallets.length >= 2 && (
+              <button
+                onClick={() => setIsTransferOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-black text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all active:scale-95"
+              >
+                <ArrowLeftRight size={15} /> Chuyển tiền
+              </button>
+            )}
+            <button
+              onClick={() => setIsAddOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-black text-white transition-all active:scale-95"
+              style={{ backgroundColor: '#4361ee', boxShadow: '0 4px 12px #4361ee40' }}
+            >
+              <Plus size={15} /> Thêm ví
+            </button>
+          </div>
         </div>
 
         {/* Total balance card */}
@@ -593,6 +776,14 @@ export default function WalletsPage() {
           }}
         />
       )}
+
+      {/* Transfer Modal */}
+      <TransferModal
+        isOpen={isTransferOpen}
+        wallets={wallets}
+        onClose={() => setIsTransferOpen(false)}
+        onTransfer={handleTransfer}
+      />
 
       {/* Delete Confirm */}
       {confirmDeleteId && (

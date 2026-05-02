@@ -1,8 +1,10 @@
 'use client';
 
-import { Target, Plus, TrendingUp, Loader2 } from 'lucide-react';
+import { Target, Plus, TrendingUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Button } from '@/_components/ui/button';
+import { Skeleton } from '@/_components/ui/skeleton';
+import { EmptyState } from '@/_components/EmptyState';
 import confetti from 'canvas-confetti';
 import { formatCurrency, Goal } from '@finance/api-client';
 import Decimal from 'decimal.js';
@@ -42,11 +44,27 @@ export function GoalsView({
       </div>
 
       {isLoading ? (
-        <div className="py-16 flex flex-col items-center gap-3 text-center">
-          <Loader2 size={24} className="text-blue-400 animate-spin" />
-          <p className="text-[13px] font-black text-gray-400">
-            Đang tải dữ liệu...
-          </p>
+        <div className="space-y-6">
+          <Skeleton className="h-6 w-48" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-12 h-12 rounded-xl" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+                <Skeleton className="h-3 w-full rounded-full" />
+                <div className="flex justify-between">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+                <Skeleton className="h-8 w-24 rounded-lg" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <>
@@ -55,6 +73,18 @@ export function GoalsView({
             <h2 className="text-lg font-bold text-gray-800 mb-4">
               Đang thực hiện ({activeGoals.length})
             </h2>
+            {activeGoals.length === 0 ? (
+              <EmptyState
+                icon={<Target size={28} />}
+                title="Chưa có mục tiêu nào"
+                description="Tạo mục tiêu tiết kiệm để theo dõi tiến độ đạt được ước mơ tài chính của bạn."
+                action={
+                  <Button onClick={() => onAddGoal?.({})} disabled={isMutating}>
+                    <Plus size={14} className="mr-1.5" /> Thêm Mục Tiêu
+                  </Button>
+                }
+              />
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {activeGoals.map((goal: Goal) => {
                 const currentSaved = new Decimal(goal.currentSaved || 0).toNumber();
@@ -132,6 +162,7 @@ export function GoalsView({
                 );
               })}
             </div>
+            )}
           </div>
 
           {/* Completed Goals */}
