@@ -3,7 +3,7 @@
 /**
  * OverviewSummaryCard — Tổng quan 3-stat: Thu nhập / Chi tiêu / Ví của tôi
  * "Ví của tôi" is clickable → /wallets
- * Removed: S2S (không có S2S)
+ * Removed: Budget Summary
  */
 
 import { TrendingUp, TrendingDown, Wallet, ChevronRight } from 'lucide-react';

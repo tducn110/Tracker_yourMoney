@@ -95,7 +95,7 @@ export function CashWalletStrip({
 
         {/* Badge */}
         <div className="px-3 py-1.5 rounded-lg bg-white/60 border border-amber-300/40">
-          <span className="text-[11px] font-bold text-amber-700">Không tính vào S2S</span>
+          <span className="text-[11px] font-bold text-amber-700">Không tính vào ngân sách</span>
         </div>
 
         {/* Quick Sync Button */}

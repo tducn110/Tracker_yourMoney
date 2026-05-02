@@ -52,7 +52,7 @@ export function formatCurrency(
 }
 
 /**
- * Format số tiền VND (mặc định cho dự án S2S)
+ * Format số tiền VND (mặc định cho dự án Finance Tracker)
  */
 export function formatVND(amount: string | number | bigint | Decimal): string {
   return formatCurrency(amount, 'vi-VN');

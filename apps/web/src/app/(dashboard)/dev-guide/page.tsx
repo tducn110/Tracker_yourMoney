@@ -174,7 +174,7 @@ const STEPS = [
     step: '01',
     title: 'Tạo file component',
     desc: 'Tạo file .tsx mới trong thư mục module tương ứng',
-    detail: 'src/app/_components/{module}/TênComponent.tsx\nModule: dashboard, budgets, wallet, quick-add, layout, s2s',
+    detail: 'src/app/_components/{module}/TênComponent.tsx\nModule: dashboard, budgets, wallet, quick-add, layout',
     color: '#4361ee',
   },
   {

@@ -79,6 +79,7 @@ export interface Budget {
   status: 'active' | 'completed' | 'paused';
   createdAt: string;
   updatedAt: string;
+  spent?: string;
 }
 
 export interface BudgetSummary {

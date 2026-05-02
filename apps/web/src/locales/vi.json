@@ -1,31 +1,5 @@
 {
-  "s2s": {
-    "title": "Khoảng Chi Tiêu An Toàn",
-    "periods": {
-      "today": "Hôm nay",
-      "week": "Tuần này",
-      "month": "Tháng này"
-    },
-    "remaining": "còn lại",
-    "used": "đã dùng",
-    "status": {
-      "safe": "Ngân sách an toàn",
-      "warning": "Cảnh báo vượt ngân sách",
-      "danger": "Vượt ngân sách!"
-    },
-    "details": {
-      "show": "Xem",
-      "hide": "Ẩn",
-      "text": "chi tiết tính toán"
-    },
-    "pills": {
-      "income": "Thu nhập",
-      "spent": "Đã chi",
-      "fixed": "Chi cố định",
-      "savings": "Tiết kiệm",
-      "budget": "Ngân sách"
-    }
-  },
+
   "dashboard": {
     "title": "Tổng quan",
     "safeToSpend": "Có thể chi tiêu an toàn",

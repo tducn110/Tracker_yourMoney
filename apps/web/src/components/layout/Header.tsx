@@ -62,7 +62,7 @@ function HomeGreeting() {
         {greeting} 👋
       </p>
       <h1 className="text-[17px] font-black text-gray-900 leading-tight">
-        S2S Finance
+        Finance Tracker
       </h1>
     </div>
   );
@@ -82,7 +82,7 @@ export function Header({ onQuickAddClick }: HeaderProps) {
 
   const isHome    = pathname === '/';
   const ROUTE_TITLES = getRouteTitles(t);
-  const pageTitle = ROUTE_TITLES[pathname] ?? 'S2S Finance';
+  const pageTitle = ROUTE_TITLES[pathname] ?? 'Finance Tracker';
 
   return (
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">

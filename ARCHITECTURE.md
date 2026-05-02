@@ -1,4 +1,4 @@
-# S2S Finance — Technical Architecture
+# Finance Tracker — Technical Architecture
 
 This document describes the high-level architecture and design patterns used in the Finance Tracker V3 project.
 

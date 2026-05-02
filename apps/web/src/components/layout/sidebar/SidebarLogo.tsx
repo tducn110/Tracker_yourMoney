@@ -21,10 +21,10 @@ export function SidebarLogo({ open, onToggle }: SidebarLogoProps) {
         style={{ opacity: open ? 1 : 0, maxWidth: open ? '160px' : '0' }}
       >
         <p className="text-white font-black text-[15px] whitespace-nowrap leading-tight">
-          S2S Finance
+          Finance Tracker
         </p>
         <p className="text-slate-400 text-[10px] font-bold whitespace-nowrap tracking-wider">
-          Safe-to-Spend
+          Budget-First
         </p>
       </div>
 
