@@ -58,18 +58,14 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   // ── CORRELATION ID INJECTION ─────────────────────────────────────
   // Generate a unique ID for distributed tracing (Single Source of Truth)
-  const correlationId = typeof crypto !== 'undefined' && crypto.randomUUID 
-    ? crypto.randomUUID() 
+  const correlationId = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
     : Math.random().toString(36).substring(2, 15);
-    
+
   config.headers['x-correlation-id'] = correlationId;
 
-  if (config.data && !(config.data instanceof FormData)) {
-    config.data = toSnake(config.data);
-  }
-  if (config.params) {
-    config.params = toSnake(config.params);
-  }
+  // NOTE: We do NOT convert request body/params to snake_case.
+  // The API uses camelCase consistently across all schemas (zValidator + Zod).
   return config;
 });
 
