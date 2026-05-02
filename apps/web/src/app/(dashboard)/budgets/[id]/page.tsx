@@ -1,12 +1,11 @@
 'use client';
 
 /**
- * BudgetDetailPage — Chi tiết ngân sách
+ * BudgetDetailPage — Chi tiết ngân sách (wired to real API)
  * Hiển thị: progress, recommended daily, projected spending, line chart, transactions
  */
 
-import { useParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   CalendarDays,
@@ -16,6 +15,7 @@ import {
   Calculator,
   BarChart3,
   AlertTriangle,
+  Loader2,
 } from 'lucide-react';
 import {
   LineChart,
@@ -28,27 +28,8 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { formatCurrency } from '@finance/api-client';
-
-const mockTransactions = [
-  { id: 1, type: "expense", category: "Ăn uống", amount: 45000, date: "01/04/2026", note: "Phở sáng", icon: "🍜" },
-  { id: 2, type: "expense", category: "Di chuyển", amount: 150000, date: "01/04/2026", note: "Đổ xăng", icon: "⛽" },
-  { id: 3, type: "expense", category: "Mua sắm", amount: 850000, date: "02/04/2026", note: "Quần áo", icon: "👕" },
-];
-
-const mockBudgets = [
-  { id: 1, name: "Ăn uống hàng ngày", budget_limit: 4500000, spent: 1250000, left: 3250000, percent: 28, categories: [{ name: "Ăn uống", icon: "🍜" }], period_type: "monthly", start_date: "01/04/2026", end_date: "30/04/2026", wallet_scope: "all", is_all_categories: false },
-  { id: 2, name: "Mua sắm cá nhân", budget_limit: 2000000, spent: 1850000, left: 150000, percent: 92, categories: [{ name: "Mua sắm", icon: "👕" }], period_type: "monthly", start_date: "01/04/2026", end_date: "30/04/2026", wallet_scope: "all", is_all_categories: false },
-  { id: 3, name: "Cà phê & Giao tiếp", budget_limit: 1000000, spent: 400000, left: 600000, percent: 40, categories: [{ name: "Cà phê", icon: "☕" }], period_type: "monthly", start_date: "01/04/2026", end_date: "30/04/2026", wallet_scope: "all", is_all_categories: false },
-];
-
-const mockBudgetDailySpend = [
-  { day: '01', actual: 120000, planned: 150000 },
-  { day: '02', actual: 180000, planned: 150000 },
-  { day: '03', actual: 95000, planned: 150000 },
-  { day: '04', actual: 210000, planned: 150000 },
-  { day: '05', actual: 140000, planned: 150000 },
-  { day: '06', actual: 165000, planned: 150000 },
-];
+import { useBudgetDetail } from '@/_lib/hooks/use-budgets';
+import Decimal from 'decimal.js';
 
 // ─── Progress Bar ─────────────────────────────────────────────────────────────
 function DetailProgressBar({ percent }: { percent: number }) {
@@ -103,14 +84,51 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
+// ─── Compute daily spend from transactions ─────────────────────────────────────
+function computeDailySpend(txs: any[], startDate: string, endDate: string, recommendedDaily: number) {
+  const dailyMap = new Map<string, number>();
+
+  // Fill all days in range with 0
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const key = d.toISOString().slice(0, 10);
+    dailyMap.set(key, 0);
+  }
+
+  // Sum amounts per day
+  for (const tx of txs) {
+    const day = (tx.displayDate || tx.date || '').slice(0, 10);
+    if (day && dailyMap.has(day)) {
+      dailyMap.set(day, (dailyMap.get(day) || 0) + parseFloat(tx.amount));
+    }
+  }
+
+  // Convert to chart format
+  return Array.from(dailyMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, amount]) => ({
+      day: date.slice(8),
+      actual: Math.round(amount),
+      planned: Math.round(recommendedDaily),
+    }));
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function BudgetDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { data: budget, isLoading, error } = useBudgetDetail(id);
 
-  const budget = mockBudgets.find((b) => b.id === Number(id));
+  if (isLoading) {
+    return (
+      <div className="p-8 flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
 
-  if (!budget) {
+  if (error || !budget) {
     return (
       <div className="p-8 text-center">
         <p className="text-[16px] font-bold text-gray-400">Không tìm thấy ngân sách</p>
@@ -125,40 +143,41 @@ export default function BudgetDetailPage() {
   }
 
   const {
-    name, budget_limit, spent, left, percent,
-    categories, period_type, start_date, end_date,
-    wallet_scope, is_all_categories,
+    name, targetAmount, spent, left, percent,
+    categories: budgetCats, periodType, startDate, endDate,
+    walletScope, isAllCategories, icon,
   } = budget;
 
+  const numericLeft = parseFloat(left || '0');
+  const numericSpent = parseFloat(spent || '0');
+  const numericTarget = parseFloat(targetAmount);
+
   // ── Time calculations ──
-  const today = new Date('2026-04-22');
-  const startD = new Date(start_date);
-  const endD = new Date(end_date);
+  const today = new Date();
+  const startD = new Date(startDate);
+  const endD = new Date(endDate);
   const totalDays = Math.ceil((endD.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-  const daysElapsed = Math.ceil((today.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24));
+  const daysElapsed = Math.max(1, Math.ceil((today.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24)));
   const daysRemaining = Math.max(0, Math.ceil((endD.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
 
-  const recommendedDaily = daysRemaining > 0 ? Math.round((budget_limit - spent) / daysRemaining) : 0;
-  const projectedSpending = daysElapsed > 0 ? Math.round((spent / daysElapsed) * totalDays) : 0;
-  const projectedPercent = Math.round((projectedSpending / budget_limit) * 100);
+  const recommendedDaily = budget.recommendedDaily ?? (daysRemaining > 0
+    ? Math.round((numericTarget - numericSpent) / daysRemaining)
+    : 0);
+  const projectedSpending = budget.projectedSpending ?? (daysElapsed > 0
+    ? Math.round((numericSpent / daysElapsed) * totalDays)
+    : 0);
+  const projectedPercent = numericTarget > 0 ? Math.round((projectedSpending / numericTarget) * 100) : 0;
 
   const isOver = percent >= 100;
   const progressColor = isOver ? '#ef4444' : percent >= 80 ? '#f59e0b' : '#4361ee';
 
-  // ── Lọc giao dịch thuộc budget ──
-  const relevantCategoryNames = is_all_categories
-    ? null
-    : categories.map((c) => c.name);
-
-  const budgetTransactions = mockTransactions.filter((tx) => {
-    if (tx.type === 'income') return false;
-    if (relevantCategoryNames === null) return true;
-    return relevantCategoryNames.includes(tx.category);
-  }).slice(0, 10);
-
   const periodLabel: Record<string, string> = {
     weekly: 'Tuần', monthly: 'Tháng', quarterly: 'Quý', yearly: 'Năm', custom: 'Tùy chỉnh',
   };
+
+  // Transactions from API
+  const transactions = budget.transactions || [];
+  const chartData = computeDailySpend(transactions, startDate, endDate, recommendedDaily);
 
   return (
     <div className="p-6 md:p-8 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -173,18 +192,18 @@ export default function BudgetDetailPage() {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-0.5">
             <span className="text-[22px]">
-              {is_all_categories ? '📊' : categories[0]?.icon ?? '💼'}
+              {isAllCategories ? '📊' : (budgetCats?.[0]?.icon ?? icon ?? '💼')}
             </span>
             <h1 className="text-[22px] font-black text-gray-900">{name}</h1>
           </div>
           <div className="flex items-center gap-3 text-[12px] font-semibold text-gray-400">
             <span className="flex items-center gap-1">
               <CalendarDays size={12} />
-              {periodLabel[period_type]} • {start_date} → {end_date}
+              {periodLabel[periodType]} • {startDate} → {endDate}
             </span>
             <span className="flex items-center gap-1">
               <Wallet size={12} />
-              {wallet_scope === 'all' ? 'Tất cả ví' : 'Ví cụ thể'}
+              {walletScope === 'all' ? 'Tất cả ví' : 'Ví cụ thể'}
             </span>
           </div>
         </div>
@@ -206,7 +225,7 @@ export default function BudgetDetailPage() {
               className="text-[36px] font-black leading-none"
               style={{ color: isOver ? '#ef4444' : '#10b981' }}
             >
-              {left < 0 ? '-' : ''}{formatCurrency(String(Math.abs(left)), "vi-VN")}
+              {numericLeft < 0 ? '-' : ''}{formatCurrency(String(Math.abs(numericLeft)), "vi-VN")}
             </p>
           </div>
           <div className="text-right">
@@ -220,8 +239,8 @@ export default function BudgetDetailPage() {
 
         {/* Stats Row */}
         <div className="flex justify-between mt-3 text-[12px] font-semibold text-gray-500">
-          <span>Đã chi: <span className="text-gray-800 font-bold">{formatCurrency(String(spent), "vi-VN")}</span></span>
-          <span>Hạn mức: <span className="text-gray-800 font-bold">{formatCurrency(String(budget_limit), "vi-VN")}</span></span>
+          <span>Đã chi: <span className="text-gray-800 font-bold">{formatCurrency(spent, "vi-VN")}</span></span>
+          <span>Hạn mức: <span className="text-gray-800 font-bold">{formatCurrency(targetAmount, "vi-VN")}</span></span>
         </div>
 
         {/* Over budget warning */}
@@ -229,7 +248,7 @@ export default function BudgetDetailPage() {
           <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 border border-red-200">
             <AlertTriangle size={14} className="text-red-500" />
             <p className="text-[12px] font-semibold text-red-700">
-              Đã vượt {formatCurrency(String(Math.abs(left)), "vi-VN")} — hãy điều chỉnh chi tiêu!
+              Đã vượt {formatCurrency(String(Math.abs(numericLeft)), "vi-VN")} — hãy điều chỉnh chi tiêu!
             </p>
           </div>
         )}
@@ -258,7 +277,7 @@ export default function BudgetDetailPage() {
         />
         <StatBox
           label="Chi/ngày thực tế"
-          value={daysElapsed > 0 ? formatCurrency(String(Math.round(spent / daysElapsed)), "vi-VN") : '—'}
+          value={daysElapsed > 0 ? formatCurrency(String(Math.round(numericSpent / daysElapsed)), "vi-VN") : '—'}
           sub="Trung bình"
           icon={BarChart3}
         />
@@ -270,53 +289,62 @@ export default function BudgetDetailPage() {
           <BarChart3 size={16} className="text-blue-600" />
           Chi tiêu theo ngày
         </h3>
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={mockBudgetDailySpend} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-            <XAxis
-              dataKey="day"
-              tick={{ fontSize: 10, fontWeight: 600, fill: '#94a3b8' }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis hide />
-            <Tooltip content={<CustomTooltip />} />
-            <ReferenceLine
-              y={recommendedDaily}
-              stroke="#4361ee"
-              strokeDasharray="4 4"
-              label={{ value: 'Kế hoạch/ngày', position: 'right', fontSize: 10, fill: '#4361ee' }}
-            />
-            <Line
-              type="monotone"
-              dataKey="actual"
-              name="actual"
-              stroke="#10b981"
-              strokeWidth={2.5}
-              dot={{ r: 3, fill: '#10b981', strokeWidth: 0 }}
-              activeDot={{ r: 5, fill: '#10b981' }}
-            />
-            <Line
-              type="monotone"
-              dataKey="planned"
-              name="planned"
-              stroke="#4361ee"
-              strokeWidth={2}
-              strokeDasharray="4 4"
-              dot={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-        <div className="flex items-center gap-4 mt-3 justify-center">
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-0.5 bg-emerald-500 rounded" />
-            <span className="text-[11px] font-semibold text-gray-500">Thực tế</span>
+        {chartData.length > 0 ? (
+          <>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis
+                  dataKey="day"
+                  tick={{ fontSize: 10, fontWeight: 600, fill: '#94a3b8' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis hide />
+                <Tooltip content={<CustomTooltip />} />
+                <ReferenceLine
+                  y={recommendedDaily}
+                  stroke="#4361ee"
+                  strokeDasharray="4 4"
+                  label={{ value: 'Kế hoạch/ngày', position: 'right', fontSize: 10, fill: '#4361ee' }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="actual"
+                  name="actual"
+                  stroke="#10b981"
+                  strokeWidth={2.5}
+                  dot={{ r: 3, fill: '#10b981', strokeWidth: 0 }}
+                  activeDot={{ r: 5, fill: '#10b981' }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="planned"
+                  name="planned"
+                  stroke="#4361ee"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+            <div className="flex items-center gap-4 mt-3 justify-center">
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-0.5 bg-emerald-500 rounded" />
+                <span className="text-[11px] font-semibold text-gray-500">Thực tế</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-0.5 bg-blue-600 rounded border-dashed border" />
+                <span className="text-[11px] font-semibold text-gray-500">Kế hoạch</span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="py-10 text-center">
+            <BarChart3 size={28} className="text-gray-200 mx-auto mb-2" />
+            <p className="text-[12px] font-bold text-gray-400">Chưa có dữ liệu chi tiêu</p>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-0.5 bg-blue-600 rounded border-dashed border" />
-            <span className="text-[11px] font-semibold text-gray-500">Kế hoạch</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Transactions */}
@@ -324,32 +352,36 @@ export default function BudgetDetailPage() {
         <div className="flex items-center justify-between p-5 border-b border-gray-50">
           <h3 className="text-[14px] font-bold text-gray-900">Giao dịch thuộc ngân sách</h3>
           <span className="text-[11px] font-bold text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">
-            {budgetTransactions.length} giao dịch
+            {transactions.length} giao dịch
           </span>
         </div>
 
-        {budgetTransactions.length === 0 ? (
+        {transactions.length === 0 ? (
           <div className="p-8 text-center">
             <p className="text-[13px] font-semibold text-gray-400">Chưa có giao dịch nào</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
-            {budgetTransactions.map((tx) => (
+            {transactions.slice(0, 20).map((tx: any) => (
               <div
                 key={tx.id}
                 className="flex items-center justify-between px-5 py-3.5 hover:bg-gray-50/80 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center text-[16px]">
-                    {tx.icon}
+                    {tx.icon ?? tx.category?.icon ?? '💸'}
                   </div>
                   <div>
-                    <p className="text-[13px] font-bold text-gray-900">{tx.note}</p>
-                    <p className="text-[11px] font-semibold text-gray-400">{tx.category} • {tx.date}</p>
+                    <p className="text-[13px] font-bold text-gray-900">{tx.note ?? tx.category?.name ?? 'Không ghi chú'}</p>
+                    <p className="text-[11px] font-semibold text-gray-400">
+                      {tx.category?.name ?? tx.categoryName ?? ''} • {new Date(tx.displayDate || tx.date).toLocaleDateString('vi-VN')}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <p className="text-[14px] font-black text-gray-800">-{formatCurrency(String(Math.abs(tx.amount)), "vi-VN")}</p>
+                  <p className="text-[14px] font-black text-gray-800">
+                    -{formatCurrency(String(Math.abs(parseFloat(tx.amount))), "vi-VN")}
+                  </p>
                 </div>
               </div>
             ))}

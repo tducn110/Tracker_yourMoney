@@ -36,6 +36,11 @@
     "typecheck": {
       "dependsOn": ["^typecheck"]
     },
+    "worker#dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
     "db:push": {
       "cache": false
     },

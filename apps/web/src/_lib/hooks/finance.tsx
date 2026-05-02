@@ -2,12 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Decimal from 'decimal.js';
 import { toast } from 'sonner';
 import { 
-  transactionsAPI, 
-  goalsAPI, 
-  billsAPI, 
-  walletAPI, 
-  analyticsAPI, 
+  transactionsAPI,
+  goalsAPI,
+  billsAPI,
+  walletAPI,
+  analyticsAPI,
   authAPI,
+  userAPI,
+  notificationAPI,
   categoriesAPI,
   LoginCredentials,
   RegisterData,
@@ -544,6 +546,79 @@ export function useUser() {
     queryKey: ['auth', 'me'],
     queryFn: async () => {
       return authAPI.me();
+    },
+  });
+}
+
+/**
+ * Hook: User Settings
+ */
+export function useUserSettings() {
+  return useQuery({
+    queryKey: ['user', 'settings'],
+    queryFn: async () => {
+      return userAPI.settings();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Mutation: Update User Settings
+ */
+export function useUpdateUserSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Record<string, unknown>) => userAPI.updateSettings(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'settings'] });
+      toast.success('Đã lưu cài đặt');
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Không thể lưu cài đặt');
+    },
+  });
+}
+
+/**
+ * Hook: Notifications
+ */
+export function useNotifications() {
+  return useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => notificationAPI.list(),
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useUnreadCount() {
+  return useQuery({
+    queryKey: ['notifications', 'unread'],
+    queryFn: async () => {
+      const res = await notificationAPI.unreadCount();
+      return res.count;
+    },
+    refetchInterval: 60 * 1000,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useMarkRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => notificationAPI.markRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+}
+
+export function useMarkAllRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => notificationAPI.markAllRead(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 }

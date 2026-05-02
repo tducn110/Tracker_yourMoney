@@ -24,14 +24,20 @@ import type {
  */
 
 export const authAPI = {
-  login: (credentials: LoginCredentials) => 
+  login: (credentials: LoginCredentials) =>
     apiClient.post<AuthResponse>('/api/auth/login', credentials) as unknown as Promise<AuthResponse>,
-  register: (data: RegisterData) => 
+  register: (data: RegisterData) =>
     apiClient.post<{ success: boolean }>('/api/auth/register', data) as unknown as Promise<{ success: boolean }>,
-  logout: () => 
+  logout: () =>
     apiClient.post('/api/auth/logout') as unknown as Promise<void>,
-  me: () => 
+  me: () =>
     apiClient.get<User>('/api/auth/me') as unknown as Promise<User>,
+};
+
+export const userAPI = {
+  settings: () => apiClient.get('/api/v1/user/settings') as unknown as Promise<any>,
+  updateSettings: (data: Record<string, unknown>) =>
+    apiClient.put('/api/v1/user/settings', data) as unknown as Promise<any>,
 };
 
 export const budgetAPI = {
@@ -111,6 +117,13 @@ export const walletAPI = {
     apiClient.post('/api/v1/wallet/transfer', data, {
       headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
     }) as unknown as Promise<{ source: any; target: any }>,
+};
+
+export const notificationAPI = {
+  list: () => apiClient.get<any[]>('/api/v1/notifications') as unknown as Promise<any[]>,
+  unreadCount: () => apiClient.get<{ count: number }>('/api/v1/notifications/unread-count') as unknown as Promise<{ count: number }>,
+  markRead: (id: string) => apiClient.patch(`/api/v1/notifications/${id}/read`) as unknown as Promise<void>,
+  markAllRead: () => apiClient.patch('/api/v1/notifications/read-all') as unknown as Promise<void>,
 };
 
 export const categoriesAPI = {

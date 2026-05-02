@@ -100,6 +100,7 @@ export interface BudgetDetail extends Budget {
   daysElapsed: number;
   daysRemaining: number;
   transactions: Transaction[];
+  categories: { categoryId: number; name: string; icon: string }[];
 }
 
 export interface CategorySpending {
