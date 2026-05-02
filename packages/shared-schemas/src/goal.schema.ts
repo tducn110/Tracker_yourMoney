@@ -38,8 +38,9 @@ export const updateGoalSchema = insertGoalSchema.partial().extend({
 
 // ── Contribute (add savings to a goal) ───────────────────────────
 export const contributeGoalSchema = z.object({
-  amount: positiveDecimal,
-  note:   z.string().max(255).optional(),
+  walletId: z.string(),  // Required: wallet to deduct from
+  amount:   positiveDecimal,
+  note:     z.string().max(255).optional(),
 });
 
 // ── Response ────────────────────────────────────────────────────────

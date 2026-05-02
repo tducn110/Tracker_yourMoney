@@ -29,6 +29,7 @@ export const updateBillSchema = insertBillSchema.partial();
 // Trạng thái "paid/partial/pending" tính tại bill-service.ts qua SUM
 export const insertBillPaymentSchema = z.object({
   billId:      z.string(),  // bigint string
+  walletId:    z.string(),  // Required: wallet to deduct from
   amountPaid:  decimalString,
   // YYYY-MM format validator
   periodMonth: z.string().regex(

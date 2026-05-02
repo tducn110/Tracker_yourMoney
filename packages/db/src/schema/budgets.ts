@@ -7,8 +7,8 @@ import { categories } from "./categories";
 export const budgets = mysqlTable(
   "budgets",
   {
-    id: bigint("id", { mode: "number" }).primaryKey().autoincrement().$type<string>(),
-    userId: bigint("user_id", { mode: "number" }).notNull().references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }).$type<string>(),
+    id: bigint("id", { mode: "bigint", unsigned: true }).primaryKey().autoincrement().$type<string>(),
+    userId: bigint("user_id", { mode: "bigint", unsigned: true }).notNull().references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }).$type<string>(),
     name: varchar("name", { length: 100 }).notNull(),
     icon: varchar("icon", { length: 20 }).default("💰").notNull(),
     targetAmount: decimal("target_amount", { precision: 15, scale: 2 }).notNull(),
@@ -30,8 +30,8 @@ export const budgets = mysqlTable(
 export const budgetCategories = mysqlTable(
   "budget_categories",
   {
-    id: bigint("id", { mode: "number" }).primaryKey().autoincrement().$type<string>(),
-    budgetId: bigint("budget_id", { mode: "number" }).notNull().references(() => budgets.id, { onDelete: "cascade", onUpdate: "cascade" }).$type<string>(),
+    id: bigint("id", { mode: "bigint", unsigned: true }).primaryKey().autoincrement().$type<string>(),
+    budgetId: bigint("budget_id", { mode: "bigint", unsigned: true }).notNull().references(() => budgets.id, { onDelete: "cascade", onUpdate: "cascade" }).$type<string>(),
     categoryId: int("category_id").notNull().references(() => categories.id, { onDelete: "cascade", onUpdate: "cascade" }),
     allocatedAmount: decimal("allocated_amount", { precision: 15, scale: 2 }).notNull().default("0.00"),
   },

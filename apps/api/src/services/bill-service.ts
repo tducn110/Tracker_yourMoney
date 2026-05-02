@@ -54,6 +54,7 @@ export class BillService {
       // 2. Create Transaction Record (Expense)
       await this.transactionRepository.create({
         userId: userId as any,
+        walletId: input.walletId as any,
         categoryId: bill.categoryId,
         amount: input.amountPaid,
         type: "expense",

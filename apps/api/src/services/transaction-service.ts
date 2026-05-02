@@ -22,10 +22,11 @@ export class TransactionService {
     return this.repository.findAll(userId);
   }
 
-  async createTransaction(userId: string, input: InsertTransaction & { idempotencyKey?: string }) {
+  async createTransaction(userId: string, input: InsertTransaction & { walletId: string; idempotencyKey?: string }) {
     return this.repository.create({
       ...input,
       userId: userId as any,
+      walletId: input.walletId as any,
     });
   }
 
@@ -58,15 +59,15 @@ export class TransactionService {
   /**
    * High-level business logic for "Quick Add" via Natural Language.
    */
-  async quickAdd(userId: string, text: string, options: { categoryId?: number; idempotencyKey?: string } = {}) {
+  async quickAdd(userId: string, text: string, options: { walletId: string; categoryId?: number; idempotencyKey?: string } = { walletId: "" }) {
     const parsed = this.nlpAdapter.parse(text);
-    
+
     let categoryId = options.categoryId;
-    
+
     // If no category ID provided, try to find one by keyword from NLP
     if (!categoryId && parsed.keyword) {
       const categories = await this.categoryRepository.findAll(userId);
-      const matched = categories.find((c: any) => 
+      const matched = categories.find((c: any) =>
         c.name.toLowerCase().includes(parsed.keyword!.toLowerCase())
       );
       categoryId = matched?.id;
@@ -76,6 +77,7 @@ export class TransactionService {
     categoryId = categoryId || 1;
 
     return this.createTransaction(userId, {
+      walletId: options.walletId,
       categoryId,
       amount: parsed.amount,
       type: parsed.type,
