@@ -62,8 +62,8 @@ export const transactions = mysqlTable("transactions", {
   userDateIdx:  index("idx_tx_user_date").on(table.userId, table.displayDate),
   userTypeIdx:  index("idx_tx_user_type").on(table.userId, table.type),
   userCatIdx:   index("idx_tx_user_cat").on(table.userId, table.categoryId),
-  // Covering index cho Budget monthly query
-  userMonthIdx: index("idx_tx_user_month").on(table.userId, table.displayDate),
+  // Targeted index for Budget Engine: WHERE userId=? AND type='expense' AND displayDate BETWEEN ? AND ?
+  userTypeDateIdx: index("idx_tx_user_type_date").on(table.userId, table.type, table.displayDate),
   // CHECK: amount phải luôn dương
   amountCheck:  check("chk_tx_amount_positive", sql`amount > 0`),
 }));

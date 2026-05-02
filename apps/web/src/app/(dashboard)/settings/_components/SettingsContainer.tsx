@@ -1,24 +1,52 @@
 'use client';
 
 import { useState } from 'react';
-import { useUser, useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/_lib/hooks/finance';
+import {
+  useUser, useUserSettings, useUpdateUserSettings,
+  useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory,
+} from '@/_lib/hooks/finance';
 import type { Category } from '@finance/api-client';
 import { SettingsView } from './SettingsView';
 import { toast } from 'sonner';
 
 export function SettingsContainer() {
   const { data: user, isLoading } = useUser();
+  const { data: settings, isLoading: settingsLoading } = useUserSettings();
+  const updateSettings = useUpdateUserSettings();
   const { data: categories = [], isLoading: catsLoading } = useCategories();
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
 
-  const [emergencyBuffer, setEmergencyBuffer] = useState(1500000);
+  const [emergencyBuffer, setEmergencyBuffer] = useState(0);
+  const [monthlyBudget, setMonthlyBudget] = useState('0');
+  const [incomeDate, setIncomeDate] = useState(1);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
+  const [initialized, setInitialized] = useState(false);
+
+  // Sync settings from API to local state on first load
+  if (settings && !initialized) {
+    setEmergencyBuffer(parseFloat(settings.emergencyBuffer || '0'));
+    setMonthlyBudget(settings.monthlyBudget || '0');
+    setIncomeDate(settings.incomeDate || 1);
+    setEmailNotifications(settings.notifyEmail === 1);
+    setPushNotifications(settings.notifyPush === 1);
+    setInitialized(true);
+  }
 
   const handleSave = async () => {
-    toast.success('Đã lưu cài đặt');
+    try {
+      await updateSettings.mutateAsync({
+        emergencyBuffer: String(emergencyBuffer),
+        monthlyBudget: monthlyBudget,
+        incomeDate: incomeDate,
+        notifyEmail: emailNotifications ? 1 : 0,
+        notifyPush: pushNotifications ? 1 : 0,
+      });
+    } catch {
+      // Toast handled in mutation onError
+    }
   };
 
   const handleCreateCategory = async (data: { name: string; type: string; icon?: string; color?: string }) => {
@@ -51,14 +79,19 @@ export function SettingsContainer() {
   return (
     <SettingsView
       user={user || { fullName: '', email: '' }}
-      isLoading={isLoading}
+      isLoading={isLoading || settingsLoading}
       emergencyBuffer={emergencyBuffer}
       setEmergencyBuffer={setEmergencyBuffer}
+      monthlyBudget={monthlyBudget}
+      setMonthlyBudget={setMonthlyBudget}
+      incomeDate={incomeDate}
+      setIncomeDate={setIncomeDate}
       emailNotifications={emailNotifications}
       setEmailNotifications={setEmailNotifications}
       pushNotifications={pushNotifications}
       setPushNotifications={setPushNotifications}
       onSave={handleSave}
+      isSaving={updateSettings.isPending}
       categories={categories}
       categoriesLoading={catsLoading}
       isMutatingCategories={createCategory.isPending || updateCategory.isPending || deleteCategory.isPending}

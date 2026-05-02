@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { User, Bell, DollarSign, Save, Tags, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
+import { User, Bell, DollarSign, Save, Tags, Plus, Pencil, Trash2, X, Check, Loader2, Calendar } from 'lucide-react';
 import { formatCurrency } from '@finance/api-client';
 import { Button } from '@/components/ui/button';
 import type { Category } from '@finance/api-client';
@@ -14,11 +14,16 @@ interface SettingsViewProps {
   isLoading?: boolean;
   emergencyBuffer: number;
   setEmergencyBuffer: (val: number) => void;
+  monthlyBudget: string;
+  setMonthlyBudget: (val: string) => void;
+  incomeDate: number;
+  setIncomeDate: (val: number) => void;
   emailNotifications: boolean;
   setEmailNotifications: (val: boolean) => void;
   pushNotifications: boolean;
   setPushNotifications: (val: boolean) => void;
   onSave: () => void;
+  isSaving?: boolean;
   categories: Category[];
   categoriesLoading: boolean;
   isMutatingCategories: boolean;
@@ -273,11 +278,16 @@ export function SettingsView({
   isLoading,
   emergencyBuffer,
   setEmergencyBuffer,
+  monthlyBudget,
+  setMonthlyBudget,
+  incomeDate,
+  setIncomeDate,
   emailNotifications,
   setEmailNotifications,
   pushNotifications,
   setPushNotifications,
   onSave,
+  isSaving,
   categories,
   categoriesLoading,
   isMutatingCategories,
@@ -360,24 +370,63 @@ export function SettingsView({
               <DollarSign size={20} className="text-gray-600" />
               <h2 className="font-bold text-gray-800">Cài đặt tài chính</h2>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Quỹ dự phòng khẩn cấp
-              </label>
-              <input
-                type="text"
-                value={formatCurrency(emergencyBuffer.toString(), 'vi-VN')}
-                onChange={(e) => {
-                  const val = parseInt(
-                    e.target.value.replace(/\D/g, '') || '0'
-                  );
-                  setEmergencyBuffer(val);
-                }}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 outline-none"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Số tiền dự phòng sẽ được trừ vào ngân sách an toàn
-              </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ngân sách tháng
+                </label>
+                <input
+                  type="text"
+                  value={monthlyBudget ? formatCurrency(monthlyBudget, 'vi-VN') : ''}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '');
+                    setMonthlyBudget(digits || '0');
+                  }}
+                  placeholder="0"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 outline-none"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Hạn mức chi tiêu mặc định mỗi tháng
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Quỹ dự phòng khẩn cấp
+                </label>
+                <input
+                  type="text"
+                  value={emergencyBuffer ? formatCurrency(String(emergencyBuffer), 'vi-VN') : ''}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value.replace(/\D/g, '') || '0', 10);
+                    setEmergencyBuffer(val);
+                  }}
+                  placeholder="0"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 outline-none"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Khoản dự phòng được khuyến nghị giữ lại
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ngày nhận lương
+                </label>
+                <div className="flex items-center gap-2">
+                  <Calendar size={16} className="text-gray-400" />
+                  <select
+                    value={incomeDate}
+                    onChange={(e) => setIncomeDate(Number(e.target.value))}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 outline-none"
+                  >
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                      <option key={day} value={day}>Ngày {day}</option>
+                    ))}
+                  </select>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Ngày nhận thu nhập chính trong tháng
+                </p>
+              </div>
             </div>
           </div>
 
@@ -436,9 +485,13 @@ export function SettingsView({
           </div>
 
           {/* Save Button */}
-          <Button onClick={onSave} className="w-full" disabled={isLoading}>
-            <Save size={16} className="mr-2" />
-            Lưu Thay Đổi
+          <Button onClick={onSave} className="w-full" disabled={isLoading || isSaving}>
+            {isSaving ? (
+              <Loader2 size={16} className="mr-2 animate-spin" />
+            ) : (
+              <Save size={16} className="mr-2" />
+            )}
+            {isSaving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
           </Button>
         </div>
       </div>

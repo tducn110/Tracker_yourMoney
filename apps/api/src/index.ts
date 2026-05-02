@@ -19,7 +19,7 @@ if (process.env.NODE_ENV !== 'production') {
 // Only load Sentry in Node.js fallback if DSN is present.
 // For Cloudflare Workers, use @sentry/cloudflare middleware if needed.
 if (process.env.SENTRY_DSN) {
-  await import('./instrument');
+  import('./instrument').catch(() => {});
 }
 
 // ── GLOBAL POLYFILLS ───────────────────────────────────────────────
@@ -38,6 +38,7 @@ import type { Context } from 'hono';
 import { logger, logRequest, logError } from './lib/logger';
 import { rateLimitMiddleware } from './middleware/rate-limit';
 import { authMiddleware } from './middleware/auth-guard';
+import { auditMiddleware } from './middleware/audit';
 
 import { authRoutes } from './routes/auth';
 import { internalRoutes } from './routes/internal';
@@ -48,6 +49,8 @@ import { billRoutes } from './routes/bills';
 import { categoryRoutes } from './routes/categories';
 import { goalRoutes } from './routes/goals';
 import { budgetRoutes } from './routes/budgets';
+import { userRoutes } from './routes/user';
+import { notificationRoutes } from './routes/notifications';
 
 // ── TYPE DEFINITIONS ───────────────────────────────────────────────
 type Variables = {
@@ -92,10 +95,22 @@ app.use('*', async (c, next) => {
 // ── API V1 ROUTES ──────────────────────────────────────────────────
 const v1 = new Hono<{ Variables: Variables }>();
 
-// Quick Add Rate Limit: 10 req/min per IP applies to the /transactions/quick endpoint
+// Rate Limiting (Phase 9) — sliding window, in-memory, per IP+path
+// Global: 100 req/min per IP across all v1 endpoints
+v1.use('*', rateLimitMiddleware({ limit: 100, windowMs: 60_000 }));
+// Quick Add: 10 req/min (NLP parsing is the most expensive endpoint)
 v1.use('/transactions/quick', rateLimitMiddleware({ limit: 10, windowMs: 60_000 }));
+// Mutation-heavy endpoints: 30 req/min
+v1.use('/transactions/*', rateLimitMiddleware({ limit: 30, windowMs: 60_000 }));
+v1.use('/bills/*', rateLimitMiddleware({ limit: 30, windowMs: 60_000 }));
+v1.use('/goals/*', rateLimitMiddleware({ limit: 30, windowMs: 60_000 }));
+v1.use('/budgets/*', rateLimitMiddleware({ limit: 30, windowMs: 60_000 }));
+v1.use('/wallet/*', rateLimitMiddleware({ limit: 30, windowMs: 60_000 }));
 
 v1.use('/*', authMiddleware);
+
+// Audit Trail (Phase 8) — logs mutations to audit_logs (fire-and-forget)
+v1.use('*', auditMiddleware);
 
 v1.route('/wallet', walletRoutes);
 v1.route('/analytics', analyticsRoutes);
@@ -104,6 +119,8 @@ v1.route('/bills', billRoutes);
 v1.route('/categories', categoryRoutes);
 v1.route('/goals', goalRoutes);
 v1.route('/budgets', budgetRoutes);
+v1.route('/user', userRoutes);
+v1.route('/notifications', notificationRoutes);
 
 v1.get('/health', (c) => {
   return c.json({
@@ -116,6 +133,8 @@ v1.get('/health', (c) => {
   });
 });
 
+// Auth routes — strict rate limit for brute force protection (10 req/min per IP)
+app.use('/api/auth/*', rateLimitMiddleware({ limit: 10, windowMs: 60_000 }));
 app.route('/api/auth', authRoutes);
 app.route('/api/v1', v1);
 

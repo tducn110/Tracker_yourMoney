@@ -5,6 +5,7 @@ import {
   type NewBudget,
 } from "@finance/db/src/schema/budgets";
 import { transactions } from "@finance/db/src/schema/transactions";
+import { categories } from "@finance/db/src/schema/categories";
 import { and, eq, sum, between, inArray, sql, desc } from "drizzle-orm";
 import Decimal from "decimal.js";
 
@@ -210,12 +211,18 @@ export class BudgetService {
       ? 0
       : new Decimal(spent).div(budget.targetAmount).times(100).toNumber();
 
-    // Lấy danh sách giao dịch thuộc budget
+    // Lấy danh sách categories của budget (with names/icons)
     let categoryIds: number[] = [];
+    let budgetCats: { categoryId: number; name: string; icon: string }[] = [];
     if (!budget.isAllCategories) {
-      const budgetCats = await db
-        .select({ categoryId: budgetCategories.categoryId })
+      budgetCats = await db
+        .select({
+          categoryId: budgetCategories.categoryId,
+          name: categories.name,
+          icon: categories.icon,
+        })
         .from(budgetCategories)
+        .innerJoin(categories, eq(budgetCategories.categoryId, categories.id))
         .where(eq(budgetCategories.budgetId, budget.id));
       categoryIds = budgetCats.map((c) => Number(c.categoryId));
     }
@@ -269,6 +276,7 @@ export class BudgetService {
       daysElapsed,
       daysRemaining,
       transactions: relatedTxs,
+      categories: budgetCats,
     };
   }
 
