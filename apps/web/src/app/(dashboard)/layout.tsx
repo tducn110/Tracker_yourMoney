@@ -6,6 +6,8 @@ import { QuickAddModal } from '@/components/quick-add/QuickAddModal';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useState } from 'react';
 import { Toaster } from 'sonner';
+import { useCreateTransaction, useCategories } from '@/_lib/hooks/finance';
+import { resolveCategoryId } from '@/_lib/category-map';
 
 export default function DashboardLayout({
   children,
@@ -13,6 +15,29 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const { mutateAsync: createTransaction } = useCreateTransaction();
+  const { data: categories = [] } = useCategories();
+
+  const handleQuickAdd = async (data: {
+    amount: number;
+    type: 'income' | 'expense';
+    category: string;
+    walletId: string;
+    note: string;
+    date: string;
+  }) => {
+    const categoryId = resolveCategoryId(data.category, data.type, categories);
+    await createTransaction({
+      walletId: data.walletId,
+      categoryId,
+      amount: String(data.amount),
+      type: data.type,
+      note: data.note,
+      displayDate: data.date,
+      source: 'manual',
+    });
+    setIsQuickAddOpen(false);
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -37,7 +62,7 @@ export default function DashboardLayout({
       <QuickAddModal
         isOpen={isQuickAddOpen}
         onClose={() => setIsQuickAddOpen(false)}
-        onSubmit={async () => setIsQuickAddOpen(false)}
+        onSubmit={handleQuickAdd}
       />
 
       <Toaster position="top-right" richColors />

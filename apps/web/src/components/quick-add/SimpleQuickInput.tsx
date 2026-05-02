@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '@finance/api-client';
 import { useWallet } from '@/app/context/WalletContext';
+import { useCreateTransaction, useCategories } from '@/_lib/hooks/finance';
+import { resolveCategoryId } from '@/_lib/category-map';
 import { toast } from 'sonner';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -253,6 +255,9 @@ export function SimpleQuickInput() {
     return new Intl.NumberFormat('vi-VN').format(parseInt(digits, 10));
   };
 
+  const { mutateAsync: createTransaction } = useCreateTransaction();
+  const { data: categories = [] } = useCategories();
+
   const activeType     = TYPE_CONFIGS.find((t) => t.type === type)!;
   const cats           = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
   const activeCategory = cats.find((c) => c.id === selectedCategory) ?? cats[0];
@@ -271,6 +276,16 @@ export function SimpleQuickInput() {
     }
     setSubmitting(true);
     try {
+      const categoryId = resolveCategoryId(selectedCategory, type, categories);
+      await createTransaction({
+        walletId: selectedWallet,
+        categoryId,
+        amount: String(num),
+        type,
+        note,
+        displayDate: new Date().toISOString().split('T')[0],
+        source: 'manual',
+      });
       toast.success(
         `✅ ${activeType.label}: ${activeCategory.emoji} ${activeCategory.name}` +
           (note ? ` — ${note}` : '') +

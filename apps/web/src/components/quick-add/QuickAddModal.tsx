@@ -33,6 +33,7 @@ interface CreateTransactionDTO {
   amount: number;
   type: 'income' | 'expense';
   category: string;
+  walletId: string;
   note: string;
   date: string;
 }
@@ -104,7 +105,7 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
   const onFormSubmit = async (data: CreateTransactionDTO) => {
     setIsSubmitting(true);
     try {
-      await onSubmit({ ...data, type, category: selectedCat });
+      await onSubmit({ ...data, type, category: selectedCat, walletId: selectedWallet });
       toast.success('Đã thêm giao dịch thành công!');
       reset();
       onClose();
