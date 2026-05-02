@@ -7,6 +7,11 @@ import { ok, err } from "../lib/response";
 
 export const walletRoutes = new Hono<{ Variables: { userId: string } }>()
 
+  .get("/", async (c) => {
+    const wallets = await walletService.getWallets(c.get("userId"));
+    return ok(c, wallets);
+  })
+
   .get("/cash", async (c) => {
     const userId = c.get("userId");
     const wallet = await walletService.getDefaultWallet(userId);
@@ -35,4 +40,26 @@ export const walletRoutes = new Hono<{ Variables: { userId: string } }>()
       idempotencyKey: idempotencyKey || undefined,
     });
     return ok(c, wallet);
+  })
+
+  .post("/", async (c) => {
+    const userId = c.get("userId");
+    const body = await c.req.json();
+    const wallet = await walletService.createWallet(userId, body);
+    return ok(c, wallet);
+  })
+
+  .put("/:id", async (c) => {
+    const userId = c.get("userId");
+    const { id } = c.req.param();
+    const body = await c.req.json();
+    const wallet = await walletService.updateWallet(userId, id, body);
+    return ok(c, wallet);
+  })
+
+  .delete("/:id", async (c) => {
+    const userId = c.get("userId");
+    const { id } = c.req.param();
+    await walletService.deleteWallet(userId, id);
+    return ok(c, { message: "Đã xóa ví" });
   });

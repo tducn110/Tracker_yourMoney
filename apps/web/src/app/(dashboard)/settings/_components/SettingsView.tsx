@@ -7,29 +7,31 @@ import { toast } from 'sonner';
 
 interface SettingsViewProps {
   user: {
-    full_name: string;
-    email: string;
+    fullName?: string;
+    full_name?: string;
+    email?: string;
   };
+  isLoading?: boolean;
   emergencyBuffer: number;
   setEmergencyBuffer: (val: number) => void;
   emailNotifications: boolean;
   setEmailNotifications: (val: boolean) => void;
   pushNotifications: boolean;
   setPushNotifications: (val: boolean) => void;
+  onSave: () => void;
 }
 
 export function SettingsView({
   user,
+  isLoading,
   emergencyBuffer,
   setEmergencyBuffer,
   emailNotifications,
   setEmailNotifications,
   pushNotifications,
   setPushNotifications,
+  onSave,
 }: SettingsViewProps) {
-  const handleSave = () => {
-    toast.success('Đã lưu cài đặt thành công!');
-  };
 
   return (
     <div className="p-6 space-y-6">
@@ -46,9 +48,9 @@ export function SettingsView({
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-3xl mb-4">
-                {user.full_name.charAt(0)}
+                {(user.fullName || user.full_name || '?').charAt(0)}
               </div>
-              <h3 className="font-bold text-gray-800">{user.full_name}</h3>
+              <h3 className="font-bold text-gray-800">{user.fullName || user.full_name || ''}</h3>
               <p className="text-sm text-gray-600 mt-1">{user.email}</p>
               <Button variant="outline" className="mt-4 w-full">
                 Đổi Ảnh Đại Diện
@@ -72,7 +74,7 @@ export function SettingsView({
                 </label>
                 <input
                   type="text"
-                  defaultValue={user.full_name}
+                  defaultValue={user.fullName || user.full_name || ''}
                   className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 outline-none"
                 />
               </div>
@@ -171,7 +173,7 @@ export function SettingsView({
           </div>
 
           {/* Save Button */}
-          <Button onClick={handleSave} className="w-full">
+          <Button onClick={onSave} className="w-full" disabled={isLoading}>
             <Save size={16} className="mr-2" />
             Lưu Thay Đổi
           </Button>

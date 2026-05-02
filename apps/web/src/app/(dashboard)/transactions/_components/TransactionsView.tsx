@@ -200,6 +200,7 @@ interface TransactionsViewProps {
   onFilterChange: (val: FilterType) => void;
   sortOrder: SortOrder;
   onSortChange: (val: SortOrder) => void;
+  onExportCSV?: () => void;
 }
 
 export function TransactionsView({
@@ -213,6 +214,7 @@ export function TransactionsView({
   onFilterChange,
   sortOrder,
   onSortChange,
+  onExportCSV,
 }: TransactionsViewProps) {
   const [showSort, setShowSort] = useState(false);
 
@@ -310,7 +312,10 @@ export function TransactionsView({
         </div>
 
         {/* Export */}
-        <button className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-gray-200 text-[11px] font-bold text-gray-600 hover:border-blue-300 hover:text-blue-600 transition-all shadow-sm">
+        <button
+          onClick={onExportCSV}
+          className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-gray-200 text-[11px] font-bold text-gray-600 hover:border-blue-300 hover:text-blue-600 transition-all shadow-sm"
+        >
           <Download size={13} />
           Xuất CSV
         </button>
