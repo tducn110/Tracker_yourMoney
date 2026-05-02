@@ -11,8 +11,10 @@ import { useRouter } from 'next/navigation';
 import { useGoals } from '@/_lib/hooks/finance';
 import { formatCurrency, Goal } from '@finance/api-client';
 import Decimal from 'decimal.js';
+import { useTranslations } from '@/locales';
 
 export function TopGoalCard() {
+  const t = useTranslations();
   const router = useRouter();
   const { data: goals = [], isLoading } = useGoals();
   
@@ -26,7 +28,7 @@ export function TopGoalCard() {
             <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
               <Target size={14} className="text-purple-600" />
             </div>
-            <h2 className="text-[14px] font-black text-gray-900">Mục tiêu</h2>
+            <h2 className="text-[14px] font-black text-gray-900">{t('dashboard.goals.title')}</h2>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm min-h-[160px] flex items-center justify-center">
@@ -55,13 +57,13 @@ export function TopGoalCard() {
           <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
             <Target size={14} className="text-purple-600" />
           </div>
-          <h2 className="text-[14px] font-black text-gray-900">Mục tiêu</h2>
+          <h2 className="text-[14px] font-black text-gray-900">{t('dashboard.goals.title')}</h2>
         </div>
         <button
           onClick={() => router.push('/goals')}
           className="flex items-center gap-1 text-[12px] font-bold text-blue-600 hover:text-blue-700 transition-colors"
         >
-          Tất cả <ChevronRight size={14} />
+          {t('dashboard.goals.viewAll')} <ChevronRight size={14} />
         </button>
       </div>
 
@@ -83,13 +85,13 @@ export function TopGoalCard() {
               {topGoal.name}
             </h3>
             <p className="text-[12px] font-bold text-gray-400 mt-0.5">
-              Deadline: {topGoal.deadline || 'Không có'}
+              {t('dashboard.goals.deadline')}: {topGoal.deadline || t('dashboard.goals.none')}
             </p>
             {monthlyContribution > 0 && (
               <div className="flex items-center gap-1.5 mt-1.5">
                 <TrendingUp size={11} className="text-purple-500" />
                 <span className="text-[11px] font-bold text-purple-600">
-                  +{formatCurrency(monthlyContribution)}/tháng
+                  +{formatCurrency(monthlyContribution)}{t('dashboard.goals.perMonth')}
                 </span>
               </div>
             )}
@@ -98,7 +100,7 @@ export function TopGoalCard() {
           {/* Percentage */}
           <div className="shrink-0 text-right">
             <p className="text-[28px] font-black text-purple-600 leading-none">{percent}%</p>
-            <p className="text-[10px] font-bold text-gray-400 mt-0.5">hoàn thành</p>
+            <p className="text-[10px] font-bold text-gray-400 mt-0.5">{t('dashboard.goals.completed')}</p>
           </div>
         </div>
 
@@ -115,21 +117,21 @@ export function TopGoalCard() {
         {/* Amount row */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-bold text-gray-400 mb-0.5">Đã tiết kiệm</p>
+            <p className="text-[11px] font-bold text-gray-400 mb-0.5">{t('dashboard.goals.saved')}</p>
             <p className="text-[18px] font-black text-gray-900 leading-none">
               {formatCurrency(currentSaved)}
             </p>
           </div>
           <div className="w-px h-8 bg-gray-100 shrink-0" />
           <div className="text-center">
-            <p className="text-[11px] font-bold text-gray-400 mb-0.5">Mục tiêu</p>
+            <p className="text-[11px] font-bold text-gray-400 mb-0.5">{t('dashboard.goals.target')}</p>
             <p className="text-[18px] font-black text-gray-700 leading-none">
               {formatCurrency(targetAmount)}
             </p>
           </div>
           <div className="w-px h-8 bg-gray-100 shrink-0" />
           <div className="text-right">
-            <p className="text-[11px] font-bold text-gray-400 mb-0.5">Còn thiếu</p>
+            <p className="text-[11px] font-bold text-gray-400 mb-0.5">{t('dashboard.goals.remaining')}</p>
             <p className="text-[18px] font-black text-purple-600 leading-none">
               {formatCurrency(remaining)}
             </p>

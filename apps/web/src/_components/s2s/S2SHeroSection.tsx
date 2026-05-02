@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldCheck, ChevronDown, Info, TrendingDown, Flame } from 'lucide-react';
 import { formatCurrency } from '@finance/api-client';
+import { useTranslations } from '@/locales';
 
 export type S2SPeriod = "today" | "week" | "month";
 export type S2SStatus = "safe" | "warning" | "danger";
@@ -37,10 +38,12 @@ function S2SRing({
   percent,
   size = 108,
   status,
+  t,
 }: {
   percent: number;
   size?: number;
   status: S2SStatus;
+  t: (key: string) => string;
 }) {
   const sw = 9;
   const r = (size - sw * 2) / 2;
@@ -78,7 +81,7 @@ function S2SRing({
         >
           {percent}%
         </motion.span>
-        <span className="text-[8px] font-semibold mt-0.5 text-blue-500/70">đã dùng</span>
+        <span className="text-[8px] font-semibold mt-0.5 text-blue-500/70">{t('s2s.used')}</span>
       </div>
     </div>
   );
@@ -112,6 +115,7 @@ interface S2SHeroSectionProps {
 }
 
 export function S2SHeroSection({ data = mockS2SData }: S2SHeroSectionProps) {
+  const { t } = useTranslations();
   const [period, setPeriod] = useState<S2SPeriod>('month');
   const [showBreakdown, setShowBreakdown] = useState(false);
 
@@ -119,9 +123,9 @@ export function S2SHeroSection({ data = mockS2SData }: S2SHeroSectionProps) {
   const { remaining: s2sRemaining, spent: s2sSpent, budget: s2sBudget, percent: usagePercent, status } = periodData;
 
   const periodLabel = {
-    today: 'Hôm nay',
-    week: 'Tuần này',
-    month: 'Tháng này',
+    today: t('s2s.periods.today'),
+    week: t('s2s.periods.week'),
+    month: t('s2s.periods.month'),
   };
 
   return (
@@ -139,7 +143,7 @@ export function S2SHeroSection({ data = mockS2SData }: S2SHeroSectionProps) {
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <ShieldCheck size={20} className="text-blue-600" />
-          <h3 className="font-bold text-[15px] text-blue-900">Khoảng Chi Tiêu An Toàn</h3>
+          <h3 className="font-bold text-[15px] text-blue-900">{t('s2s.title')}</h3>
         </div>
         <div className="flex items-center gap-2">
           {(['month', 'week', 'today'] as S2SPeriod[]).map((p) => (
@@ -174,7 +178,7 @@ export function S2SHeroSection({ data = mockS2SData }: S2SHeroSectionProps) {
             >
               {formatCurrency(String(s2sRemaining), "vi-VN")}
             </motion.h2>
-            <span className="text-[16px] font-medium text-blue-600/70">còn lại</span>
+            <span className="text-[16px] font-medium text-blue-600/70">{t('s2s.remaining')}</span>
           </div>
 
           {/* Status Badge */}
@@ -193,7 +197,7 @@ export function S2SHeroSection({ data = mockS2SData }: S2SHeroSectionProps) {
                 color: status === 'danger' ? '#dc2626' : status === 'warning' ? '#d97706' : '#059669',
               }}
             >
-              {status === 'safe' ? 'Ngân sách an toàn' : status === 'warning' ? 'Cảnh báo vượt ngân sách' : 'Vượt ngân sách!'}
+              {status === 'safe' ? t('s2s.status.safe') : status === 'warning' ? t('s2s.status.warning') : t('s2s.status.danger')}
             </span>
           </div>
 
@@ -203,7 +207,7 @@ export function S2SHeroSection({ data = mockS2SData }: S2SHeroSectionProps) {
             className="flex items-center gap-2 text-[12px] font-medium text-blue-600 hover:text-blue-700"
           >
             <Info size={14} />
-            <span>{showBreakdown ? 'Ẩn' : 'Xem'} chi tiết tính toán</span>
+            <span>{showBreakdown ? t('s2s.details.hide') : t('s2s.details.show')} {t('s2s.details.text')}</span>
             <ChevronDown size={14} className={`transition-transform ${showBreakdown ? 'rotate-180' : ''}`} />
           </button>
 
@@ -215,22 +219,22 @@ export function S2SHeroSection({ data = mockS2SData }: S2SHeroSectionProps) {
                 exit={{ opacity: 0, height: 0 }}
                 className="flex items-center gap-2 mt-3 flex-wrap"
               >
-                <Pill label={formatCurrency(String(data.monthlyIncome), "vi-VN")} sub="Thu nhập" />
+                <Pill label={formatCurrency(String(data.monthlyIncome), "vi-VN")} sub={t('s2s.pills.income')} />
                 <span className="text-blue-500/50 font-bold">−</span>
-                <Pill label={formatCurrency(String(s2sSpent), "vi-VN")} sub="Đã chi" />
+                <Pill label={formatCurrency(String(s2sSpent), "vi-VN")} sub={t('s2s.pills.spent')} />
                 <span className="text-blue-500/50 font-bold">−</span>
-                <Pill label={formatCurrency(String(data.fixedExpenses.total), "vi-VN")} sub="Chi cố định" />
+                <Pill label={formatCurrency(String(data.fixedExpenses.total), "vi-VN")} sub={t('s2s.pills.fixed')} />
                 <span className="text-blue-500/50 font-bold">−</span>
-                <Pill label={formatCurrency(String(data.savingsCommitment.total), "vi-VN")} sub="Tiết kiệm" />
+                <Pill label={formatCurrency(String(data.savingsCommitment.total), "vi-VN")} sub={t('s2s.pills.savings')} />
                 <span className="text-blue-500/50 font-bold">=</span>
-                <Pill label={formatCurrency(String(s2sBudget), "vi-VN")} sub="Ngân sách" accent />
+                <Pill label={formatCurrency(String(s2sBudget), "vi-VN")} sub={t('s2s.pills.budget')} accent />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
         {/* Right - Ring Chart */}
-        <S2SRing percent={usagePercent} status={status} />
+        <S2SRing percent={usagePercent} status={status} t={t} />
       </div>
     </motion.section>
   );

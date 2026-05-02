@@ -1,0 +1,120 @@
+{
+  "s2s": {
+    "title": "Khoảng Chi Tiêu An Toàn",
+    "periods": {
+      "today": "Hôm nay",
+      "week": "Tuần này",
+      "month": "Tháng này"
+    },
+    "remaining": "còn lại",
+    "used": "đã dùng",
+    "status": {
+      "safe": "Ngân sách an toàn",
+      "warning": "Cảnh báo vượt ngân sách",
+      "danger": "Vượt ngân sách!"
+    },
+    "details": {
+      "show": "Xem",
+      "hide": "Ẩn",
+      "text": "chi tiết tính toán"
+    },
+    "pills": {
+      "income": "Thu nhập",
+      "spent": "Đã chi",
+      "fixed": "Chi cố định",
+      "savings": "Tiết kiệm",
+      "budget": "Ngân sách"
+    }
+  },
+  "dashboard": {
+    "title": "Tổng quan",
+    "safeToSpend": "Có thể chi tiêu an toàn",
+    "budget": "Ngân sách",
+    "recentTransactions": "Giao dịch gần đây",
+    "viewAll": "Xem tất cả",
+    "quickAdd": "Thêm nhanh",
+    "overview": {
+      "income": "Thu nhập",
+      "expense": "Chi tiêu",
+      "myWallet": "Ví của tôi",
+      "thisMonth": "Tháng này",
+      "accounts": "tài khoản",
+      "tapToView": "Nhấn để xem"
+    },
+    "goals": {
+      "title": "Mục tiêu",
+      "savingsGoals": "Mục tiêu tiết kiệm",
+      "viewAll": "Tất cả",
+      "noGoals": "Chưa có mục tiêu nào.",
+      "addNew": "Thêm mục tiêu mới",
+      "status": {
+        "active": "Đang chạy",
+        "completed": "Hoàn thành",
+        "paused": "Tạm dừng",
+        "cancelled": "Đã hủy"
+      },
+      "deadline": "Deadline",
+      "none": "Không có",
+      "perMonth": "/tháng",
+      "completed": "hoàn thành",
+      "saved": "Đã tiết kiệm",
+      "target": "Mục tiêu",
+      "remaining": "Còn thiếu"
+    },
+    "transactions": {
+      "title": "Giao dịch gần đây",
+      "all": "Tất cả",
+      "income": "Thu nhập",
+      "expense": "Chi tiêu",
+      "other": "Khác",
+      "incomeArrow": "↑ Thu nhập",
+      "expenseArrow": "↓ Chi tiêu",
+      "noTransactions": "Không có giao dịch nào"
+    },
+    "fixedExpenses": {
+      "title": "Chi phí cố định"
+    },
+    "bills": {
+      "title": "Hóa đơn sắp tới",
+      "viewAll": "Xem hết",
+      "noBills": "Không có hóa đơn nào sắp tới.",
+      "overdue": "🚨 Quá hạn",
+      "monthlyDue": "Ngày {{day}} hàng tháng"
+    }
+  },
+  "wallet": {
+    "title": "Ví của bạn",
+    "totalBalance": "Tổng số dư"
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Đã xảy ra lỗi",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa"
+  },
+  "nav": {
+    "overview": "Tổng Quan",
+    "transactions": "Giao Dịch",
+    "wallets": "Ví Tiền",
+    "budgets": "Ngân Sách",
+    "goals": "Mục Tiêu",
+    "bills": "Hóa Đơn",
+    "analytics": "Phân Tích",
+    "settings": "Cài Đặt"
+  },
+  "header": {
+    "greeting": {
+      "morning": "Chào buổi sáng",
+      "afternoon": "Chào buổi chiều",
+      "evening": "Chào buổi tối"
+    },
+    "search": {
+      "tooltip": "Tìm kiếm",
+      "placeholder": "Tìm kiếm giao dịch, mục tiêu, hóa đơn..."
+    },
+    "notifications": "Thông báo",
+    "quickAdd": "Thêm nhanh"
+  }
+}

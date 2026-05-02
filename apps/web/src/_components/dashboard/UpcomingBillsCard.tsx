@@ -4,9 +4,11 @@ import { ArrowRight, Receipt } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useBills } from '@/_lib/hooks/finance';
 import { formatCurrency, Bill } from '@finance/api-client';
+import { useTranslations } from '@/locales';
 
 export function UpcomingBillsCard() {
   const router = useRouter();
+  const t = useTranslations();
   const { data: billsData, isLoading } = useBills();
   const allBills = Array.isArray(billsData) ? (billsData as Bill[]) : [];
   
@@ -22,19 +24,19 @@ export function UpcomingBillsCard() {
           <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
             <Receipt size={14} className="text-amber-600" />
           </div>
-          <h3 className="text-[13px] font-black text-gray-900">Hóa đơn sắp tới</h3>
+          <h3 className="text-[13px] font-black text-gray-900">{t('dashboard.bills.title')}</h3>
         </div>
         <button
           onClick={() => router.push('/bills')}
           className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 transition-colors"
         >
-          Xem hết <ArrowRight size={12} />
+          {t('dashboard.bills.viewAll')} <ArrowRight size={12} />
         </button>
       </div>
       <div className="p-2 divide-y divide-gray-50/80 flex-1 overflow-y-auto">
         {activeBills.length === 0 ? (
           <div className="py-8 text-center text-[12px] text-gray-500 font-medium">
-            Không có hóa đơn nào sắp tới.
+            {t('dashboard.bills.noBills')}
           </div>
         ) : (
           activeBills.slice(0, 4).map((bill) => {
@@ -55,7 +57,7 @@ export function UpcomingBillsCard() {
                       overdue ? 'text-red-500' : 'text-amber-500'
                     }`}
                   >
-                    {overdue ? '🚨 Quá hạn' : `Ngày ${bill.dueDay} hàng tháng`}
+                    {overdue ? t('dashboard.bills.overdue') : t('dashboard.bills.monthlyDue').replace('{{day}}', bill.dueDay.toString())}
                   </p>
                 </div>
                 <p className="text-[12px] font-black text-gray-800 shrink-0">

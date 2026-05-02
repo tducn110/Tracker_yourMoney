@@ -14,20 +14,23 @@ import { useTransactions } from '@/_lib/hooks/finance';
 import { formatCurrency, Transaction } from '@finance/api-client';
 import Decimal from 'decimal.js';
 
+import { useTranslations } from '@/locales';
+
 type FilterType = 'all' | 'income' | 'expense';
 
 // ─── Filter Tab ───────────────────────────────────────────────────────────────
 
-const FILTERS: { key: FilterType; label: string; activeColor: string }[] = [
-  { key: 'all',     label: 'Tất cả',    activeColor: '#4361ee' },
-  { key: 'income',  label: 'Thu nhập',  activeColor: '#059669' },
-  { key: 'expense', label: 'Chi tiêu',  activeColor: '#dc2626' },
+const getFilters = (t: any): { key: FilterType; label: string; activeColor: string }[] => [
+  { key: 'all',     label: t('dashboard.transactions.all'),    activeColor: '#4361ee' },
+  { key: 'income',  label: t('dashboard.transactions.income'),  activeColor: '#059669' },
+  { key: 'expense', label: t('dashboard.transactions.expense'),  activeColor: '#dc2626' },
 ];
 
-function FilterTabs({ active, onChange }: { active: FilterType; onChange: (f: FilterType) => void }) {
+function FilterTabs({ active, onChange, t }: { active: FilterType; onChange: (f: FilterType) => void; t: any }) {
+  const filters = getFilters(t);
   return (
     <div className="flex gap-1.5">
-      {FILTERS.map(({ key, label, activeColor }) => (
+      {filters.map(({ key, label, activeColor }) => (
         <button
           key={key}
           onClick={() => onChange(key)}
@@ -47,7 +50,7 @@ function FilterTabs({ active, onChange }: { active: FilterType; onChange: (f: Fi
 
 // ─── Transaction Row ──────────────────────────────────────────────────────────
 
-function TransactionRow({ tx }: { tx: Transaction }) {
+function TransactionRow({ tx, t }: { tx: Transaction; t: any }) {
   const isIncome = tx.type === 'income';
   return (
     <div className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors group">
@@ -71,10 +74,10 @@ function TransactionRow({ tx }: { tx: Transaction }) {
                 : { backgroundColor: '#fef2f2', color: '#dc2626' }
             }
           >
-            {isIncome ? '↑ Thu nhập' : '↓ Chi tiêu'}
+            {isIncome ? t('dashboard.transactions.incomeArrow') : t('dashboard.transactions.expenseArrow')}
           </span>
           <p className="text-[10px] font-bold text-gray-400">
-            {tx.categoryName || 'Khác'} · {new Date(tx.date).toLocaleDateString('vi-VN')}
+            {tx.categoryName || t('dashboard.transactions.other')} · {new Date(tx.date).toLocaleDateString('vi-VN')}
           </p>
         </div>
       </div>
@@ -124,6 +127,7 @@ const DISPLAY_LIMIT = 10;
 
 export function RecentTransactionsCard() {
   const router = useRouter();
+  const t = useTranslations();
   const [filter, setFilter] = useState<FilterType>('all');
   
   const { data: transactionsData, isLoading } = useTransactions({ limit: DISPLAY_LIMIT * 2 });
@@ -153,19 +157,19 @@ export function RecentTransactionsCard() {
           <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
             <BarChart3 size={14} className="text-blue-600" />
           </div>
-          <h3 className="text-[13px] font-black text-gray-900">Giao dịch gần đây</h3>
+          <h3 className="text-[13px] font-black text-gray-900">{t('dashboard.transactions.title')}</h3>
         </div>
         <button
           onClick={() => router.push('/transactions')}
           className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 transition-colors"
         >
-          Tất cả <ArrowRight size={12} />
+          {t('dashboard.transactions.all')} <ArrowRight size={12} />
         </button>
       </div>
 
       {/* Filter tabs */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50 bg-gray-50/50">
-        <FilterTabs active={filter} onChange={setFilter} />
+        <FilterTabs active={filter} onChange={setFilter} t={t} />
 
         {/* Mini summary */}
         {filter === 'all' && (
@@ -180,14 +184,14 @@ export function RecentTransactionsCard() {
       <div className="p-2">
         {groupedEntries.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-[13px] font-bold text-gray-400">Không có giao dịch nào</p>
+            <p className="text-[13px] font-bold text-gray-400">{t('dashboard.transactions.noTransactions')}</p>
           </div>
         ) : (
           groupedEntries.map(([date, txs]) => (
             <div key={date}>
               <DateGroupHeader date={date} txs={txs} />
               {txs.map((tx) => (
-                <TransactionRow key={tx.id} tx={tx} />
+                <TransactionRow key={tx.id} tx={tx} t={t} />
               ))}
             </div>
           ))
