@@ -1,8 +1,10 @@
 'use client';
 
-import { Receipt, Plus, Calendar, Check, Loader2 } from 'lucide-react';
+import { Receipt, Plus, Calendar, Check } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Button } from '@/_components/ui/button';
+import { Skeleton } from '@/_components/ui/skeleton';
+import { EmptyState } from '@/_components/EmptyState';
 import { formatCurrency, Bill } from '@finance/api-client';
 import Decimal from 'decimal.js';
 
@@ -36,11 +38,35 @@ export function BillsView({ isLoading, activeBills, totalMonthly, onAddBill, onP
       </div>
 
       {isLoading ? (
-        <div className="py-16 flex flex-col items-center gap-3 text-center">
-          <Loader2 size={24} className="text-blue-400 animate-spin" />
-          <p className="text-[13px] font-black text-gray-400">
-            Đang tải dữ liệu...
-          </p>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-xl border border-gray-100 p-5 space-y-3">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-32" />
+              </div>
+            ))}
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200">
+            <div className="p-4 border-b border-gray-200">
+              <Skeleton className="h-5 w-40" />
+            </div>
+            <div className="divide-y divide-gray-100">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-5 flex items-center gap-4">
+                  <Skeleton className="w-12 h-12 rounded-xl" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <div className="space-y-2 text-right">
+                    <Skeleton className="h-5 w-24 ml-auto" />
+                    <Skeleton className="h-8 w-36 ml-auto rounded-lg" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : (
         <>
@@ -86,9 +112,16 @@ export function BillsView({ isLoading, activeBills, totalMonthly, onAddBill, onP
             </div>
             <div className="divide-y divide-gray-100">
               {activeBills.length === 0 ? (
-                <div className="p-8 text-center text-gray-500 text-sm">
-                  Chưa có hóa đơn nào đang hoạt động.
-                </div>
+                <EmptyState
+                  icon={<Receipt size={28} />}
+                  title="Chưa có hóa đơn nào"
+                  description="Thêm hóa đơn định kỳ để theo dõi các khoản chi cố định hàng tháng."
+                  action={
+                    <Button onClick={() => onAddBill?.({})} disabled={isMutating}>
+                      <Plus size={14} className="mr-1.5" /> Thêm Hóa Đơn
+                    </Button>
+                  }
+                />
               ) : (
                 activeBills.map((bill: Bill) => {
                   const amount = new Decimal(bill.amount || 0).toNumber();

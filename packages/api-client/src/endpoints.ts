@@ -109,8 +109,18 @@ export const walletAPI = {
     apiClient.put(`/api/v1/wallet/${id}`, data) as unknown as Promise<any>,
   delete: (id: string) =>
     apiClient.delete(`/api/v1/wallet/${id}`) as unknown as Promise<void>,
+  transfer: (data: { fromWalletId: string; toWalletId: string; amount: string; note?: string }, idempotencyKey?: string) =>
+    apiClient.post('/api/v1/wallet/transfer', data, {
+      headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
+    }) as unknown as Promise<{ source: any; target: any }>,
 };
 
 export const categoriesAPI = {
   list: () => apiClient.get<Category[]>('/api/v1/categories') as unknown as Promise<Category[]>,
+  create: (data: { name: string; type: string; icon?: string; color?: string; sortOrder?: number }) =>
+    apiClient.post<Category>('/api/v1/categories', data) as unknown as Promise<Category>,
+  update: (id: number, data: { name?: string; type?: string; icon?: string; color?: string; sortOrder?: number }) =>
+    apiClient.put<Category>(`/api/v1/categories/${id}`, data) as unknown as Promise<Category>,
+  delete: (id: number) =>
+    apiClient.delete(`/api/v1/categories/${id}`) as unknown as Promise<void>,
 };

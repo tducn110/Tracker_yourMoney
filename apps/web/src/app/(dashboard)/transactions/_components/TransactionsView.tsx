@@ -8,9 +8,10 @@ import {
   ArrowUpDown,
   Download,
   ReceiptText,
-  Loader2,
 } from 'lucide-react';
 import { formatCurrency, Transaction } from '@finance/api-client';
+import { Skeleton } from '@/_components/ui/skeleton';
+import { EmptyState } from '@/_components/EmptyState';
 import Decimal from 'decimal.js';
 
 export type FilterType = 'all' | 'income' | 'expense';
@@ -340,24 +341,24 @@ export function TransactionsView({
         </div>
 
         {isLoading ? (
-          <div className="py-16 flex flex-col items-center gap-3 text-center">
-            <Loader2 size={24} className="text-blue-400 animate-spin" />
-            <p className="text-[13px] font-black text-gray-400">
-              Đang tải dữ liệu...
-            </p>
+          <div className="divide-y divide-gray-50">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3">
+                <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+                <Skeleton className="h-5 w-20" />
+              </div>
+            ))}
           </div>
         ) : groupedTransactions.length === 0 ? (
-          <div className="py-16 flex flex-col items-center gap-3 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center">
-              <ReceiptText size={24} className="text-gray-300" />
-            </div>
-            <p className="text-[13px] font-black text-gray-400">
-              Không tìm thấy giao dịch
-            </p>
-            <p className="text-[11px] font-bold text-gray-300">
-              Thử thay đổi bộ lọc hoặc từ khóa
-            </p>
-          </div>
+          <EmptyState
+            icon={<ReceiptText size={28} />}
+            title="Không tìm thấy giao dịch"
+            description="Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm."
+          />
         ) : (
           groupedTransactions.map(([date, txs]) => (
             <DateGroupRow key={date} date={date} txs={txs} />
