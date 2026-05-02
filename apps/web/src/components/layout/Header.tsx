@@ -51,7 +51,7 @@ function IconButton({
 // ─── HomeGreeting ─────────────────────────────────────────────────────────────
 
 function HomeGreeting() {
-  const t = useTranslations();
+  const { t } = useTranslations();
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? t('header.greeting.morning') : hour < 18 ? t('header.greeting.afternoon') : t('header.greeting.evening');
@@ -75,7 +75,7 @@ interface HeaderProps {
 }
 
 export function Header({ onQuickAddClick }: HeaderProps) {
-  const t = useTranslations();
+  const { t } = useTranslations();
   const { user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();

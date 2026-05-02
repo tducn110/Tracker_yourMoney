@@ -17,7 +17,7 @@ import { useTranslations } from '@/locales';
 
 function GoalRow({ goal }: { goal: Goal }) {
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslations();
 
   const getStatusMeta = (status: string) => {
     const meta: Record<string, { label: string; bg: string; color: string; Icon: any }> = {
@@ -114,7 +114,7 @@ function GoalRow({ goal }: { goal: Goal }) {
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export function DashboardGoalsCard() {
-  const t = useTranslations();
+  const { t } = useTranslations();
   const router = useRouter();
   const { data: goalsData, isLoading } = useGoals();
   const goals = Array.isArray(goalsData) ? goalsData : [];

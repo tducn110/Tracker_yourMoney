@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { User, Bell, DollarSign, Save, Tags, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
 import { formatCurrency } from '@finance/api-client';
-import { Button } from '@/_components/ui/button';
+import { Button } from '@/components/ui/button';
 import type { Category } from '@finance/api-client';
 
 const CATEGORY_ICONS = ['🍔', '🚗', '🏠', '🎮', '📚', '💊', '👕', '🎬', '✈️', '💼', '🎁', '🐾', '📱', '💡', '🛒', '🏥', '🎓', '☕', '🎵', '💻'];

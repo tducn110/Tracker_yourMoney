@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, Sparkles, Plus, Search, ChevronRight } from 'lucide-react';
-import { Input } from '@/_components/ui/input';
-import { Button } from '@/_components/ui/button';
-import { Badge } from '@/_components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@finance/api-client';
 import { toast } from 'sonner';
 

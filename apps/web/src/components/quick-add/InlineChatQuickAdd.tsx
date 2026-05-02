@@ -17,8 +17,8 @@ import {
   Car,
   Home,
 } from 'lucide-react';
-import { Button } from '@/_components/ui/button';
-import { ScrollArea } from '@/_components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatCurrency } from '@finance/api-client';
 import { toast } from 'sonner';
 

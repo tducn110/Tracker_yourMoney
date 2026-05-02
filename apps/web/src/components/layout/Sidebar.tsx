@@ -42,7 +42,7 @@ export const getNavItems = (t: (key: string) => string) => [
 // ─── Desktop Sidebar ──────────────────────────────────────────────────────────
 
 export function Sidebar() {
-  const t = useTranslations();
+  const { t } = useTranslations();
   const [open, setOpen] = useState(true);
   const pathname = usePathname();
 
@@ -87,7 +87,7 @@ export function Sidebar() {
 // ─── Mobile Bottom Nav ─────────────────────────────────────────────────────────
 
 export function MobileBottomNav() {
-  const t = useTranslations();
+  const { t } = useTranslations();
   const pathname = usePathname();
   const navItems = getNavItems(t);
   const mobileItems = navItems.slice(0, 5);

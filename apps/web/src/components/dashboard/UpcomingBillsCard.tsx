@@ -8,7 +8,7 @@ import { useTranslations } from '@/locales';
 
 export function UpcomingBillsCard() {
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslations();
   const { data: billsData, isLoading } = useBills();
   const allBills = Array.isArray(billsData) ? (billsData as Bill[]) : [];
   

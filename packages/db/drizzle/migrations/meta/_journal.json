@@ -92,6 +92,13 @@
       "when": 1775940000000,
       "tag": "0012_sync_schema_to_erd",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1776700000000,
+      "tag": "0013_add_wallet_version",
+      "breakpoints": true
     }
   ]
 }

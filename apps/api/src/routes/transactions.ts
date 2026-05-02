@@ -106,15 +106,7 @@ export const transactionRoutes = new Hono<{ Variables: { userId: string, correla
     }
   })
 
-  .delete("/:id", async (c) => {
-    const userId = c.get("userId");
-    const { id } = c.req.param();
-    try {
-      await transactionService.deleteTransaction(userId, id);
-      return ok(c, { message: "Đã xóa giao dịch" });
-    } catch (e: any) {
-      if (e.code === "NOT_FOUND") return err(c, 404, "NOT_FOUND", e.message);
-      throw e;
-    }
-  });
+  // DELETE is intentionally not exposed — transactions are immutable ledger entries.
+  // To reverse a transaction, create a reversal (income → expense or vice versa).
+  ;
 

@@ -71,7 +71,7 @@ function StatCell({ icon, label, value, sublabel, colorText, colorBg, colorBorde
 }
 
 export function OverviewSummaryCard() {
-  const t = useTranslations();
+  const { t } = useTranslations();
   const { data: budgetData } = useBudgetSummary();
   const total_income = budgetData?.totalIncome ?? '0';
   const total_expense = budgetData?.totalSpent ?? '0';

@@ -14,8 +14,8 @@ const mockCashWallet = {
   balance: 1500000,
   lastSynced: "01/04/2026 08:30"
 };
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/_components/ui/dialog';
-import { Button } from '@/_components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface CashWalletStripProps {
   balance?: number;

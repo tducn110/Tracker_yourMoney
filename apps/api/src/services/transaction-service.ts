@@ -49,13 +49,6 @@ export class TransactionService {
     } as any);
   }
 
-  async deleteTransaction(userId: string, id: string) {
-    const tx = await this.getTransaction(userId, id);
-    if (!tx) throw Object.assign(new Error("Giao dịch không tồn tại"), { code: "NOT_FOUND" });
-
-    await this.repository.delete(id, userId);
-  }
-
   /**
    * High-level business logic for "Quick Add" via Natural Language.
    */

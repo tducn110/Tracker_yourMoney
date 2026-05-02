@@ -118,22 +118,7 @@ export class TransactionRepository extends BaseRepository {
           eq(transactions.userId, userId)
         )
       );
-    
-    return this.findById(id, userId, client);
-  }
 
-  /**
-   * Hard delete a transaction.
-   */
-  async delete(id: string, userId: string, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
-    await client
-      .delete(transactions)
-      .where(
-        and(
-          eq(transactions.id, id),
-          eq(transactions.userId, userId)
-        )
-      );
+    return this.findById(id, userId, client);
   }
 }

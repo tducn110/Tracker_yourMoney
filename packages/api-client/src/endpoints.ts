@@ -55,10 +55,8 @@ export const transactionsAPI = {
       { text, walletId: options?.walletId, categoryId: options?.categoryId },
       { headers: options?.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {} }
     ) as unknown as Promise<Transaction>,
-  update: (id: string, data: Partial<Transaction>) => 
+  update: (id: string, data: Partial<Transaction>) =>
     apiClient.put<Transaction>(`/api/v1/transactions/${id}`, data) as unknown as Promise<Transaction>,
-  delete: (id: string) => 
-    apiClient.delete(`/api/v1/transactions/${id}`) as unknown as Promise<void>,
 };
 
 export const goalsAPI = {

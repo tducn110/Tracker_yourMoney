@@ -15,11 +15,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/_components/ui/dialog';
-import { Button } from '@/_components/ui/button';
-import { Input } from '@/_components/ui/input';
-import { Label } from '@/_components/ui/label';
-import { Tabs, TabsList, TabsTrigger } from '@/_components/ui/tabs';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Plus, Coffee, ShoppingCart, Car, Home, Utensils, Zap,
   MoreHorizontal, Check, Briefcase, Gift, Laptop, TrendingUp,

@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+import { sql } from "drizzle-orm";
 import { wallets, walletLogs, transactions, db, and } from "@finance/db";
 import { eq, isNull, desc } from "@finance/db";
 import type { CategoryRepository } from "@finance/db/src/repositories/category-repository";
@@ -139,12 +140,21 @@ export class WalletService {
         autoTxId = txResult.lastInsertId?.toString() || String(txResult[0]?.insertId) || null;
       }
 
-      // OCC: update wallet balance
-      await tx.update(wallets).set({
+      // OCC: update wallet balance with version check
+      const updateResult = await tx.update(wallets).set({
         balance: after.toFixed(2),
+        version: sql`version + 1`,
         lastSyncedAt: new Date(),
         updatedAt: new Date(),
-      }).where(and(eq(wallets.id, walletId as any), eq(wallets.userId, userId as any)));
+      }).where(and(
+        eq(wallets.id, walletId as any),
+        eq(wallets.userId, userId as any),
+        eq(wallets.version, (wallet as any).version ?? 0),
+      ));
+
+      if (updateResult[0]?.affectedRows === 0) {
+        throw Object.assign(new Error("Xung đột cập nhật — vui lòng thử lại"), { code: "CONFLICT" });
+      }
 
       // Insert audit log
       await tx.insert(walletLogs).values({
@@ -185,10 +195,20 @@ export class WalletService {
 
       const autoTxId = txResult.lastInsertId?.toString() || String(txResult[0]?.insertId) || null;
 
-      await tx.update(wallets).set({
+      // OCC: update wallet balance with version check
+      const updateResult = await tx.update(wallets).set({
         balance: after.toFixed(2),
+        version: sql`version + 1`,
         updatedAt: new Date(),
-      }).where(and(eq(wallets.id, walletId as any), eq(wallets.userId, userId as any)));
+      }).where(and(
+        eq(wallets.id, walletId as any),
+        eq(wallets.userId, userId as any),
+        eq(wallets.version, (wallet as any).version ?? 0),
+      ));
+
+      if (updateResult[0]?.affectedRows === 0) {
+        throw Object.assign(new Error("Xung đột cập nhật — vui lòng thử lại"), { code: "CONFLICT" });
+      }
 
       await tx.insert(walletLogs).values({
         walletId: walletId as any,
@@ -285,17 +305,35 @@ export class WalletService {
         idempotencyKey: idempotencyKey ? `${idempotencyKey}_in` : undefined,
       });
 
-      // Update source wallet balance
-      await tx.update(wallets).set({
+      // OCC: update source wallet balance
+      const srcUpdate = await tx.update(wallets).set({
         balance: sourceAfter.toFixed(2),
+        version: sql`version + 1`,
         updatedAt: new Date(),
-      }).where(and(eq(wallets.id, fromWalletId as any), eq(wallets.userId, userId as any)));
+      }).where(and(
+        eq(wallets.id, fromWalletId as any),
+        eq(wallets.userId, userId as any),
+        eq(wallets.version, (source as any).version ?? 0),
+      ));
 
-      // Update target wallet balance
-      await tx.update(wallets).set({
+      if (srcUpdate[0]?.affectedRows === 0) {
+        throw Object.assign(new Error("Xung đột cập nhật ví nguồn — vui lòng thử lại"), { code: "CONFLICT" });
+      }
+
+      // OCC: update target wallet balance
+      const tgtUpdate = await tx.update(wallets).set({
         balance: targetAfter.toFixed(2),
+        version: sql`version + 1`,
         updatedAt: new Date(),
-      }).where(and(eq(wallets.id, toWalletId as any), eq(wallets.userId, userId as any)));
+      }).where(and(
+        eq(wallets.id, toWalletId as any),
+        eq(wallets.userId, userId as any),
+        eq(wallets.version, (target as any).version ?? 0),
+      ));
+
+      if (tgtUpdate[0]?.affectedRows === 0) {
+        throw Object.assign(new Error("Xung đột cập nhật ví đích — vui lòng thử lại"), { code: "CONFLICT" });
+      }
 
       // Audit logs
       const txOutId = txOut.lastInsertId?.toString() || String(txOut[0]?.insertId) || null;

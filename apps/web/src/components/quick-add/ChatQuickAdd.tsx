@@ -8,10 +8,10 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter
-} from '@/_components/ui/sheet';
-import { Button } from '@/_components/ui/button';
-import { Input } from '@/_components/ui/input';
-import { ScrollArea } from '@/_components/ui/scroll-area';
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   MessageCircle, 
   Send, 

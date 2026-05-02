@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { TrendingUp, TrendingDown, Receipt, Plus, Zap } from 'lucide-react';
-import { Input } from '@/_components/ui/input';
+import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@finance/api-client';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
