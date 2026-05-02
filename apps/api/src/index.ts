@@ -32,6 +32,7 @@ if (process.env.SENTRY_DSN) {
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { cors } from 'hono/cors';
+import { compress } from 'hono/compress';
 import { db } from '@finance/db';
 import type { Context } from 'hono';
 
@@ -62,6 +63,9 @@ type Variables = {
 const app = new Hono<{ Variables: Variables }>();
 
 // ── GLOBAL MIDDLEWARES ──────────────────────────────────────────────
+// Payload Compression (Phase 29) — gzip/deflate for JSON responses >1KB
+app.use('*', compress({ threshold: 1024 }));
+
 app.use('*', cors({
   origin: ['http://127.0.0.1:3000', 'http://localhost:3000'],
   credentials: true,

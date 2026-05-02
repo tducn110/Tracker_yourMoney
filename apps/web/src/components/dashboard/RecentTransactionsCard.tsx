@@ -7,7 +7,7 @@
  * - No motion/react — pure CSS transitions
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ArrowRight, BarChart3, TrendingUp, TrendingDown, RefreshCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTransactions } from '@/_lib/hooks/finance';
@@ -133,21 +133,31 @@ export function RecentTransactionsCard() {
   const { data: transactionsData, isLoading } = useTransactions({ limit: DISPLAY_LIMIT * 2 });
   const allTransactions = Array.isArray(transactionsData) ? transactionsData : [];
 
-  const filtered = allTransactions
-    .filter((tx) => filter === 'all' || tx.type === filter)
-    .slice(0, DISPLAY_LIMIT);
+  const filtered = useMemo(() =>
+    allTransactions
+      .filter((tx) => filter === 'all' || tx.type === filter)
+      .slice(0, DISPLAY_LIMIT),
+    [allTransactions, filter],
+  );
 
-  // Group by date
-  const grouped = filtered.reduce<Record<string, Transaction[]>>((acc, tx) => {
-    const dateStr = new Date(tx.date).toLocaleDateString('vi-VN');
-    (acc[dateStr] ??= []).push(tx);
-    return acc;
-  }, {});
-  const groupedEntries = Object.entries(grouped);
+  const groupedEntries = useMemo(() => {
+    const grouped = filtered.reduce<Record<string, Transaction[]>>((acc, tx) => {
+      const dateStr = new Date(tx.date).toLocaleDateString('vi-VN');
+      (acc[dateStr] ??= []).push(tx);
+      return acc;
+    }, {});
+    return Object.entries(grouped);
+  }, [filtered]);
 
   // Summary counts
-  const totalIncome = filtered.filter((t) => t.type === 'income').reduce((s, t) => s.plus(t.amount), new Decimal(0));
-  const totalExpense = filtered.filter((t) => t.type === 'expense').reduce((s, t) => s.plus(t.amount), new Decimal(0));
+  const totalIncome = useMemo(() =>
+    filtered.filter((t) => t.type === 'income').reduce((s, t) => s.plus(t.amount), new Decimal(0)),
+    [filtered],
+  );
+  const totalExpense = useMemo(() =>
+    filtered.filter((t) => t.type === 'expense').reduce((s, t) => s.plus(t.amount), new Decimal(0)),
+    [filtered],
+  );
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden h-full">

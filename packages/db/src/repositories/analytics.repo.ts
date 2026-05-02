@@ -26,22 +26,24 @@ export class AnalyticsRepository extends BaseRepository {
       sql`${transactions.displayDate} <= ${endDate}`,
     );
 
-    const rows = await client
-      .select({ total: sql<string>`sum(${transactions.amount})` })
+    // Single query with GROUP BY instead of two serial queries
+    const summaryRows = await client
+      .select({
+        type: transactions.type,
+        total: sql<string>`sum(${transactions.amount})`,
+      })
       .from(transactions)
-      .where(and(dateFilter, eq(transactions.type, "income")));
-    const incomeRow = rows[0];
+      .where(dateFilter)
+      .groupBy(transactions.type);
 
-    const rowsEx = await client
-      .select({ total: sql<string>`sum(${transactions.amount})` })
-      .from(transactions)
-      .where(and(dateFilter, eq(transactions.type, "expense")));
-    const expenseRow = rowsEx[0];
+    let totalIncome = "0.00";
+    let totalExpense = "0.00";
+    for (const row of summaryRows) {
+      if (row.type === "income") totalIncome = row.total ?? "0.00";
+      else if (row.type === "expense") totalExpense = row.total ?? "0.00";
+    }
 
-    return {
-      totalIncome: incomeRow?.total ?? "0.00",
-      totalExpense: expenseRow?.total ?? "0.00",
-    };
+    return { totalIncome, totalExpense };
   }
 
   /**

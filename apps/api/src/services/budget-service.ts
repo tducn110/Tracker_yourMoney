@@ -205,13 +205,7 @@ export class BudgetService {
     if (!budget)
       throw Object.assign(new Error("Budget not found"), { code: "NOT_FOUND" });
 
-    const spent = await this.calculateSpent(budget);
-    const left = new Decimal(budget.targetAmount).minus(spent);
-    const percent = new Decimal(budget.targetAmount).isZero()
-      ? 0
-      : new Decimal(spent).div(budget.targetAmount).times(100).toNumber();
-
-    // Lấy danh sách categories của budget (with names/icons)
+    // Fetch budget categories + transactions in parallel (single batch, no duplicate queries)
     let categoryIds: number[] = [];
     let budgetCats: { categoryId: number; name: string; icon: string }[] = [];
     if (!budget.isAllCategories) {
@@ -226,6 +220,7 @@ export class BudgetService {
         .where(eq(budgetCategories.budgetId, budget.id));
       categoryIds = budgetCats.map((c) => Number(c.categoryId));
     }
+
     const txFilters = [
       eq(transactions.userId, userId),
       eq(transactions.type, "expense"),
@@ -239,6 +234,16 @@ export class BudgetService {
       .from(transactions)
       .where(and(...txFilters))
       .orderBy(desc(transactions.displayDate));
+
+    // Compute spent from the already-fetched transactions (no extra query)
+    const spent = relatedTxs.reduce(
+      (sum, tx) => sum.plus(new Decimal(tx.amount)),
+      new Decimal(0),
+    );
+    const left = new Decimal(budget.targetAmount).minus(spent);
+    const percent = new Decimal(budget.targetAmount).isZero()
+      ? 0
+      : spent.div(budget.targetAmount).times(100).toNumber();
 
     // Tính recommended daily và projected spending
     const today = new Date();

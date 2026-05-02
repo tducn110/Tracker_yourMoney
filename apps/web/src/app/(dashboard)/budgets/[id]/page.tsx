@@ -17,19 +17,19 @@ import {
   AlertTriangle,
   Loader2,
 } from 'lucide-react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  ReferenceLine,
-} from 'recharts';
+import dynamic from 'next/dynamic';
 import { formatCurrency } from '@finance/api-client';
 import { useBudgetDetail } from '@/_lib/hooks/use-budgets';
 import Decimal from 'decimal.js';
+
+const BudgetChart = dynamic(() => import('./_components/BudgetChart'), {
+  ssr: false,
+  loading: () => (
+    <div className="py-10 flex items-center justify-center">
+      <Loader2 className="w-5 h-5 text-gray-300 animate-spin" />
+    </div>
+  ),
+});
 
 // ─── Progress Bar ─────────────────────────────────────────────────────────────
 function DetailProgressBar({ percent }: { percent: number }) {
@@ -61,25 +61,6 @@ function StatBox({ label, value, sub, icon: Icon, accent }: any) {
       </div>
       <p className={`text-[18px] font-black ${accent ? 'text-blue-700' : 'text-gray-900'}`}>{value}</p>
       {sub && <p className="text-[11px] font-semibold text-gray-400 mt-0.5">{sub}</p>}
-    </div>
-  );
-}
-
-// ─── Custom Tooltip ───────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-lg p-3 min-w-[150px]">
-      <p className="text-[11px] font-bold text-gray-500 mb-2">{label}</p>
-      {payload.map((entry: any) => (
-        <div key={entry.name} className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-          <span className="text-[12px] font-semibold text-gray-600">
-            {entry.name === 'actual' ? 'Thực tế' : 'Kế hoạch'}:{' '}
-            <span className="font-bold text-gray-900">{formatCurrency(String(entry.value), "vi-VN")}</span>
-          </span>
-        </div>
-      ))}
     </div>
   );
 }
@@ -283,68 +264,13 @@ export default function BudgetDetailPage() {
         />
       </div>
 
-      {/* Line Chart */}
+      {/* Line Chart — dynamically imported (~200KB saved from main bundle) */}
       <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
         <h3 className="text-[14px] font-bold text-gray-900 mb-4 flex items-center gap-2">
           <BarChart3 size={16} className="text-blue-600" />
           Chi tiêu theo ngày
         </h3>
-        {chartData.length > 0 ? (
-          <>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="day"
-                  tick={{ fontSize: 10, fontWeight: 600, fill: '#94a3b8' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis hide />
-                <Tooltip content={<CustomTooltip />} />
-                <ReferenceLine
-                  y={recommendedDaily}
-                  stroke="#4361ee"
-                  strokeDasharray="4 4"
-                  label={{ value: 'Kế hoạch/ngày', position: 'right', fontSize: 10, fill: '#4361ee' }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="actual"
-                  name="actual"
-                  stroke="#10b981"
-                  strokeWidth={2.5}
-                  dot={{ r: 3, fill: '#10b981', strokeWidth: 0 }}
-                  activeDot={{ r: 5, fill: '#10b981' }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="planned"
-                  name="planned"
-                  stroke="#4361ee"
-                  strokeWidth={2}
-                  strokeDasharray="4 4"
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-            <div className="flex items-center gap-4 mt-3 justify-center">
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-0.5 bg-emerald-500 rounded" />
-                <span className="text-[11px] font-semibold text-gray-500">Thực tế</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-0.5 bg-blue-600 rounded border-dashed border" />
-                <span className="text-[11px] font-semibold text-gray-500">Kế hoạch</span>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="py-10 text-center">
-            <BarChart3 size={28} className="text-gray-200 mx-auto mb-2" />
-            <p className="text-[12px] font-bold text-gray-400">Chưa có dữ liệu chi tiêu</p>
-          </div>
-        )}
+        <BudgetChart data={chartData} recommendedDaily={recommendedDaily} />
       </div>
 
       {/* Transactions */}

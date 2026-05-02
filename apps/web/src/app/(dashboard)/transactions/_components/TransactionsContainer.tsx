@@ -6,13 +6,16 @@ import { Transaction } from '@finance/api-client';
 import Decimal from 'decimal.js';
 import { TransactionsView, FilterType, SortOrder } from './TransactionsView';
 
+const PAGE_SIZE = 100;
+
 export function TransactionsContainer() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  const [offset, setOffset] = useState(0);
 
   // Fetch transactions from API
-  const { data: apiTransactions = [], isLoading } = useTransactions({ limit: 100 });
+  const { data: apiTransactions = [], isLoading } = useTransactions({ limit: PAGE_SIZE, offset });
 
   const filtered = useMemo(() => {
     let list = apiTransactions.filter((tx: Transaction) => {
@@ -61,6 +64,10 @@ export function TransactionsContainer() {
     return [...map.entries()];
   }, [filtered]);
 
+  const handleLoadMore = () => {
+    setOffset((prev) => prev + PAGE_SIZE);
+  };
+
   const handleExportCSV = () => {
     const headers = ['Ngày', 'Danh mục', 'Ghi chú', 'Loại', 'Số tiền'];
     const rows = filtered.map((tx: Transaction) => [
@@ -93,6 +100,9 @@ export function TransactionsContainer() {
       sortOrder={sortOrder}
       onSortChange={setSortOrder}
       onExportCSV={handleExportCSV}
+      onLoadMore={handleLoadMore}
+      hasMore={apiTransactions.length === PAGE_SIZE}
+      offset={offset}
     />
   );
 }

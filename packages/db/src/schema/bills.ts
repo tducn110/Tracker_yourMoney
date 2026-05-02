@@ -36,6 +36,7 @@ export const bills = mysqlTable("bills", {
   userIdx:       index("idx_bills_user").on(table.userId, table.isActive),
   userDueDayIdx: index("idx_bills_user_dueday").on(table.userId, table.dueDay),
   userFreqIdx:   index("idx_bills_user_freq").on(table.userId, table.frequency),
+  catIdx:        index("idx_bills_category").on(table.categoryId),
   amountCheck:   check("chk_bills_amount_positive", sql`amount > 0`),
   dueDayCheck:   check("chk_bills_due_day", sql`due_day BETWEEN 1 AND 31`),
 }));

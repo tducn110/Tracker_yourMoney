@@ -271,11 +271,11 @@ export class WalletService {
     const sourceAfter = sourceBefore.minus(amt);
     const targetAfter = targetBefore.plus(amt);
 
-    // Find "Transfer" category or default to "Khác"
-    const allCats = await this.categoryRepository.findAll(userId);
-    const transferCat = allCats.find((c: any) =>
-      c.name.toLowerCase().includes("chuyển") || c.name.toLowerCase().includes("transfer")
-    );
+    // Find "Transfer" category — targeted query instead of fetching all
+    let transferCat = await this.categoryRepository.findByName("Chuyển tiền", userId);
+    if (!transferCat) {
+      transferCat = await this.categoryRepository.findByName("Transfer", userId);
+    }
     const catId = transferCat?.id ?? 1; // fallback to category ID 1
 
     await db.transaction(async (tx: any) => {

@@ -202,6 +202,9 @@ interface TransactionsViewProps {
   sortOrder: SortOrder;
   onSortChange: (val: SortOrder) => void;
   onExportCSV?: () => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  offset?: number;
 }
 
 export function TransactionsView({
@@ -216,6 +219,9 @@ export function TransactionsView({
   sortOrder,
   onSortChange,
   onExportCSV,
+  onLoadMore,
+  hasMore = false,
+  offset = 0,
 }: TransactionsViewProps) {
   const [showSort, setShowSort] = useState(false);
 
@@ -372,12 +378,18 @@ export function TransactionsView({
           <p className="text-[11px] font-bold text-gray-400">
             Hiển thị {filteredTransactions.length} / {totalTransactions} giao
             dịch
+            {offset > 0 && ` (trang ${Math.floor(offset / 100) + 1})`}
           </p>
-          {filteredTransactions.length < totalTransactions && (
-            <button className="text-[11px] font-bold text-blue-600 hover:underline">
-              Xem thêm
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {hasMore && (
+              <button
+                onClick={() => onLoadMore?.()}
+                className="text-[11px] font-bold text-blue-600 hover:underline"
+              >
+                Xem thêm
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
