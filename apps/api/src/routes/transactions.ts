@@ -11,7 +11,7 @@ import { logger } from "../lib/logger";
 
 const querySchema = z.object({
   month:       z.string().regex(/^\d{4}-\d{2}$/).optional(),
-  category_id: z.coerce.number().optional(),
+  categoryId: z.coerce.number().optional(),
   type:        z.enum(["income", "expense", "transfer"]).optional(),
   page:        z.coerce.number().default(1),
   limit:       z.coerce.number().max(100).default(20),
@@ -29,7 +29,7 @@ export const transactionRoutes = new Hono<{ Variables: { userId: string, correla
     const userId = c.get("userId");
     const q = c.req.valid("query");
     const data = await getTransactionsPaginated(userId, {
-      month: q.month, categoryId: q.category_id, type: q.type,
+      month: q.month, categoryId: q.categoryId, type: q.type,
       page: q.page, limit: q.limit,
     });
     const transactionsWithSafeAmount = data.transactions.map((tx: any) => ({
