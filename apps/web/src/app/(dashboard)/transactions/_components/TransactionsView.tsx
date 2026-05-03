@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Search,
   TrendingUp,
   TrendingDown,
   ArrowUpDown,
   Download,
+  Upload,
   ReceiptText,
 } from 'lucide-react';
 import { formatCurrency, Transaction } from '@finance/api-client';
+import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/EmptyState';
 import Decimal from 'decimal.js';
@@ -132,7 +134,7 @@ function TransactionRow({ tx }: { tx: Transaction }) {
 
       <div className="hidden sm:block shrink-0 text-center">
         <p className="text-[11px] font-bold text-gray-500">
-          {new Date(tx.date).toLocaleDateString('vi-VN')}
+          {new Date(tx.displayDate).toLocaleDateString('vi-VN')}
         </p>
       </div>
 
@@ -202,6 +204,7 @@ interface TransactionsViewProps {
   sortOrder: SortOrder;
   onSortChange: (val: SortOrder) => void;
   onExportCSV?: () => void;
+  onImportCSV?: (file: File) => Promise<void>;
   onLoadMore?: () => void;
   hasMore?: boolean;
   offset?: number;
@@ -219,11 +222,13 @@ export function TransactionsView({
   sortOrder,
   onSortChange,
   onExportCSV,
+  onImportCSV,
   onLoadMore,
   hasMore = false,
   offset = 0,
 }: TransactionsViewProps) {
   const [showSort, setShowSort] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="p-4 md:p-6 pb-24 max-w-[960px] mx-auto space-y-5">
@@ -326,6 +331,34 @@ export function TransactionsView({
           <Download size={13} />
           Xuất CSV
         </button>
+
+        {/* Import */}
+        {onImportCSV && (
+          <>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-gray-200 text-[11px] font-bold text-gray-600 hover:border-emerald-300 hover:text-emerald-600 transition-all shadow-sm"
+            >
+              <Upload size={13} />
+              Nhập CSV
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  onImportCSV(file).finally(() => {
+                    // Reset input so same file can be re-imported
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  });
+                }
+              }}
+            />
+          </>
+        )}
       </div>
 
       {/* Transaction list */}

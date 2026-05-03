@@ -13,6 +13,11 @@ const querySchema = z.object({
   month:       z.string().regex(/^\d{4}-\d{2}$/).optional(),
   categoryId: z.coerce.number().optional(),
   type:        z.enum(["income", "expense", "transfer"]).optional(),
+  search:      z.string().optional(),
+  dateFrom:    z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  dateTo:      z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  amountMin:   z.string().optional(),
+  amountMax:   z.string().optional(),
   page:        z.coerce.number().default(1),
   limit:       z.coerce.number().max(100).default(20),
 });
@@ -30,6 +35,8 @@ export const transactionRoutes = new Hono<{ Variables: { userId: string, correla
     const q = c.req.valid("query");
     const data = await getTransactionsPaginated(userId, {
       month: q.month, categoryId: q.categoryId, type: q.type,
+      search: q.search, dateFrom: q.dateFrom, dateTo: q.dateTo,
+      amountMin: q.amountMin, amountMax: q.amountMax,
       page: q.page, limit: q.limit,
     });
     const transactionsWithSafeAmount = data.transactions.map((tx: any) => ({
@@ -108,5 +115,48 @@ export const transactionRoutes = new Hono<{ Variables: { userId: string, correla
 
   // DELETE is intentionally not exposed — transactions are immutable ledger entries.
   // To reverse a transaction, create a reversal (income → expense or vice versa).
+
+  // POST /api/v1/transactions/import — CSV bulk import
+  .post("/import", async (c) => {
+    const userId = c.get("userId");
+    const correlationId = c.get("correlationId");
+    const idempotencyKey = c.req.header("Idempotency-Key");
+
+    // Idempotency check for the entire import batch
+    if (idempotencyKey) {
+      const existing = await transactionService.getTransactionByIdempotencyKey(userId, idempotencyKey);
+      if (existing) {
+        return err(c, 409, "CONFLICT", "File này đã được import trước đó", { id: existing.id });
+      }
+    }
+
+    const formData = await c.req.formData();
+    const file = formData.get("file") as File | null;
+    const walletId = formData.get("walletId") as string | null;
+
+    if (!file) return err(c, 400, "BAD_REQUEST", "Vui lòng chọn file CSV");
+    if (!walletId) return err(c, 400, "BAD_REQUEST", "Vui lòng chọn ví");
+
+    try {
+      const text = await file.text();
+      const result = await transactionService.importCSV(userId, text, walletId, idempotencyKey);
+      logger.info({
+        event: "CSV_IMPORT_COMPLETE",
+        correlationId,
+        imported: result.imported,
+        skipped: result.skipped,
+        errors: result.errors,
+      });
+      return created(c, result);
+    } catch (e: any) {
+      logger.error({
+        event: "CSV_IMPORT_FAILED",
+        correlationId,
+        message: e.message,
+      });
+      return err(c, 422, "IMPORT_FAILED", e.message || "Không thể import file CSV");
+    }
+  })
+
   ;
 

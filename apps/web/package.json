@@ -79,7 +79,7 @@
     "@eslint/js": "^10.0.1",
     "@next/eslint-plugin-next": "16.2.4",
     "@playwright/test": "^1.59.1",
-    "@tailwindcss/postcss": "^4.2.2",
+    "@tailwindcss/postcss": "^4.2.4",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
@@ -87,7 +87,7 @@
     "axe-playwright": "^2.2.2",
     "eslint": "^10.2.1",
     "eslint-config-next": "16.2.4",
-    "tailwindcss": "^4.2.2",
+    "tailwindcss": "^4.2.4",
     "typescript": "^6.0.3"
   }
 }

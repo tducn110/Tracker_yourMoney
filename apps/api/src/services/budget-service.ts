@@ -18,20 +18,7 @@ export class BudgetService {
 
     if (userBudgets.length === 0) return [];
 
-    // Batch compute spent per budget (3 queries total, no N+1)
-    const budgetIds = userBudgets.map((b) => b.id);
-    const allBudgetCats = await db
-      .select()
-      .from(budgetCategories)
-      .where(inArray(budgetCategories.budgetId, budgetIds));
-
-    const budgetCatMap = new Map<string, number[]>();
-    for (const bc of allBudgetCats) {
-      const bid = String(bc.budgetId);
-      if (!budgetCatMap.has(bid)) budgetCatMap.set(bid, []);
-      budgetCatMap.get(bid)!.push(Number(bc.categoryId));
-    }
-
+    // Compute overall date range
     let minDate = userBudgets[0].startDate;
     let maxDate = userBudgets[0].endDate;
     for (const b of userBudgets) {
@@ -39,16 +26,32 @@ export class BudgetService {
       if (b.endDate > maxDate) maxDate = b.endDate;
     }
 
-    const allTxs = await db
-      .select()
-      .from(transactions)
-      .where(
-        and(
-          eq(transactions.userId, userId),
-          eq(transactions.type, "expense"),
-          between(transactions.displayDate, minDate, maxDate),
+    const budgetIds = userBudgets.map((b) => b.id);
+
+    // Fetch budget categories + transactions in parallel (2 independent queries)
+    const [allBudgetCats, allTxs] = await Promise.all([
+      db
+        .select()
+        .from(budgetCategories)
+        .where(inArray(budgetCategories.budgetId, budgetIds)),
+      db
+        .select()
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.userId, userId),
+            eq(transactions.type, "expense"),
+            between(transactions.displayDate, minDate, maxDate),
+          ),
         ),
-      );
+    ]);
+
+    const budgetCatMap = new Map<string, number[]>();
+    for (const bc of allBudgetCats) {
+      const bid = String(bc.budgetId);
+      if (!budgetCatMap.has(bid)) budgetCatMap.set(bid, []);
+      budgetCatMap.get(bid)!.push(Number(bc.categoryId));
+    }
 
     return userBudgets.map((budget) => {
       const bCatIds = budgetCatMap.get(String(budget.id)) || [];
@@ -95,21 +98,7 @@ export class BudgetService {
       };
     }
 
-    // 1. Get all budget categories in one go
-    const budgetIds = activeBudgets.map(b => b.id);
-    const allBudgetCats = await db
-      .select()
-      .from(budgetCategories)
-      .where(inArray(budgetCategories.budgetId, budgetIds));
-
-    const budgetCatMap = new Map<string, number[]>();
-    for (const bc of allBudgetCats) {
-      const bid = String(bc.budgetId);
-      if (!budgetCatMap.has(bid)) budgetCatMap.set(bid, []);
-      budgetCatMap.get(bid)!.push(Number(bc.categoryId));
-    }
-
-    // 2. Find the overall date range to fetch transactions once
+    // 1. Compute overall date range
     let minDate = activeBudgets[0].startDate;
     let maxDate = activeBudgets[0].endDate;
     for (const b of activeBudgets) {
@@ -117,17 +106,49 @@ export class BudgetService {
       if (b.endDate > maxDate) maxDate = b.endDate;
     }
 
-    // 3. Fetch all expenses in this range
-    const allTxs = await db
-      .select()
-      .from(transactions)
-      .where(
-        and(
-          eq(transactions.userId, userId),
-          eq(transactions.type, "expense"),
-          between(transactions.displayDate, minDate, maxDate),
-        )
-      );
+    const budgetIds = activeBudgets.map(b => b.id);
+
+    // 2. Fetch budget categories + transactions + income in parallel (3 independent queries)
+    const [allBudgetCats, allTxs, incomeRow] = await Promise.all([
+      db
+        .select()
+        .from(budgetCategories)
+        .where(inArray(budgetCategories.budgetId, budgetIds)),
+      db
+        .select()
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.userId, userId),
+            eq(transactions.type, "expense"),
+            between(transactions.displayDate, minDate, maxDate),
+          ),
+        ),
+      (async () => {
+        const now = new Date();
+        const incomeStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const incomeEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+        const [row] = await db
+          .select({ total: sum(transactions.amount) })
+          .from(transactions)
+          .where(
+            and(
+              eq(transactions.userId, userId),
+              eq(transactions.type, "income"),
+              between(transactions.displayDate, incomeStart, incomeEnd),
+            ),
+          );
+        return row;
+      })(),
+    ]);
+
+    const budgetCatMap = new Map<string, number[]>();
+    for (const bc of allBudgetCats) {
+      const bid = String(bc.budgetId);
+      if (!budgetCatMap.has(bid)) budgetCatMap.set(bid, []);
+      budgetCatMap.get(bid)!.push(Number(bc.categoryId));
+    }
 
     // 4. Calculate spent and projected for each budget
     let totalLimit = new Decimal(0);
@@ -161,23 +182,6 @@ export class BudgetService {
       totalProjected = totalProjected.plus(bProjected);
     }
 
-    // 5. Get total income for current month (fixed to current calendar month)
-    const now = new Date();
-    const incomeStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const incomeEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-
-    const [incomeRow] = await db
-      .select({ total: sum(transactions.amount) })
-      .from(transactions)
-      .where(
-        and(
-          eq(transactions.userId, userId),
-          eq(transactions.type, "income"),
-          between(transactions.displayDate, incomeStart, incomeEnd),
-        ),
-      );
-
     const left = totalLimit.minus(totalSpent);
     const percent = totalLimit.isZero() ? 0 : totalSpent.div(totalLimit).times(100).toNumber();
 
@@ -205,7 +209,7 @@ export class BudgetService {
     if (!budget)
       throw Object.assign(new Error("Budget not found"), { code: "NOT_FOUND" });
 
-    // Fetch budget categories + transactions in parallel (single batch, no duplicate queries)
+    // Fetch budget categories + related transactions (categories needed for tx filter)
     let categoryIds: number[] = [];
     let budgetCats: { categoryId: number; name: string; icon: string }[] = [];
     if (!budget.isAllCategories) {

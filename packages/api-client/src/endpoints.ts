@@ -50,11 +50,11 @@ export const budgetAPI = {
 };
 
 export const transactionsAPI = {
-  list: (params?: any) => 
+  list: (params?: any) =>
     apiClient.get<{ transactions: Transaction[]; total: number; pages: number }>('/api/v1/transactions', { params }) as unknown as Promise<{ transactions: Transaction[]; total: number; pages: number }>,
-  create: (data: Partial<Transaction>, idempotencyKey?: string) => 
-    apiClient.post<Transaction>('/api/v1/transactions', data, { 
-      headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {} 
+  create: (data: Partial<Transaction>, idempotencyKey?: string) =>
+    apiClient.post<Transaction>('/api/v1/transactions', data, {
+      headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
     }) as unknown as Promise<Transaction>,
   quickAdd: (text: string, options?: { walletId: string; categoryId?: number; idempotencyKey?: string }) =>
     apiClient.post<Transaction>('/api/v1/transactions/quick',
@@ -63,6 +63,13 @@ export const transactionsAPI = {
     ) as unknown as Promise<Transaction>,
   update: (id: string, data: Partial<Transaction>) =>
     apiClient.put<Transaction>(`/api/v1/transactions/${id}`, data) as unknown as Promise<Transaction>,
+  importCSV: (formData: FormData, idempotencyKey?: string) =>
+    apiClient.post<{ imported: number; skipped: number; errors: string[] }>('/api/v1/transactions/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+      },
+    }) as unknown as Promise<{ imported: number; skipped: number; errors: string[] }>,
 };
 
 export const goalsAPI = {

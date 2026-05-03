@@ -79,7 +79,7 @@ function computeDailySpend(txs: any[], startDate: string, endDate: string, recom
 
   // Sum amounts per day
   for (const tx of txs) {
-    const day = (tx.displayDate || tx.date || '').slice(0, 10);
+    const day = (tx.displayDate || '').slice(0, 10);
     if (day && dailyMap.has(day)) {
       dailyMap.set(day, (dailyMap.get(day) || 0) + parseFloat(tx.amount));
     }
@@ -300,7 +300,7 @@ export default function BudgetDetailPage() {
                   <div>
                     <p className="text-[13px] font-bold text-gray-900">{tx.note ?? tx.category?.name ?? 'Không ghi chú'}</p>
                     <p className="text-[11px] font-semibold text-gray-400">
-                      {tx.category?.name ?? tx.categoryName ?? ''} • {new Date(tx.displayDate || tx.date).toLocaleDateString('vi-VN')}
+                      {tx.category?.name ?? tx.categoryName ?? ''} • {new Date(tx.displayDate).toLocaleDateString('vi-VN')}
                     </p>
                   </div>
                 </div>
