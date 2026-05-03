@@ -57,22 +57,21 @@ export async function socialLogin(
         // Generate a simple username from email
         const baseUsername = email.split("@")[0].replace(/[^a-z0-9_]/g, "_").toLowerCase();
         const username = `${baseUsername}_${Math.random().toString(36).substring(2, 7)}`;
-        
-        const insertResult = await tx.insert(users).values({
+
+        const [newUser] = await tx.insert(users).values({
           email,
           username,
           fullName: name ?? email.split("@")[0],
           avatarUrl: picture ?? null,
           firebaseUid,
-          emailVerified: 1, // Firebase verified email
-        });
+          emailVerified: true, // Firebase verified email
+        }).returning();
 
-        // Handle both [ResultSetHeader, undefined] (mysql2) and { insertId } (tidb-serverless)
-        const insertId = Array.isArray(insertResult) ? insertResult[0].insertId : (insertResult as any).insertId;
-        const newUserId = insertId.toString();
-        
+        if (!newUser) throw new Error("Failed to create user");
+        const newUserId = String(newUser.id);
+
         await tx.insert(userSettings).values({ userId: newUserId as any });
-        await tx.insert(wallets).values({ userId: newUserId as any, name: "Ví Tiền Mặt", type: "cash", isDefault: 1 });
+        await tx.insert(wallets).values({ userId: newUserId as any, name: "Ví Tiền Mặt", type: "cash", isDefault: true });
       });
 
       [user] = await db

@@ -23,7 +23,7 @@ if (process.env.SENTRY_DSN) {
 }
 
 // ── GLOBAL POLYFILLS ───────────────────────────────────────────────
-// Support BigInt serialization in JSON.stringify (required for TiDB IDs)
+// Support BigInt serialization in JSON.stringify (required for PostgreSQL bigint IDs)
 (BigInt.prototype as any).toJSON = function () {
   return this.toString();
 };

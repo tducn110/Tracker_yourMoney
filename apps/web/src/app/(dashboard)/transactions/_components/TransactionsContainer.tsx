@@ -31,7 +31,7 @@ export function TransactionsContainer() {
   // Get default wallet ID for CSV import
   const { data: wallets = [] } = useWallets();
   const defaultWalletId = useMemo(() => {
-    const def = wallets.find((w: any) => w.isDefault === 1);
+    const def = wallets.find((w: any) => Boolean(w.isDefault));
     return def?.id ?? wallets[0]?.id ?? null;
   }, [wallets]);
 

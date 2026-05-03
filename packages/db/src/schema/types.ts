@@ -1,8 +1,8 @@
-import { customType } from "drizzle-orm/mysql-core";
+import { customType } from "drizzle-orm/pg-core";
 
 export const bigintString = customType<{ data: string; driverParam: string | number }>({
   dataType() {
-    return "bigint unsigned";
+    return "bigint";
   },
   toDriver(value: string) {
     return value;

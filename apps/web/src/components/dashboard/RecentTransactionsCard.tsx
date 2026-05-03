@@ -131,7 +131,7 @@ export function RecentTransactionsCard() {
   const [filter, setFilter] = useState<FilterType>('all');
   
   const { data: transactionsData, isLoading } = useTransactions({ limit: DISPLAY_LIMIT * 2 });
-  const allTransactions = Array.isArray(transactionsData) ? transactionsData : [];
+  const allTransactions = (transactionsData as any)?.transactions ?? (Array.isArray(transactionsData) ? transactionsData : []);
 
   const filtered = useMemo(() =>
     allTransactions

@@ -12,20 +12,26 @@ const nextConfig: NextConfig = {
   compress: true, // enable gzip/brotli via Next.js built-in
 
   // ── Cache Headers for Static Assets (Phase 28) ───────────────────────
+  // NOTE: Do NOT set immutable cache on /_next/static/ in development —
+  // it causes "module factory not available" errors after server restarts
+  // because the browser serves stale chunks with old hashes.
   async headers() {
+    const isDev = process.env.NODE_ENV === 'development';
     return [
-      {
-        source: '/_next/static/(.*)',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-      {
-        source: '/fonts/(.*)',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
+      ...(isDev ? [] : [
+        {
+          source: '/_next/static/(.*)',
+          headers: [
+            { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          ],
+        },
+        {
+          source: '/fonts/(.*)',
+          headers: [
+            { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          ],
+        },
+      ]),
       {
         source: '/images/(.*)',
         headers: [
@@ -50,7 +56,11 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  transpilePackages: ['@finance/db', '@finance/shared-schemas'],
+  transpilePackages: ['@finance/db', '@finance/shared-schemas', '@finance/api-client'],
+  // Next.js 16.2.x + pnpm monorepo workarounds for "module factory is not available"
+  experimental: {
+    optimizePackageImports: ['@finance/db', '@finance/shared-schemas', '@finance/api-client'],
+  },
 };
 
 export default nextConfig;

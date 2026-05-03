@@ -1,4 +1,4 @@
-import mysql from "mysql2/promise";
+import { Pool } from "pg";
 import path from "path";
 import * as dotenv from "dotenv";
 import fs from "fs";
@@ -6,7 +6,6 @@ import crypto from "crypto";
 import { fileURLToPath } from "url";
 
 // ── ROBUST PATHING ───────────────────────────────────────────────────
-// Ensures script works from any directory in the monorepo
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -52,7 +51,7 @@ function getMigrations() {
 
   return entries.map((entry) => {
     const filePath = path.join(migrationsDir, entry.sqlFile);
-    
+
     // Integrity Check 1: File Existence
     if (!fs.existsSync(filePath)) {
       throw new Error(`Critical Integrity Failure: Migration file listed in journal not found on disk: "${entry.sqlFile}"`);
@@ -89,34 +88,44 @@ async function syncMetadata() {
     process.exit(1);
   }
 
-  const connection = await mysql.createConnection(process.env.DATABASE_URL);
-  
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
   try {
-    const [rows] = await connection.query<mysql.RowDataPacket[]>("SHOW TABLES LIKE \"__drizzle_migrations\"");
-    
-    if (rows.length === 0) {
-      process.stdout.write("⚠️ Infrastructure Warning: __drizzle_migrations table does not exist. Initializing...\n");
-      // Use backticks for table name in SQL to support reserved words/special chars
-      await connection.query("CREATE TABLE `__drizzle_migrations` (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, hash TEXT NOT NULL, created_at BIGINT NOT NULL) ENGINE=InnoDB");
+    const client = await pool.connect();
+    try {
+      const { rows } = await client.query(
+        "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '__drizzle_migrations')"
+      );
+
+      if (!rows[0].exists) {
+        process.stdout.write("⚠️ Infrastructure Warning: __drizzle_migrations table does not exist. Initializing...\n");
+        await client.query(
+          "CREATE TABLE __drizzle_migrations (id BIGSERIAL PRIMARY KEY, hash TEXT NOT NULL, created_at BIGINT NOT NULL)"
+        );
+      }
+
+      const migrations = getMigrations();
+      process.stdout.write(`📦 Found ${migrations.length} migrations in directory.\n`);
+
+      await client.query("TRUNCATE TABLE __drizzle_migrations");
+      for (const entry of migrations) {
+        await client.query(
+          "INSERT INTO __drizzle_migrations (hash, created_at) VALUES ($1, $2)",
+          [entry.hash, entry.timestamp]
+        );
+      }
+
+      process.stdout.write("--- ✅ METADATA SYNCHRONIZATION SUCCESSFUL ---\n");
+    } finally {
+      client.release();
     }
-
-    const migrations = getMigrations();
-    process.stdout.write(`📦 Found ${migrations.length} migrations in directory.\n`);
-
-    await connection.query("TRUNCATE TABLE `__drizzle_migrations` ");
-    for (const entry of migrations) {
-      await connection.query("INSERT INTO `__drizzle_migrations` (hash, created_at) VALUES (?, ?)", [entry.hash, entry.timestamp]);
-    }
-
-    process.stdout.write("--- ✅ METADATA SYNCHRONIZATION SUCCESSFUL ---\n");
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     process.stderr.write("❌ CRITICAL FAILURE: " + errorMessage + "\n");
     process.exit(1);
   } finally {
-    await connection.end();
+    await pool.end();
   }
 }
 
 syncMetadata();
-

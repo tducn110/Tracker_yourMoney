@@ -1,1 +1,0 @@
-ALTER TABLE `transactions` MODIFY COLUMN `source` enum('manual','quick_add','ocr','import','recurring','bill_payment','goal_contribution') NOT NULL DEFAULT 'manual';

@@ -17,8 +17,8 @@ export const insertBillSchema = z.object({
   amount:     decimalString,
   dueDay:     z.number().int().min(1).max(31),
   frequency:  z.enum(["monthly", "quarterly", "yearly"]).default("monthly"),
-  autoPay:    z.number().min(0).max(1).default(0),
-  isActive:   z.number().min(0).max(1).default(1),
+  autoPay:    z.boolean().default(false),
+  isActive:   z.boolean().default(true),
   notes:      z.string().max(65535).optional(),
 });
 

@@ -41,25 +41,25 @@ internalRoutes.post("/seed-user", async (c) => {
     // Standard Cryptography
     const passwordHash = await hashPassword(password);
 
-    let insertedUserId: number = 0;
+    let insertedUserId: string = "";
 
     await db.transaction(async (tx: any) => {
       // Create user with autoincrement ID
-      const result = await tx.insert(users).values({
+      const [result] = await tx.insert(users).values({
         email,
         username,
         fullName,
         passwordHash,
-      });
+      }).returning({ id: users.id });
 
-      insertedUserId = (result as any).insertId || (result as any)[0]?.insertId;
+      insertedUserId = String(result.id);
 
       // Initialize Settings & Wallet using the auto-generated ID
-      await tx.insert(userSettings).values({ userId: insertedUserId });
-      await tx.insert(wallets).values({ userId: insertedUserId, name: "Ví Tiền Mặt", type: "cash", isDefault: 1 });
+      await tx.insert(userSettings).values({ userId: insertedUserId as any });
+      await tx.insert(wallets).values({ userId: insertedUserId as any, name: "Ví Tiền Mặt", type: "cash", isDefault: true });
     });
-    
-    return created(c, { message: "User seeded successfully (Dynamic ID)", user: { id: String(insertedUserId), email } });
+
+    return created(c, { message: "User seeded successfully (Dynamic ID)", user: { id: insertedUserId, email } });
   } catch (e: any) {
     logError(e, c.req.path, c.req.method, "internal-seed");
     return err(c, 500, "SEED_FAILED", `${e.message} \n ${e.stack}`);

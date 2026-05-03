@@ -61,24 +61,24 @@ export const authRoutes = new Hono()
         } else {
           // Tạo tài khoản mới
           const username = email.split("@")[0] + Math.floor(Math.random() * 1000);
-          const [result] = await db.insert(users).values({
+          const [createdUser] = await db.insert(users).values({
             firebaseUid: uid,
             email,
             username,
             fullName: name || email.split("@")[0],
             avatarUrl: picture || null,
-            emailVerified: 1,
-          });
+            emailVerified: true,
+          }).returning();
 
-          // Handle both [ResultSetHeader, undefined] (mysql2) and { insertId } (tidb-serverless)
-          const insertId = Array.isArray(result) ? result[0].insertId : (result as any).insertId;
-
-          user = await db
-            .select()
-            .from(users)
-            .where(eq(users.id, String(insertId)))
-            .limit(1)
-            .then((rows) => rows[0]);
+          user = createdUser;
+          if (!user) {
+            user = await db
+              .select()
+              .from(users)
+              .where(eq(users.email, email))
+              .limit(1)
+              .then((rows) => rows[0]);
+          }
         }
       }
 

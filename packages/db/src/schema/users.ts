@@ -1,9 +1,9 @@
 import {
-  bigint, varchar, tinyint, timestamp, mysqlTable, index,
-} from "drizzle-orm/mysql-core";
+  bigint, varchar, boolean, timestamp, pgTable, index,
+} from "drizzle-orm/pg-core";
 
-export const users = mysqlTable("users", {
-  id:            bigint("id", { mode: "bigint", unsigned: true }).$type<string>().autoincrement().primaryKey(),
+export const users = pgTable("users", {
+  id:            bigint("id", { mode: "bigint" }).$type<string>().generatedAlwaysAsIdentity().primaryKey(),
   username:      varchar("username", { length: 50 }).notNull().unique(),
   email:         varchar("email", { length: 255 }).notNull().unique(),
   passwordHash:  varchar("password_hash", { length: 255 }), // Nullable for social login
@@ -11,12 +11,12 @@ export const users = mysqlTable("users", {
   fullName:      varchar("full_name", { length: 100 }).notNull(),
   avatarUrl:     varchar("avatar_url", { length: 500 }),
   avatarText:    varchar("avatar_text", { length: 5 }),
-  isActive:      tinyint("is_active").notNull().default(1),
-  emailVerified: tinyint("email_verified").notNull().default(0),
+  isActive:      boolean("is_active").notNull().default(true),
+  emailVerified: boolean("email_verified").notNull().default(false),
   lastLoginAt:   timestamp("last_login_at"),
   deletedAt:     timestamp("deleted_at"),
   createdAt:     timestamp("created_at").notNull().defaultNow(),
-  updatedAt:     timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+  updatedAt:     timestamp("updated_at").notNull().defaultNow(),
 }, (table) => ({
   emailIdx:    index("idx_users_email").on(table.email),
   usernameIdx: index("idx_users_username").on(table.username),

@@ -274,11 +274,16 @@ export function SimpleQuickInput() {
       toast.error('Vui lòng nhập số tiền hợp lệ');
       return;
     }
+    const walletId = selectedWallet || defaultWallet?.id || wallets[0]?.id;
+    if (!walletId) {
+      toast.error('Vui lòng tạo ví trước khi thêm giao dịch');
+      return;
+    }
     setSubmitting(true);
     try {
       const categoryId = resolveCategoryId(selectedCategory, type, categories);
       await createTransaction({
-        walletId: selectedWallet,
+        walletId,
         categoryId,
         amount: String(num),
         type,

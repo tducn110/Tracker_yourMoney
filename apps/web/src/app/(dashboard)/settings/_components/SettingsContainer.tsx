@@ -30,8 +30,8 @@ export function SettingsContainer() {
     setEmergencyBuffer(parseFloat(settings.emergencyBuffer || '0'));
     setMonthlyBudget(settings.monthlyBudget || '0');
     setIncomeDate(settings.incomeDate || 1);
-    setEmailNotifications(settings.notifyEmail === 1);
-    setPushNotifications(settings.notifyPush === 1);
+    setEmailNotifications(Boolean(settings.notifyEmail));
+    setPushNotifications(Boolean(settings.notifyPush));
     setInitialized(true);
   }
 

@@ -5,6 +5,8 @@ import type { INLPAdapter } from "./adapters/nlp-adapter";
 import type { CategoryRepository } from "@finance/db/src/repositories/category-repository";
 import type { ICache } from "@finance/cache";
 import { eventBus } from "../lib/event-bus";
+import { db, wallets, walletLogs, transactions, and, eq, sql } from "@finance/db";
+import Decimal from "decimal.js";
 
 /**
  * Service for managing financial transactions.
@@ -24,10 +26,64 @@ export class TransactionService {
   }
 
   async createTransaction(userId: string, input: InsertTransaction & { walletId: string; idempotencyKey?: string }) {
-    const result = await this.repository.create({
-      ...input,
-      userId: userId as any,
-      walletId: input.walletId as any,
+    if (!input.walletId) {
+      throw Object.assign(new Error("walletId là bắt buộc"), { code: "BAD_REQUEST" });
+    }
+
+    // Fetch current wallet to get balance and version for OCC
+    const [wallet] = await db
+      .select()
+      .from(wallets)
+      .where(and(eq(wallets.id, input.walletId as any), eq(wallets.userId, userId as any)))
+      .limit(1);
+
+    if (!wallet) {
+      throw Object.assign(new Error("Không tìm thấy ví"), { code: "NOT_FOUND" });
+    }
+
+    const amount = new Decimal(input.amount);
+    const balanceBefore = new Decimal(wallet.balance);
+    const isIncome = input.type === "income";
+    const balanceAfter = isIncome ? balanceBefore.plus(amount) : balanceBefore.minus(amount);
+
+    // Atomic: insert transaction + update wallet balance + audit log
+    const result = await db.transaction(async (tx: any) => {
+      const [created] = await tx.insert(transactions).values({
+        ...input,
+        userId: userId as any,
+        walletId: input.walletId as any,
+      }).returning();
+
+      if (!created) throw new Error("Failed to create transaction");
+
+      // OCC: update wallet balance with version check
+      const updateResult = await tx.update(wallets).set({
+        balance: balanceAfter.toFixed(2),
+        version: sql`version + 1`,
+        updatedAt: new Date(),
+      }).where(and(
+        eq(wallets.id, input.walletId as any),
+        eq(wallets.userId, userId as any),
+        eq(wallets.version, wallet.version ?? 0),
+      ));
+
+      if (updateResult.rowCount === 0) {
+        throw Object.assign(new Error("Xung đột cập nhật — vui lòng thử lại"), { code: "CONFLICT" });
+      }
+
+      // Audit log
+      await tx.insert(walletLogs).values({
+        walletId: input.walletId as any,
+        userId: userId as any,
+        transactionId: created.id as any,
+        balanceBefore: balanceBefore.toFixed(2),
+        balanceAfter: balanceAfter.toFixed(2),
+        difference: isIncome ? amount.toFixed(2) : amount.negated().toFixed(2),
+        note: input.note ?? null,
+        idempotencyKey: input.idempotencyKey ?? null,
+      });
+
+      return created;
     });
 
     // Emit event for async processing (budget recalc, cache invalidation)

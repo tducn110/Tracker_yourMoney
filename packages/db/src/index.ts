@@ -1,9 +1,7 @@
 // packages/db/src/index.ts
-// Dual-mode driver: support both standard MySQL TCP (Local/CI) and TiDB HTTP (Edge)
-import { connect } from "@tidbcloud/serverless";
-import { drizzle as drizzleServerless, TiDBServerlessDatabase } from "drizzle-orm/tidb-serverless";
-import { drizzle as drizzleMysql2, MySql2Database } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+// PostgreSQL driver via node-postgres + Drizzle ORM
+import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import * as schema from "./schema/index";
 
 export * from "./client";

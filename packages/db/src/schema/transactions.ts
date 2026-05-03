@@ -3,70 +3,60 @@
 //
 // [v12.0-A] display_date DATE — ngày user tự chọn cho sổ cái, không có timezone confusion
 //           Budget Engine filters: WHERE display_date BETWEEN '2026-04-01' AND '2026-04-30'
-// [v12.0-B] Currency fields deferred to Phase 2 (VND-only MVP)
 // [v12.0-C] type enum includes 'transfer' for wallet-to-wallet moves
-// [FIX #4]  bigint mode: "string" — TiDB distributed ID safety
 //
 // ⚡ COMPOSITE INDEX (user_id, display_date) — CRITICAL for Budget Engine performance
 import {
-  bigint, int, decimal, varchar, timestamp, date,
-  mysqlTable, mysqlEnum, index, check,
-} from "drizzle-orm/mysql-core";
+  bigint, integer, numeric, varchar, timestamp, date,
+  pgTable, pgEnum, index, check,
+} from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
 import { users } from "./users";
 import { categories } from "./categories";
 import { wallets } from "./wallet";
 import { goals } from "./goals";
 
-export const transactions = mysqlTable("transactions", {
-  id:          bigint("id", { mode: "bigint", unsigned: true }).$type<string>().autoincrement().primaryKey(),
-  userId:      bigint("user_id", { mode: "bigint", unsigned: true }).$type<string>().notNull()
+export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense", "transfer"]);
+export const transactionSourceEnum = pgEnum("transaction_source", [
+  "manual", "quick_add", "ocr", "import", "recurring", "bill_payment", "goal_contribution",
+]);
+
+export const transactions = pgTable("transactions", {
+  id:          bigint("id", { mode: "bigint" }).$type<string>().generatedAlwaysAsIdentity().primaryKey(),
+  userId:      bigint("user_id", { mode: "bigint" }).$type<string>().notNull()
                  .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-  walletId:    bigint("wallet_id", { mode: "bigint", unsigned: true }).$type<string>().notNull()
+  walletId:    bigint("wallet_id", { mode: "bigint" }).$type<string>().notNull()
                  .references(() => wallets.id, { onDelete: "restrict", onUpdate: "cascade" }),
-  categoryId:  int("category_id", { unsigned: true }).notNull()
+  categoryId:  integer("category_id").notNull()
                  .references(() => categories.id, { onDelete: "restrict", onUpdate: "cascade" }),
-  goalId:      bigint("goal_id", { mode: "bigint", unsigned: true }).$type<string>()
+  goalId:      bigint("goal_id", { mode: "bigint" }).$type<string>()
                  .references(() => goals.id, { onDelete: "set null", onUpdate: "cascade" }),
 
   // Decimal Trap: amount từ DB là string → dùng new Decimal(tx.amount) tại service layer
   // KHÔNG .toNumber() trực tiếp
-  amount:      decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  amount:      numeric("amount", { precision: 15, scale: 2 }).notNull(),
 
-  // [v12.0-C] 'transfer' cho phép ghi nhận chuyển ví
-  type:        mysqlEnum("type", ["income", "expense", "transfer"]).notNull(),
+  type:        transactionTypeEnum("type").notNull(),
 
   note:        varchar("note", { length: 500 }),
 
   // [v12.0-A] User-controlled date — không phải system timestamp
-  // Cho phép log giao dịch quá khứ đúng ngày
-  displayDate: date("display_date", { mode: "string" }).notNull(),
+  displayDate: date("display_date").notNull(),
 
   receiptUrl:  varchar("receipt_url", { length: 500 }),
-  source:      mysqlEnum("source", ["manual", "quick_add", "ocr", "import", "recurring", "bill_payment", "goal_contribution"])
-                 .notNull().default("manual"),
-  
-  // Idempotency: Khóa đúp từ DB — phòng thủ Cold Start Serverless
-  // UNIQUE constraint đảm bảo cross-instance safety trên Vercel multi-region
+  source:      transactionSourceEnum("source").notNull().default("manual"),
+
   idempotencyKey: varchar("idempotency_key", { length: 255 }).unique(),
 
   createdAt:   timestamp("created_at").notNull().defaultNow(),
-  updatedAt:   timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-
-  // Phase 2 multi-currency (uncomment + migration when expanding):
-  // currencyCode: varchar("currency_code", { length: 10 }).notNull().default("VND"),
-  // exchangeRate: decimal("exchange_rate", { precision: 18, scale: 6 }).notNull().default("1.000000"),
-  // baseAmount:   decimal("base_amount", { precision: 15, scale: 2 }).notNull(),
+  updatedAt:   timestamp("updated_at").notNull().defaultNow(),
 }, (table) => ({
-  // ⚡ COMPOSITE INDEX — Budget Engine lifeblood
   userDateIdx:  index("idx_tx_user_date").on(table.userId, table.displayDate),
   userTypeIdx:  index("idx_tx_user_type").on(table.userId, table.type),
   userCatIdx:   index("idx_tx_user_cat").on(table.userId, table.categoryId),
-  // Targeted index for Budget Engine: WHERE userId=? AND type='expense' AND displayDate BETWEEN ? AND ?
   userTypeDateIdx: index("idx_tx_user_type_date").on(table.userId, table.type, table.displayDate),
   walletIdx:    index("idx_tx_wallet").on(table.walletId),
   goalIdx:      index("idx_tx_goal").on(table.goalId),
-  // CHECK: amount phải luôn dương
   amountCheck:  check("chk_tx_amount_positive", sql`amount > 0`),
 }));
 
