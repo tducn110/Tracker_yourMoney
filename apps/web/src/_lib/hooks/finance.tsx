@@ -33,12 +33,13 @@ import {
 /**
  * Hook: Transactions List
  */
-export function useTransactions(params?: { limit?: number; offset?: number; categoryId?: number; type?: string }) {
+export function useTransactions(params?: { limit?: number; offset?: number; categoryId?: number; type?: string; search?: string; month?: string }) {
   return useQuery({
     queryKey: ['transactions', params],
     queryFn: async () => {
       const data = await transactionsAPI.list(params);
-      return data.transactions || data || [];
+      // API returns { transactions, total, pages } — keep full response for pagination
+      return data;
     },
     staleTime: 5 * 60 * 1000,
     retry: (failureCount, error: any) => {
@@ -61,6 +62,7 @@ export function useQuickAdd() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.refetchQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
     },
@@ -148,33 +150,41 @@ export function useCreateTransaction() {
       const idempotencyKey = crypto.randomUUID();
       return transactionsAPI.create(data, idempotencyKey);
     },
-    // ⚡ OPTIMISTIC UI: Update cache immediately
+    // ⚡ OPTIMISTIC UI: Update cache immediately across all transaction queries
     onMutate: async (newTx) => {
-      // Cancel outgoing refetches (so they don't overwrite our optimistic update)
+      // Cancel outgoing refetches for ALL transaction queries (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: ['transactions'] });
 
-      // Snapshot the previous value
-      const previousTransactions = queryClient.getQueryData(['transactions']);
+      // Snapshot ALL matching transaction query caches
+      const previousQueries = queryClient.getQueriesData({ queryKey: ['transactions'] });
 
-      // Optimistically update to the new value
-      queryClient.setQueryData(['transactions'], (old: any) => {
+      // Optimistically update ALL matching query caches
+      queryClient.setQueriesData({ queryKey: ['transactions'] }, (old: any) => {
         const optimisticTx = {
           id: `temp-${Date.now()}`,
           ...newTx,
           amount: String(newTx.amount),
+          displayDate: newTx.displayDate || new Date().toISOString().split('T')[0],
           createdAt: new Date().toISOString(),
           isOptimistic: true, // Tag for UI to show "pending" state
         };
-        return Array.isArray(old) ? [optimisticTx, ...old] : [optimisticTx];
+        // Handle both object format { transactions: [...], total, pages } and array format
+        if (old && typeof old === 'object' && Array.isArray(old.transactions)) {
+          return { ...old, transactions: [optimisticTx, ...old.transactions], total: (old.total || 0) + 1 };
+        }
+        if (Array.isArray(old)) return [optimisticTx, ...old];
+        return old;
       });
 
-      // Return a context object with the snapshotted value
-      return { previousTransactions };
+      // Return a context object with all snapshotted queries
+      return { previousQueries };
     },
-    // 🛡️ ROLLBACK: If mutation fails, use the context returned from onMutate
+    // 🛡️ ROLLBACK: If mutation fails, restore all snapshotted query caches
     onError: (err: any, newTx, context) => {
-      if (context?.previousTransactions) {
-        queryClient.setQueryData(['transactions'], context.previousTransactions);
+      if (context?.previousQueries) {
+        for (const [queryKey, data] of context.previousQueries) {
+          queryClient.setQueryData(queryKey, data);
+        }
       }
       
       const correlationId = err.data?.error?.correlationId;
@@ -188,6 +198,7 @@ export function useCreateTransaction() {
     // 🔄 SYNC: Always refetch after error or success to ensure server sync
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.refetchQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
     },
@@ -205,24 +216,39 @@ export function useUpdateTransaction() {
       return transactionsAPI.update(id, data);
     },
     
-    // ⚡ OPTIMISTIC UI
+    // ⚡ OPTIMISTIC UI across all transaction queries
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: ['transactions'] });
-      const previousTransactions = queryClient.getQueryData(['transactions']);
+      const previousQueries = queryClient.getQueriesData({ queryKey: ['transactions'] });
 
-      queryClient.setQueryData(['transactions'], (old: any) => {
-        if (!Array.isArray(old)) return old;
-        return old.map((tx: any) => 
-          tx.id === id ? { ...tx, ...data, isOptimistic: true } : tx
-        );
+      queryClient.setQueriesData({ queryKey: ['transactions'] }, (old: any) => {
+        if (!old || typeof old !== 'object') return old;
+        // Handle object format { transactions: [...], total, pages }
+        if (Array.isArray(old.transactions)) {
+          return {
+            ...old,
+            transactions: old.transactions.map((tx: any) =>
+              tx.id === id ? { ...tx, ...data, isOptimistic: true } : tx
+            ),
+          };
+        }
+        // Handle array format (legacy)
+        if (Array.isArray(old)) {
+          return old.map((tx: any) =>
+            tx.id === id ? { ...tx, ...data, isOptimistic: true } : tx
+          );
+        }
+        return old;
       });
 
-      return { previousTransactions };
+      return { previousQueries };
     },
     // 🛡️ ROLLBACK
     onError: (err: any, variables, context) => {
-      if (context?.previousTransactions) {
-        queryClient.setQueryData(['transactions'], context.previousTransactions);
+      if (context?.previousQueries) {
+        for (const [queryKey, data] of context.previousQueries) {
+          queryClient.setQueryData(queryKey, data);
+        }
       }
       const correlationId = err.data?.error?.correlationId;
       toast.error(
@@ -232,9 +258,10 @@ export function useUpdateTransaction() {
         </div>
       );
     },
-    // 🔄 SYNC
+    // 🔄 SYNC: Always refetch after error or success to ensure server sync
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.refetchQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
     },
@@ -443,6 +470,8 @@ export function usePayBill() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bills'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.refetchQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
     },
@@ -491,7 +520,10 @@ export function useUpdateCashWallet() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
+      queryClient.refetchQueries({ queryKey: ['wallet', 'cash'] });
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.refetchQueries({ queryKey: ['transactions'] });
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || err?.message || 'Không thể cập nhật số dư');

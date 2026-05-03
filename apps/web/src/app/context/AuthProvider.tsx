@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { 
   onAuthStateChanged, 
   signInWithPopup, 
@@ -35,12 +35,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const socialLoginInProgress = useRef(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        // Skip /auth/me check if social login is about to set the user from /auth/social response
+        if (socialLoginInProgress.current) {
+          setLoading(false);
+          return;
+        }
         try {
-          const response = await fetch("/api/auth/me");
+          const response = await fetch("/api/auth/me", {
+            credentials: "include",
+          });
           if (response.ok) {
             const data = await response.json();
             setUser(data.data);
@@ -62,15 +70,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loginWithSocial = async (provider: FirebaseAuthProvider) => {
+    socialLoginInProgress.current = true;
     try {
       setLoading(true);
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();
-      
+
       const response = await fetch("/api/auth/social", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken }),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -90,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Social login error:", error);
       toast.error(error.message || "Đăng nhập thất bại");
     } finally {
+      socialLoginInProgress.current = false;
       setLoading(false);
     }
   };
@@ -102,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await firebaseSignOut(auth);
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
       setUser(null);
       router.push("/login");
       toast.success("Đã đăng xuất");

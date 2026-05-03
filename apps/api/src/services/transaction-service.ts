@@ -70,6 +70,128 @@ export class TransactionService {
   }
 
   /**
+   * CSV Import: parse CSV rows and bulk-create transactions.
+   * Expected CSV format: date,amount,type,note,category (header row optional)
+   * Returns summary with count of imported, skipped, and errors.
+   */
+  async importCSV(userId: string, csvText: string, walletId: string, batchKey?: string) {
+    const lines = csvText.trim().split("\n");
+    if (lines.length < 1) throw new Error("File CSV rỗng");
+
+    // Detect and skip header row
+    const headerLine = lines[0].toLowerCase();
+    const hasHeader = /ngày|date|số tiền|amount|loại|type|ghi chú|note|danh mục|category/.test(headerLine);
+    const dataLines = hasHeader ? lines.slice(1) : lines;
+
+    const errors: string[] = [];
+    let imported = 0;
+    let skipped = 0;
+
+    for (let i = 0; i < dataLines.length; i++) {
+      const line = dataLines[i].trim();
+      if (!line) { skipped++; continue; }
+
+      const rowNumber = i + (hasHeader ? 2 : 1);
+      const cols = this.parseCSVLine(line);
+      if (cols.length < 4) {
+        errors.push(`Dòng ${rowNumber}: không đủ cột (cần: ngày,số tiền,loại,ghi chú)`);
+        skipped++;
+        continue;
+      }
+
+      const [dateStr, amountStr, typeStr, noteStr, categoryStr] = cols;
+
+      // Validate date
+      const dateMatch = dateStr?.trim().match(/^(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})$/);
+      if (!dateMatch) {
+        errors.push(`Dòng ${rowNumber}: ngày không hợp lệ (${dateStr})`);
+        skipped++;
+        continue;
+      }
+      let displayDate = dateStr.trim();
+      // Convert DD/MM/YYYY to YYYY-MM-DD
+      if (displayDate.includes("/")) {
+        const [d, m, y] = displayDate.split("/");
+        displayDate = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+      }
+
+      // Validate amount
+      const cleanAmount = amountStr?.trim().replace(/[^0-9.-]/g, "") || "0";
+      if (!/^-?\d+(\.\d+)?$/.test(cleanAmount) || parseFloat(cleanAmount) === 0) {
+        errors.push(`Dòng ${rowNumber}: số tiền không hợp lệ (${amountStr})`);
+        skipped++;
+        continue;
+      }
+
+      // Validate type
+      const rawType = typeStr?.trim().toLowerCase() || "";
+      const type = rawType.includes("thu") || rawType === "income" ? "income" :
+                   rawType.includes("chi") || rawType === "expense" ? "expense" :
+                   rawType === "transfer" ? "transfer" : null;
+      if (!type) {
+        errors.push(`Dòng ${rowNumber}: loại không hợp lệ (${typeStr}), dùng 'income' hoặc 'expense'`);
+        skipped++;
+        continue;
+      }
+
+      // Category lookup by name (optional)
+      let categoryId: number | undefined;
+      const catName = categoryStr?.trim();
+      if (catName) {
+        const categories = await this.categoryRepository.findAll(userId);
+        const matched = categories.find((c: any) =>
+          c.name.toLowerCase() === catName.toLowerCase() ||
+          c.name.toLowerCase().includes(catName.toLowerCase())
+        );
+        if (matched) categoryId = matched.id;
+      }
+
+      try {
+        await this.createTransaction(userId, {
+          walletId: walletId as any,
+          categoryId: categoryId || 1,
+          amount: cleanAmount,
+          type,
+          note: noteStr?.trim() || undefined,
+          displayDate,
+          source: "import",
+          idempotencyKey: batchKey ? `${batchKey}_row${rowNumber}` : undefined,
+        });
+        imported++;
+      } catch (e: any) {
+        // Duplicate idempotency key = safe to skip
+        if (e.message?.includes("ER_DUP_ENTRY") || e.message?.includes("Duplicate")) {
+          skipped++;
+        } else {
+          errors.push(`Dòng ${rowNumber}: ${e.message}`);
+          skipped++;
+        }
+      }
+    }
+
+    return { imported, skipped, errors };
+  }
+
+  /** Parse a CSV line handling quoted fields */
+  private parseCSVLine(line: string): string[] {
+    const result: string[] = [];
+    let current = "";
+    let inQuotes = false;
+    for (const ch of line) {
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+      } else if (ch === "," && !inQuotes) {
+        result.push(current);
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+    result.push(current);
+    return result;
+  }
+
+  /**
    * High-level business logic for "Quick Add" via Natural Language.
    */
   async quickAdd(userId: string, text: string, options: { walletId: string; categoryId?: number; idempotencyKey?: string } = { walletId: "" }) {

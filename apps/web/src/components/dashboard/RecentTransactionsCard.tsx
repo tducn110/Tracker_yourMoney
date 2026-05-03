@@ -77,7 +77,7 @@ function TransactionRow({ tx, t }: { tx: Transaction; t: any }) {
             {isIncome ? t('dashboard.transactions.incomeArrow') : t('dashboard.transactions.expenseArrow')}
           </span>
           <p className="text-[10px] font-bold text-gray-400">
-            {tx.categoryName || t('dashboard.transactions.other')} · {new Date(tx.date).toLocaleDateString('vi-VN')}
+            {tx.categoryName || t('dashboard.transactions.other')} · {new Date(tx.displayDate).toLocaleDateString('vi-VN')}
           </p>
         </div>
       </div>
@@ -142,7 +142,7 @@ export function RecentTransactionsCard() {
 
   const groupedEntries = useMemo(() => {
     const grouped = filtered.reduce<Record<string, Transaction[]>>((acc, tx) => {
-      const dateStr = new Date(tx.date).toLocaleDateString('vi-VN');
+      const dateStr = new Date(tx.displayDate).toLocaleDateString('vi-VN');
       (acc[dateStr] ??= []).push(tx);
       return acc;
     }, {});
