@@ -15,7 +15,6 @@
     "@finance/shared-schemas": "workspace:*",
     "@hono/zod-validator": "^0.7.6",
     "@sentry/node": "^10.49.0",
-    "@tidbcloud/serverless": "^0.3.0",
     "decimal.js": "^10.6.0",
     "dotenv": "^17.4.2",
     "firebase-admin": "^13.8.0",

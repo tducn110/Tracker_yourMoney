@@ -1,6 +1,6 @@
 // apps/api/src/services/goal-service.ts
 import Decimal from "decimal.js";
-import { db, notifications } from "@finance/db";
+import { db, notifications, wallets, walletLogs, transactions, and, eq, sql } from "@finance/db";
 import type { GoalRepository } from "@finance/db/src/repositories/goal.repo";
 import type { InsertGoal, UpdateGoal, ContributeGoal } from "@finance/shared-schemas";
 
@@ -52,37 +52,77 @@ export class GoalService {
       );
     }
 
+    // Fetch wallet for balance update + OCC
+    const [wallet] = await db
+      .select()
+      .from(wallets)
+      .where(and(eq(wallets.id, input.walletId as any), eq(wallets.userId, userId as any)))
+      .limit(1);
+
+    if (!wallet) throw Object.assign(new Error("Không tìm thấy ví"), { code: "NOT_FOUND" });
+
+    const amount = new Decimal(input.amount);
+    const balanceBefore = new Decimal(wallet.balance);
+    const balanceAfter = balanceBefore.minus(amount);
+
     return await db.transaction(async (tx) => {
-      const newSaved = new Decimal(goal.currentSaved).plus(new Decimal(input.amount));
+      // 1. Update wallet balance (OCC)
+      const updateResult = await tx.update(wallets).set({
+        balance: balanceAfter.toFixed(2),
+        version: sql`version + 1`,
+        updatedAt: new Date(),
+      }).where(and(
+        eq(wallets.id, input.walletId as any),
+        eq(wallets.userId, userId as any),
+        eq(wallets.version, wallet.version ?? 0),
+      ));
+
+      if (updateResult.rowCount === 0) {
+        throw Object.assign(new Error("Xung đột cập nhật — vui lòng thử lại"), { code: "CONFLICT" });
+      }
+
+      // 2. Update Goal
+      const newSaved = amount.plus(new Decimal(goal.currentSaved));
       const target   = new Decimal(goal.targetAmount);
       const isComplete = newSaved.gte(target);
 
-      // 1. Update Goal
       const updated = await this.repository.update(goalId, userId, {
         currentSaved: newSaved.toFixed(2),
         ...(isComplete && { status: "completed", completedAt: new Date() }),
       }, tx);
 
-      // 2. Find Savings Category
+      // 3. Find Savings Category
       const savingsCategory = await this.categoryRepository.findByName("Tiết Kiệm", userId, tx);
       if (!savingsCategory) {
         throw new Error("Không tìm thấy danh mục 'Tiết Kiệm' để tạo giao dịch");
       }
 
-      // 3. Create Transaction (Expense/Transfer)
-      await this.transactionRepository.create({
+      // 4. Create Transaction (Expense from cash wallet)
+      const [createdTx] = await tx.insert(transactions).values({
         userId: userId as any,
         walletId: input.walletId as any,
         categoryId: savingsCategory.id,
         amount: input.amount,
-        type: "expense", // Saving is considered an "expense" from cash wallet perspective
+        type: "expense",
         note: `Tiết kiệm cho mục tiêu: ${goal.name}`,
         displayDate: new Date().toISOString().split('T')[0],
         source: "goal_contribution",
-      }, tx);
+        idempotencyKey: input.idempotencyKey ?? null,
+      }).returning({ id: transactions.id });
+
+      // 5. Audit log
+      await tx.insert(walletLogs).values({
+        walletId: input.walletId as any,
+        userId: userId as any,
+        transactionId: createdTx?.id as any ?? null,
+        balanceBefore: balanceBefore.toFixed(2),
+        balanceAfter: balanceAfter.toFixed(2),
+        difference: amount.negated().toFixed(2),
+        note: `Đóng góp mục tiêu: ${goal.name}`,
+        idempotencyKey: input.idempotencyKey ?? null,
+      });
 
       if (isComplete) {
-        // @ts-ignore - Drizzle Proxy issue
         await tx.insert(notifications).values({
           userId: userId as any,
           type: "goal_completed",

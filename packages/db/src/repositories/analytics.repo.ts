@@ -1,20 +1,15 @@
 // packages/db/src/repositories/analytics.repo.ts
 import { and, eq, sql } from "drizzle-orm";
-import { MySql2Database } from "drizzle-orm/mysql2";
 import * as schema from "../schema/index";
 import { transactions, bills, goals, userSettings } from "../schema";
 import { BaseRepository, type DB } from "./base-repository";
 
 export class AnalyticsRepository extends BaseRepository {
-  private get typedDb() {
-    return this.db as unknown as MySql2Database<typeof schema>;
-  }
-
   /**
    * Get monthly totals for income and expenses.
    */
   async getMonthlySummary(userId: string, month: string, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const client = tx || this.db;
     const [year, mon] = month.split("-").map(Number);
     const startDate = `${year}-${String(mon).padStart(2, "0")}-01`;
     const lastDay = new Date(year, mon, 0).getDate();
@@ -50,7 +45,7 @@ export class AnalyticsRepository extends BaseRepository {
    * Get user settings for financial calculations.
    */
   async getUserConfig(userId: string, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const client = tx || this.db;
     const [settings] = await client
       .select()
       .from(userSettings)
@@ -62,14 +57,14 @@ export class AnalyticsRepository extends BaseRepository {
    * Get monthly commitments from active bills.
    */
   async getActiveBillsTotal(userId: string, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const client = tx || this.db;
     const rows = await client
       .select({ total: sql<string>`sum(${bills.amount})` })
       .from(bills)
       .where(
         and(
           eq(bills.userId, userId),
-          eq(bills.isActive, 1),
+          eq(bills.isActive, true),
         ),
       );
     const row = rows[0];
@@ -80,7 +75,7 @@ export class AnalyticsRepository extends BaseRepository {
    * Get monthly allocations to active goals.
    */
   async getActiveGoalsAllocation(userId: string, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const client = tx || this.db;
     const rows = await client
       .select({ total: sql<string>`sum(${goals.monthlyContribution})` })
       .from(goals)

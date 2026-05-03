@@ -23,7 +23,7 @@ export const notificationRoutes = new Hono<{ Variables: { userId: string } }>()
     const rows = await db
       .select()
       .from(notifications)
-      .where(and(eq(notifications.userId, userId as any), eq(notifications.isRead, 0)));
+      .where(and(eq(notifications.userId, userId as any), eq(notifications.isRead, false)));
     return ok(c, { count: rows.length });
   })
   // PATCH /api/v1/notifications/:id/read
@@ -32,7 +32,7 @@ export const notificationRoutes = new Hono<{ Variables: { userId: string } }>()
     const id = c.req.param("id");
     await db
       .update(notifications)
-      .set({ isRead: 1, readAt: new Date() })
+      .set({ isRead: true, readAt: new Date() })
       .where(and(eq(notifications.id, id as any), eq(notifications.userId, userId as any)));
     return ok(c, { success: true });
   })
@@ -41,7 +41,7 @@ export const notificationRoutes = new Hono<{ Variables: { userId: string } }>()
     const userId = c.get("userId");
     await db
       .update(notifications)
-      .set({ isRead: 1, readAt: new Date() })
-      .where(and(eq(notifications.userId, userId as any), eq(notifications.isRead, 0)));
+      .set({ isRead: true, readAt: new Date() })
+      .where(and(eq(notifications.userId, userId as any), eq(notifications.isRead, false)));
     return ok(c, { success: true });
   });

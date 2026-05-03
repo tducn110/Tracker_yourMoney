@@ -9,7 +9,7 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env.local") });
 export default {
   schema: "./src/schema/index.ts",
   out: "./drizzle/migrations",
-  dialect: "mysql",
+  dialect: "postgresql",
   dbCredentials: {
     url: process.env.DATABASE_URL!,
   },

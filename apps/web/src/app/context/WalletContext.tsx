@@ -114,8 +114,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const setDefaultWallet = async (id: string) => {
     const promises = apiWallets.map((w: any) => {
-      if (String(w.id) === id) return walletAPI.update(id, { isDefault: 1 });
-      if (w.isDefault) return walletAPI.update(String(w.id), { isDefault: 0 });
+      if (String(w.id) === id) return walletAPI.update(id, { isDefault: true });
+      if (w.isDefault) return walletAPI.update(String(w.id), { isDefault: false });
       return Promise.resolve();
     });
     await Promise.all(promises);

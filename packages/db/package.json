@@ -14,11 +14,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tidbcloud/serverless": "^0.3.0",
     "drizzle-orm": "^0.45.2",
-    "mysql2": "^3.22.1"
+    "pg": "^8.16.3"
   },
   "devDependencies": {
+    "@types/pg": "^8.16.3",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.21.0",

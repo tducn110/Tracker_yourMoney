@@ -1,6 +1,4 @@
 import { and, eq, isNull, or } from "drizzle-orm";
-import { MySql2Database } from "drizzle-orm/mysql2";
-import * as schema from "../schema/index";
 import { categories, type Category, type NewCategory } from "../schema/categories";
 import { BaseRepository, type DB } from "./base-repository";
 
@@ -10,16 +8,11 @@ import { BaseRepository, type DB } from "./base-repository";
  * NOTE: isNull(categories.userId) is intentional — it identifies SYSTEM categories (userId = NULL).
  */
 export class CategoryRepository extends BaseRepository {
-  // Helper to get a typed database instance to avoid union issues with select/insert overloads
-  private get typedDb() {
-    return this.db as unknown as MySql2Database<typeof schema>;
-  }
-
   /**
    * Find all categories for a user, including global system categories.
    */
   async findAll(userId: string, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const client = tx || this.db;
     return client
       .select()
       .from(categories)
@@ -33,7 +26,7 @@ export class CategoryRepository extends BaseRepository {
    * Find a specific category by ID and userId.
    */
   async findById(id: number, userId: string, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const client = tx || this.db;
     const [category] = await client
       .select()
       .from(categories)
@@ -44,7 +37,7 @@ export class CategoryRepository extends BaseRepository {
         )
       )
       .limit(1);
-    
+
     return category || null;
   }
 
@@ -52,11 +45,8 @@ export class CategoryRepository extends BaseRepository {
    * Create a new category.
    */
   async create(data: NewCategory, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
-    const [result] = await client.insert(categories).values(data);
-    
-    const id = Number(result.insertId);
-    const [newCategory] = await client.select().from(categories).where(eq(categories.id, id)).limit(1);
+    const client = tx || this.db;
+    const [newCategory] = await client.insert(categories).values(data).returning();
     return newCategory;
   }
 
@@ -64,7 +54,7 @@ export class CategoryRepository extends BaseRepository {
    * Update an existing category.
    */
   async update(id: number, userId: string, data: Partial<NewCategory>, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const client = tx || this.db;
     await client
       .update(categories)
       .set({ ...data, updatedAt: new Date() })
@@ -74,7 +64,7 @@ export class CategoryRepository extends BaseRepository {
           eq(categories.userId, userId)
         )
       );
-    
+
     return this.findById(id, userId, client);
   }
 
@@ -82,7 +72,7 @@ export class CategoryRepository extends BaseRepository {
    * Find a category by name and userId.
    */
   async findByName(name: string, userId: string, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const client = tx || this.db;
     const [category] = await client
       .select()
       .from(categories)
@@ -93,7 +83,7 @@ export class CategoryRepository extends BaseRepository {
         )
       )
       .limit(1);
-    
+
     return category || null;
   }
 
@@ -101,7 +91,7 @@ export class CategoryRepository extends BaseRepository {
    * Hard delete a user category.
    */
   async delete(id: number, userId: string, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const client = tx || this.db;
     await client
       .delete(categories)
       .where(

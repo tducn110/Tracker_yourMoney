@@ -1,30 +1,24 @@
 import { eq, and, sql } from "drizzle-orm";
-import { MySql2Database } from "drizzle-orm/mysql2";
-import * as schema from "../schema/index";
 import { bills, billPayments, type Bill, type NewBill, type BillPayment, type NewBillPayment } from "../schema/bills";
 import { BaseRepository, type DB } from "./base-repository";
 
 export class BillRepository extends BaseRepository {
-  private get typedDb() {
-    return this.db as unknown as MySql2Database<typeof schema>;
-  }
-
   async findAll(userId: string): Promise<Bill[]> {
-    return this.typedDb
+    return this.db
       .select()
       .from(bills)
       .where(eq(bills.userId, userId));
   }
 
   async findActive(userId: string): Promise<Bill[]> {
-    return this.typedDb
+    return this.db
       .select()
       .from(bills)
-      .where(and(eq(bills.userId, userId), eq(bills.isActive, 1)));
+      .where(and(eq(bills.userId, userId), eq(bills.isActive, true)));
   }
 
   async findById(id: string, userId: string): Promise<Bill | undefined> {
-    const [row] = await this.typedDb
+    const [row] = await this.db
       .select()
       .from(bills)
       .where(and(eq(bills.id, id), eq(bills.userId, userId)))
@@ -33,7 +27,7 @@ export class BillRepository extends BaseRepository {
   }
 
   async findByIdempotencyKey(userId: string, key: string): Promise<Bill | undefined> {
-    const [row] = await this.typedDb
+    const [row] = await this.db
       .select()
       .from(bills)
       .where(and(eq(bills.userId, userId), eq(bills.idempotencyKey, key)))
@@ -42,40 +36,37 @@ export class BillRepository extends BaseRepository {
   }
 
   async create(data: NewBill): Promise<Bill> {
-    const [result] = await this.typedDb.insert(bills).values(data);
-    const insertId = String(result.insertId);
-    const [row] = await this.typedDb.select().from(bills).where(eq(bills.id, String(insertId))).limit(1);
+    const [row] = await this.db.insert(bills).values(data).returning();
     if (!row) throw new Error("Failed to create bill");
     return row;
   }
 
   async update(id: string, userId: string, data: Partial<NewBill>): Promise<Bill> {
-    await this.typedDb
+    await this.db
       .update(bills)
       .set({ ...data, updatedAt: new Date() })
       .where(and(eq(bills.id, id), eq(bills.userId, userId)));
-    
+
     const row = await this.findById(id, userId);
     if (!row) throw new Error("Bill not found after update");
     return row;
   }
 
   async delete(id: string, userId: string): Promise<void> {
-    await this.typedDb
+    await this.db
       .delete(bills)
       .where(and(eq(bills.id, id), eq(bills.userId, userId)));
   }
 
-  // Payment related
   async findPayments(billId: string, periodMonth: string): Promise<BillPayment[]> {
-    return this.typedDb
+    return this.db
       .select()
       .from(billPayments)
       .where(and(eq(billPayments.billId, billId), eq(billPayments.periodMonth, periodMonth)));
   }
 
   async sumPayments(billId: string, periodMonth: string): Promise<string> {
-    const rows = await this.typedDb
+    const rows = await this.db
       .select({ total: sql<string>`sum(${billPayments.amountPaid})` })
       .from(billPayments)
       .where(and(eq(billPayments.billId, billId), eq(billPayments.periodMonth, periodMonth)));
@@ -84,20 +75,14 @@ export class BillRepository extends BaseRepository {
   }
 
   async createPayment(data: NewBillPayment, tx?: DB): Promise<BillPayment> {
-    const client = tx || this.typedDb;
-    const [result] = await client.insert(billPayments).values(data);
-    const insertId = String(result.insertId);
-    const [row] = await client
-      .select()
-      .from(billPayments)
-      .where(eq(billPayments.id, String(insertId)))
-      .limit(1);
+    const client = tx || this.db;
+    const [row] = await client.insert(billPayments).values(data).returning();
     if (!row) throw new Error("Failed to create bill payment");
     return row;
   }
 
   async findPaymentByIdempotencyKey(userId: string, key: string, tx?: DB): Promise<BillPayment | undefined> {
-    const client = tx || this.typedDb;
+    const client = tx || this.db;
     const [row] = await client
       .select()
       .from(billPayments)

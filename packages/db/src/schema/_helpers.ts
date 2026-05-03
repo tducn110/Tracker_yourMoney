@@ -1,19 +1,18 @@
 // packages/db/src/schema/_helpers.ts
-import { customType } from "drizzle-orm/mysql-core";
+import { customType } from "drizzle-orm/pg-core";
 
 /**
- * [FIX #4] BigInt Safe ID Helper
- * 
- * MySQL BigInt columns in Drizzle for MySQL/TiDB only support 'number' or 'bigint' modes natively.
- * To prevent precision loss (> 2^53) while maintaining JSON serializability, we use a custom type
- * that maps the driver's BigInt value to a JS string.
+ * BigInt Safe ID Helper — PostgreSQL edition
+ *
+ * PostgreSQL bigint maps to JS number natively via node-postgres,
+ * but we want strings for JSON serialization safety.
  */
-export const bigintSafe = (name: string) => customType<{ data: string; driverData: bigint | number | string }>({
+export const bigintSafe = (name: string) => customType<{ data: string; driverData: string | number }>({
   dataType() {
-    return "bigint unsigned";
+    return "bigint";
   },
   // From DB to JS
-  fromDriver(value: bigint | number | string): string {
+  fromDriver(value: string | number): string {
     return String(value);
   },
   // From JS to DB

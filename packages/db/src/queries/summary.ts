@@ -1,14 +1,9 @@
-import { db, type Database } from "../client";
+import { db } from "../client";
 import { transactions, bills, goals, userSettings } from "../schema";
 import { and, eq, sum, sql } from "drizzle-orm";
-import { MySql2Database } from "drizzle-orm/mysql2";
-import * as schema from "../schema/index";
-
-// Type-safe database instance for queries to bypass union issues without using 'any'
-const drizzle = db as MySql2Database<typeof schema>;
 
 interface MonthlySummary {
-  totalIncome: string;  // decimal string
+  totalIncome: string;
   totalExpense: string;
 }
 
@@ -27,12 +22,12 @@ export async function getMonthlySummary(
     sql`${transactions.displayDate} <= ${endDate}`,
   );
 
-  const [incomeRow] = await drizzle
+  const [incomeRow] = await db
     .select({ total: sum(transactions.amount) })
     .from(transactions)
     .where(and(dateFilter, eq(transactions.type, "income")));
 
-  const [expenseRow] = await drizzle
+  const [expenseRow] = await db
     .select({ total: sum(transactions.amount) })
     .from(transactions)
     .where(and(dateFilter, eq(transactions.type, "expense")));
@@ -45,7 +40,7 @@ export async function getMonthlySummary(
 
 // Get user settings (emergency buffer, etc.) for Budget calculation
 export async function getUserFinancialConfig(userId: string) {
-  const [settings] = await drizzle
+  const [settings] = await db
     .select({
       monthlyBudget:  userSettings.monthlyBudget,
       emergencyBuffer: userSettings.emergencyBuffer,
@@ -59,13 +54,13 @@ export async function getUserFinancialConfig(userId: string) {
 
 // Get total active bills commitment for the month
 export async function getActiveBillsTotal(userId: string) {
-  const [row] = await drizzle
+  const [row] = await db
     .select({ total: sum(bills.amount) })
     .from(bills)
     .where(
       and(
         eq(bills.userId, userId),
-        eq(bills.isActive, 1),
+        eq(bills.isActive, true),
       ),
     );
 
@@ -74,7 +69,7 @@ export async function getActiveBillsTotal(userId: string) {
 
 // Get total active goals monthly contribution
 export async function getActiveGoalsAllocation(userId: string) {
-  const [row] = await drizzle
+  const [row] = await db
     .select({ total: sum(goals.monthlyContribution) })
     .from(goals)
     .where(

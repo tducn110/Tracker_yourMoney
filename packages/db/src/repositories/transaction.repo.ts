@@ -1,6 +1,4 @@
 import { and, eq, between } from "drizzle-orm";
-import { MySql2Database } from "drizzle-orm/mysql2";
-import * as schema from "../schema/index";
 import { transactions, type Transaction, type NewTransaction } from "../schema/transactions";
 import { BaseRepository, type DB } from "./base-repository";
 
@@ -9,21 +7,13 @@ import { BaseRepository, type DB } from "./base-repository";
  * Centralizes data access for financial ledger entries.
  */
 export class TransactionRepository extends BaseRepository {
-  private get typedDb() {
-    return this.db as unknown as MySql2Database<typeof schema>;
-  }
-
   /**
    * Create a new transaction.
    * Supports cross-instance idempotency via the idempotencyKey constraint in DB.
    */
   async create(data: NewTransaction, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
-    const [result] = await client.insert(transactions).values(data);
-    
-    const id = String(result.insertId);
-    const [newTx] = await client.select().from(transactions).where(eq(transactions.id, id)).limit(1);
-    
+    const client = tx || this.db;
+    const [newTx] = await client.insert(transactions).values(data).returning();
     return newTx || null;
   }
 
@@ -31,7 +21,7 @@ export class TransactionRepository extends BaseRepository {
    * Find a transaction by ID and userId.
    */
   async findById(id: string, userId: string, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const client = tx || this.db;
     const [record] = await client
       .select()
       .from(transactions)
@@ -42,7 +32,7 @@ export class TransactionRepository extends BaseRepository {
         )
       )
       .limit(1);
-    
+
     return record || null;
   }
 
@@ -50,7 +40,7 @@ export class TransactionRepository extends BaseRepository {
    * Find a transaction by idempotencyKey.
    */
   async findByIdempotencyKey(key: string, userId: string, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const client = tx || this.db;
     const [record] = await client
       .select()
       .from(transactions)
@@ -61,7 +51,7 @@ export class TransactionRepository extends BaseRepository {
         )
       )
       .limit(1);
-    
+
     return record || null;
   }
 
@@ -70,8 +60,8 @@ export class TransactionRepository extends BaseRepository {
    * Migrated to Relational Query API for type safety and clean nested data.
    */
   async findAll(userId: string, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
-    
+    const client = tx || this.db;
+
     return client.query.transactions.findMany({
       where: eq(transactions.userId, userId),
       with: {
@@ -91,7 +81,7 @@ export class TransactionRepository extends BaseRepository {
    * Crucial for Budget calculations and reports.
    */
   async findByDateRange(userId: string, startDate: string, endDate: string, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const client = tx || this.db;
     return client
       .select()
       .from(transactions)
@@ -108,7 +98,7 @@ export class TransactionRepository extends BaseRepository {
    * Update a transaction.
    */
   async update(id: string, userId: string, data: Partial<NewTransaction>, tx?: DB) {
-    const client = (tx || this.db) as unknown as MySql2Database<typeof schema>;
+    const client = tx || this.db;
     await client
       .update(transactions)
       .set({ ...data, updatedAt: new Date() })

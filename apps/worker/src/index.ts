@@ -1,3 +1,20 @@
+import * as dotenv from "dotenv";
+import * as path from "path";
+import { fileURLToPath } from "url";
+
+// ── ENVIRONMENT INITIALIZATION ──────────────────────────────────────
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootPath = path.resolve(__dirname, "../../../");
+
+if (process.env.NODE_ENV !== "production") {
+  const envPath = path.join(rootPath, ".env");
+  const envLocalPath = path.join(rootPath, ".env.local");
+
+  dotenv.config({ path: envPath, override: true });
+  dotenv.config({ path: envLocalPath, override: true });
+}
+
 /**
  * Worker Service — Recurring Bills Processor (Phase 15)
  *
@@ -43,7 +60,7 @@ async function findDueBills(): Promise<BillDue[]> {
   const activeBills = await db
     .select()
     .from(bills)
-    .where(eq(bills.isActive, 1));
+    .where(eq(bills.isActive, true));
 
   const dueBills: BillDue[] = [];
   for (const bill of activeBills) {
@@ -72,7 +89,7 @@ async function findDueBills(): Promise<BillDue[]> {
       amount: bill.amount,
       dueDay: bill.dueDay,
       periodMonth,
-      autoPay: bill.autoPay === 1,
+      autoPay: Boolean(bill.autoPay),
       categoryId: bill.categoryId,
     });
   }
@@ -86,7 +103,7 @@ async function processAutoPay(bill: BillDue) {
     const [wallet] = await db
       .select()
       .from(wallets)
-      .where(and(eq(wallets.userId, bill.userId as any), eq(wallets.isDefault, 1)))
+      .where(and(eq(wallets.userId, bill.userId as any), eq(wallets.isDefault, true)))
       .limit(1);
 
     if (!wallet) {
@@ -161,7 +178,7 @@ async function runDailyCheck() {
       // Phase 20: create notification for non-auto-pay bills
     }
   } catch (err) {
-    console.error("[Worker] Daily check error:", (err as Error).message);
+    console.error("[Worker] Daily check error:", err);
   }
 
   const duration = Date.now() - start;

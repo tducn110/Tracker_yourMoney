@@ -7,63 +7,65 @@ const __dirname = path.dirname(__filename);
 const envPath = path.resolve(__dirname, "../../../../.env.local");
 dotenv.config({ path: envPath });
 
-import { MySql2Database } from "drizzle-orm/mysql2";
-import * as schema from "../schema/index";
 import { db, users, userSettings, wallets, categories, transactions, bills, goals } from "../index";
-import { eq } from "drizzle-orm";
-
-const typedDb = db as unknown as MySql2Database<typeof schema>;
+import { eq, and } from "drizzle-orm";
 
 async function seed() {
   console.log("🌱 Seeding Demo User...");
 
   const email = "demouser@gmail.com";
   const passwordHash = "adc7e5451f44847766d34dd4e86d85f3:b173add1200aca979e727fda687c86e774ea347195e9b5be0133535b586ab409"; // Valid PBKDF2 hash for 'password123'
-  
-  // 1. Create User
-  let [user] = await typedDb.select().from(users).where(eq(users.email, email));
-  
+
+  // 1. Create User (PostgreSQL uses returning() instead of insertId)
+  const existingUsers = await db.select().from(users).where(eq(users.email, email));
+  let user = existingUsers[0];
+
   if (!user) {
     console.log("Creating demouser...");
-    const [result] = await typedDb.insert(users).values({
+    const [newUser] = await db.insert(users).values({
       email,
       username: "demouser",
       fullName: "Demo User",
       passwordHash,
-    });
-    const insertId = result.insertId;
-    [user] = await typedDb.select().from(users).where(eq(users.id, String(insertId)));
+    }).returning();
+    user = newUser;
   } else {
     console.log("Demo user exists, updating password hash...");
-    await typedDb.update(users).set({ passwordHash }).where(eq(users.id, user.id));
+    await db.update(users).set({ passwordHash }).where(eq(users.id, user.id));
   }
 
   if (!user) throw new Error("User creation failed");
   const userId = user.id;
 
-  // 2. Settings & Wallet
+  // 2. Settings & Wallet (PG: use ON CONFLICT DO UPDATE via onConflictDoUpdate)
   console.log("Seeding settings & wallet...");
-  await typedDb.insert(userSettings).values({
+  await db.insert(userSettings).values({
     userId: userId,
     monthlyBudget: "25000000",
     emergencyBuffer: "1500000",
     incomeDate: 5,
     currency: "VND",
-  }).onDuplicateKeyUpdate({ set: { monthlyBudget: "25000000" } });
+  }).onConflictDoUpdate({
+    target: userSettings.userId,
+    set: { monthlyBudget: "25000000" }
+  });
 
-  // Upsert default wallet
-  await typedDb.insert(wallets).values({
+  // Delete existing default wallet, then insert fresh
+  await db.delete(wallets).where(
+    and(eq(wallets.userId, userId), eq(wallets.name, "Ví Tiền Mặt"))
+  );
+  await db.insert(wallets).values({
     userId: userId,
     name: "Ví Tiền Mặt",
-    type: "cash",
+    type: "cash" as const,
     initialBalance: "1500000",
     balance: "1500000",
-    isDefault: 1,
+    isDefault: true,
     icon: "💵",
-  }).onDuplicateKeyUpdate({ set: { balance: "1500000" } });
+  });
 
   // Get wallet id for transactions
-  const [defaultWallet] = await typedDb.select({ id: wallets.id }).from(wallets)
+  const [defaultWallet] = await db.select({ id: wallets.id }).from(wallets)
     .where(eq(wallets.userId, userId as any)).limit(1);
   const walletId = defaultWallet?.id;
 
@@ -80,14 +82,21 @@ async function seed() {
   ];
 
   for (const cat of mockCategories) {
-    await typedDb.insert(categories).values({
-      userId: userId,
-      ...cat,
-    }).onDuplicateKeyUpdate({ set: { icon: cat.icon } });
+    const existingCats = await db.select().from(categories)
+      .where(eq(categories.name, cat.name));
+    if (existingCats.length === 0) {
+      await db.insert(categories).values({
+        userId: userId,
+        ...cat,
+      } as any);
+    }
   }
 
-  const dbCategories = await typedDb.select().from(categories).where(eq(categories.userId, userId));
-  const catMap = Object.fromEntries(dbCategories.map(c => [c.name, c.id]));
+  const dbCategories = await db.select().from(categories).where(eq(categories.userId, userId));
+  const catMap: Record<string, number> = {};
+  for (const c of dbCategories) {
+    catMap[c.name] = c.id;
+  }
 
   // 4. Transactions
   console.log("Seeding transactions...");
@@ -103,18 +112,18 @@ async function seed() {
   ];
 
   // Clear old transactions to avoid duplicates for this demo
-  await typedDb.delete(transactions).where(eq(transactions.userId, userId));
+  await db.delete(transactions).where(eq(transactions.userId, userId));
 
   for (const tx of mockTransactions) {
-    await typedDb.insert(transactions).values({
+    await db.insert(transactions).values({
       userId: userId,
-      walletId: walletId as any,
+      walletId: walletId,
       categoryId: catMap[tx.category] || catMap["Khác"],
       amount: tx.amount,
       type: tx.type,
       note: tx.note,
       displayDate: tx.date,
-    });
+    } as any);
   }
 
   // 5. Bills
@@ -125,16 +134,16 @@ async function seed() {
     { name: "Internet FPT", amount: "180000", dueDay: 15, category: "Khác", icon: "📶" },
   ];
 
-  await typedDb.delete(bills).where(eq(bills.userId, userId));
+  await db.delete(bills).where(eq(bills.userId, userId));
   for (const bill of mockBills) {
-    await typedDb.insert(bills).values({
+    await db.insert(bills).values({
       userId: userId,
       categoryId: catMap[bill.category] || catMap["Khác"],
       name: bill.name,
       amount: bill.amount,
       dueDay: bill.dueDay,
       icon: bill.icon,
-    });
+    } as any);
   }
 
   // 6. Goals
@@ -144,9 +153,9 @@ async function seed() {
     { name: "Du lịch Nhật Bản", targetAmount: "20000000", currentSaved: "12000000", monthlyContribution: "3000000", icon: "✈️", deadline: "2026-06-30" },
   ];
 
-  await typedDb.delete(goals).where(eq(goals.userId, userId));
+  await db.delete(goals).where(eq(goals.userId, userId));
   for (const goal of mockGoals) {
-    await typedDb.insert(goals).values({
+    await db.insert(goals).values({
       userId: userId,
       name: goal.name,
       targetAmount: goal.targetAmount,
@@ -154,7 +163,7 @@ async function seed() {
       monthlyContribution: goal.monthlyContribution,
       icon: goal.icon,
       deadline: goal.deadline,
-    });
+    } as any);
   }
 
   console.log("✅ Seeding completed!");

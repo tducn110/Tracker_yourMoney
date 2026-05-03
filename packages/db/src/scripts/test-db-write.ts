@@ -15,7 +15,7 @@ async function test() {
       email: testEmail,
       username: 'testuser' + Date.now(),
       fullName: 'Test User',
-      emailVerified: 1
+      emailVerified: true
     });
     console.log('✅ User inserted.');
 

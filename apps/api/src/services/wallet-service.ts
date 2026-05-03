@@ -57,9 +57,9 @@ export class WalletService {
     initialBalance?: string;
     icon?: string;
     color?: string;
-    isDefault?: number;
+    isDefault?: boolean;
   }) {
-    const [result] = await db.insert(wallets).values({
+    const [created] = await db.insert(wallets).values({
       userId: userId as any,
       name: input.name,
       type: input.type,
@@ -67,9 +67,9 @@ export class WalletService {
       balance: input.initialBalance ?? "0.00",
       icon: input.icon ?? "💵",
       color: input.color ?? "#6B7280",
-      isDefault: input.isDefault ?? 0,
-    } as any);
-    return this.getWallet(userId, String(result.insertId));
+      isDefault: input.isDefault ?? false,
+    } as any).returning({ id: wallets.id });
+    return this.getWallet(userId, String(created.id));
   }
 
   /** Update wallet metadata (name, icon, color, isDefault). Does not change balance. */
@@ -77,7 +77,7 @@ export class WalletService {
     name?: string;
     icon?: string;
     color?: string;
-    isDefault?: number;
+    isDefault?: boolean;
   }) {
     const existing = await this.getWallet(userId, walletId);
     if (!existing) throw Object.assign(new Error("Không tìm thấy ví"), { code: "NOT_FOUND" });
@@ -126,7 +126,7 @@ export class WalletService {
           throw new Error("Không tìm thấy danh mục 'Khác' để tạo giao dịch tự động");
         }
 
-        const txResult = await tx.insert(transactions).values({
+        const [txResult] = await tx.insert(transactions).values({
           userId: userId as any,
           walletId: walletId as any,
           categoryId: catId,
@@ -135,9 +135,9 @@ export class WalletService {
           note: note ?? "Chi phí không ghi nhận (Quick Sync)",
           displayDate: new Date().toISOString().split('T')[0],
           source: "quick_add",
-        });
+        }).returning({ id: transactions.id });
 
-        autoTxId = txResult.lastInsertId?.toString() || String(txResult[0]?.insertId) || null;
+        autoTxId = txResult?.id ? String(txResult.id) : null;
       }
 
       // OCC: update wallet balance with version check
@@ -152,7 +152,7 @@ export class WalletService {
         eq(wallets.version, (wallet as any).version ?? 0),
       ));
 
-      if (updateResult[0]?.affectedRows === 0) {
+      if (updateResult.rowCount === 0) {
         throw Object.assign(new Error("Xung đột cập nhật — vui lòng thử lại"), { code: "CONFLICT" });
       }
 
@@ -181,7 +181,7 @@ export class WalletService {
     const after = before.plus(amount);
 
     await db.transaction(async (tx: any) => {
-      const txResult = await tx.insert(transactions).values({
+      const [txResult] = await tx.insert(transactions).values({
         userId: userId as any,
         walletId: walletId as any,
         categoryId,
@@ -191,9 +191,9 @@ export class WalletService {
         displayDate: new Date().toISOString().split('T')[0],
         source: "manual",
         idempotencyKey: options?.idempotencyKey,
-      });
+      }).returning({ id: transactions.id });
 
-      const autoTxId = txResult.lastInsertId?.toString() || String(txResult[0]?.insertId) || null;
+      const autoTxId = txResult?.id ? String(txResult.id) : null;
 
       // OCC: update wallet balance with version check
       const updateResult = await tx.update(wallets).set({
@@ -206,7 +206,7 @@ export class WalletService {
         eq(wallets.version, (wallet as any).version ?? 0),
       ));
 
-      if (updateResult[0]?.affectedRows === 0) {
+      if (updateResult.rowCount === 0) {
         throw Object.assign(new Error("Xung đột cập nhật — vui lòng thử lại"), { code: "CONFLICT" });
       }
 
@@ -290,7 +290,7 @@ export class WalletService {
         displayDate: new Date().toISOString().split('T')[0],
         source: "transfer",
         idempotencyKey: idempotencyKey ? `${idempotencyKey}_out` : undefined,
-      });
+      }).returning({ id: transactions.id });
 
       // Credit: income to target wallet
       await tx.insert(transactions).values({
@@ -316,7 +316,7 @@ export class WalletService {
         eq(wallets.version, (source as any).version ?? 0),
       ));
 
-      if (srcUpdate[0]?.affectedRows === 0) {
+      if (srcUpdate.rowCount === 0) {
         throw Object.assign(new Error("Xung đột cập nhật ví nguồn — vui lòng thử lại"), { code: "CONFLICT" });
       }
 
@@ -331,12 +331,12 @@ export class WalletService {
         eq(wallets.version, (target as any).version ?? 0),
       ));
 
-      if (tgtUpdate[0]?.affectedRows === 0) {
+      if (tgtUpdate.rowCount === 0) {
         throw Object.assign(new Error("Xung đột cập nhật ví đích — vui lòng thử lại"), { code: "CONFLICT" });
       }
 
       // Audit logs
-      const txOutId = txOut.lastInsertId?.toString() || String(txOut[0]?.insertId) || null;
+      const txOutId = txOut?.id ? String(txOut.id) : null;
       await tx.insert(walletLogs).values({
         walletId: fromWalletId as any,
         userId: userId as any,

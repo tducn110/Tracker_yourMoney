@@ -298,12 +298,12 @@ export class BudgetService {
       periodType: input.periodType,
       startDate: input.startDate,
       endDate: input.endDate,
-      isAllCategories: input.isAllCategories ? 1 : 0,
+      isAllCategories: Boolean(input.isAllCategories),
       walletScope: input.walletScope,
       status: "active",
     };
-    const [result] = await db.insert(budgets).values(newBudget);
-    const budgetId = result.insertId;
+    const [created] = await db.insert(budgets).values(newBudget).returning({ id: budgets.id });
+    const budgetId = created.id;
     if (!input.isAllCategories && input.categoryIds?.length) {
       await db.insert(budgetCategories).values(
         input.categoryIds.map((catId: number) => ({
@@ -338,7 +338,7 @@ export class BudgetService {
         periodType: input.periodType,
         startDate: input.startDate,
         endDate: input.endDate,
-        isAllCategories: input.isAllCategories ? 1 : 0,
+        isAllCategories: Boolean(input.isAllCategories),
         walletScope: input.walletScope,
         updatedAt: new Date(),
       })
