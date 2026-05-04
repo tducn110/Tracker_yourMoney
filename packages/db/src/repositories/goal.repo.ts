@@ -35,8 +35,9 @@ export class GoalRepository extends BaseRepository {
     return row;
   }
 
-  async create(data: NewGoal): Promise<Goal> {
-    const [row] = await this.db.insert(goals).values(data).returning();
+  async create(data: NewGoal, tx?: DB): Promise<Goal> {
+    const client = tx || this.db;
+    const [row] = await client.insert(goals).values(data).returning();
     if (!row) throw new Error("Failed to create goal");
     return row;
   }

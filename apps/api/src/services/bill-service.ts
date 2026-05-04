@@ -3,7 +3,7 @@ import Decimal from "decimal.js";
 import type { TransactionRepository } from "@finance/db/src/repositories/transaction.repo";
 import type { BillRepository } from "@finance/db/src/repositories/bill.repo";
 import type { InsertBill, UpdateBill, InsertBillPayment } from "@finance/shared-schemas";
-import { db } from "@finance/db";
+import { db, wallets, walletLogs, transactions, and, eq, sql } from "@finance/db";
 
 export type BillStatus = "paid" | "partial" | "pending";
 
@@ -51,8 +51,36 @@ export class BillService {
         idempotencyKey: input.idempotencyKey,
       }, tx);
 
-      // 2. Create Transaction Record (Expense)
-      await this.transactionRepository.create({
+      // 2. Fetch wallet for balance update + OCC
+      const [wallet] = await tx
+        .select()
+        .from(wallets)
+        .where(and(eq(wallets.id, input.walletId as any), eq(wallets.userId, userId as any)))
+        .limit(1);
+
+      if (!wallet) throw Object.assign(new Error("Không tìm thấy ví"), { code: "NOT_FOUND" });
+
+      const amount = new Decimal(input.amountPaid);
+      const balanceBefore = new Decimal(wallet.balance);
+      const balanceAfter = balanceBefore.minus(amount);
+
+      // 3. Update wallet balance (OCC)
+      const updateResult = await tx.update(wallets).set({
+        balance: balanceAfter.toFixed(2),
+        version: sql`version + 1`,
+        updatedAt: new Date(),
+      }).where(and(
+        eq(wallets.id, input.walletId as any),
+        eq(wallets.userId, userId as any),
+        eq(wallets.version, wallet.version ?? 0),
+      ));
+
+      if (updateResult.rowCount === 0) {
+        throw Object.assign(new Error("Xung đột cập nhật ví — vui lòng thử lại"), { code: "CONFLICT" });
+      }
+
+      // 4. Create Transaction Record (Expense)
+      const createdTx = await this.transactionRepository.create({
         userId: userId as any,
         walletId: input.walletId as any,
         categoryId: bill.categoryId,
@@ -61,7 +89,20 @@ export class BillService {
         note: `Thanh toán hóa đơn: ${bill.name}${input.note ? ` - ${input.note}` : ""}`,
         displayDate: new Date().toISOString().split('T')[0],
         source: "bill_payment",
+        idempotencyKey: input.idempotencyKey ?? null,
       }, tx);
+
+      // 5. Audit log
+      await tx.insert(walletLogs).values({
+        walletId: input.walletId as any,
+        userId: userId as any,
+        transactionId: createdTx?.id as any ?? null,
+        balanceBefore: balanceBefore.toFixed(2),
+        balanceAfter: balanceAfter.toFixed(2),
+        difference: amount.negated().toFixed(2),
+        note: `Thanh toán hóa đơn: ${bill.name}`,
+        idempotencyKey: input.idempotencyKey ?? null,
+      });
 
       return payment;
     });

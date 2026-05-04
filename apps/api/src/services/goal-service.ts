@@ -23,17 +23,99 @@ export class GoalService {
   }
 
   async createGoal(userId: string, input: InsertGoal & { idempotencyKey?: string }) {
-    return this.repository.create({
-      userId: userId as any,
-      name: input.name,
-      icon: input.icon,
-      targetAmount: input.targetAmount,
-      monthlyContribution: input.monthlyContribution,
-      deadline: input.deadline ?? null,
-      priority: input.priority,
-      notes: input.notes ?? null,
-      status: "active",
-      idempotencyKey: input.idempotencyKey,
+    const monthlyContribution = new Decimal(input.monthlyContribution || "0.00");
+    const hasInitialContribution = monthlyContribution.gt(0) && input.walletId;
+
+    if (!hasInitialContribution) {
+      return this.repository.create({
+        userId: userId as any,
+        name: input.name,
+        icon: input.icon,
+        targetAmount: input.targetAmount,
+        monthlyContribution: input.monthlyContribution,
+        deadline: input.deadline ?? null,
+        priority: input.priority,
+        notes: input.notes ?? null,
+        status: "active",
+        idempotencyKey: input.idempotencyKey,
+      });
+    }
+
+    // Handle initial contribution
+    const walletId = input.walletId!;
+    const [wallet] = await db
+      .select()
+      .from(wallets)
+      .where(and(eq(wallets.id, walletId as any), eq(wallets.userId, userId as any)))
+      .limit(1);
+
+    if (!wallet) throw Object.assign(new Error("Không tìm thấy ví cho khoản đóng góp đầu tiên"), { code: "NOT_FOUND" });
+
+    const balanceBefore = new Decimal(wallet.balance);
+    const balanceAfter = balanceBefore.minus(monthlyContribution);
+
+    return await db.transaction(async (tx) => {
+      // 1. Create Goal
+      const goal = await this.repository.create({
+        userId: userId as any,
+        name: input.name,
+        icon: input.icon,
+        targetAmount: input.targetAmount,
+        currentSaved: input.monthlyContribution, // First month saved immediately
+        monthlyContribution: input.monthlyContribution,
+        deadline: input.deadline ?? null,
+        priority: input.priority,
+        notes: input.notes ?? null,
+        status: "active",
+        idempotencyKey: input.idempotencyKey,
+      }, tx);
+
+      // 2. Update wallet balance (OCC)
+      const updateResult = await tx.update(wallets).set({
+        balance: balanceAfter.toFixed(2),
+        version: sql`version + 1`,
+        updatedAt: new Date(),
+      }).where(and(
+        eq(wallets.id, walletId as any),
+        eq(wallets.userId, userId as any),
+        eq(wallets.version, wallet.version ?? 0),
+      ));
+
+      if (updateResult.rowCount === 0) {
+        throw Object.assign(new Error("Xung đột cập nhật ví — vui lòng thử lại"), { code: "CONFLICT" });
+      }
+
+      // 3. Find Savings Category
+      const savingsCategory = await this.categoryRepository.findByName("Tiết Kiệm", userId, tx);
+      if (!savingsCategory) {
+        throw new Error("Không tìm thấy danh mục 'Tiết Kiệm' để tạo giao dịch");
+      }
+
+      // 4. Create Transaction
+      const createdTx = await this.transactionRepository.create({
+        userId: userId as any,
+        walletId: walletId as any,
+        categoryId: savingsCategory.id,
+        amount: input.monthlyContribution,
+        type: "expense",
+        note: `Tiết kiệm đầu kỳ cho mục tiêu: ${goal.name}`,
+        displayDate: new Date().toISOString().split('T')[0],
+        source: "goal_contribution",
+      }, tx);
+
+      // 5. Audit log
+      await tx.insert(walletLogs).values({
+        walletId: walletId as any,
+        userId: userId as any,
+        transactionId: createdTx?.id as any ?? null,
+        balanceBefore: balanceBefore.toFixed(2),
+        balanceAfter: balanceAfter.toFixed(2),
+        difference: monthlyContribution.negated().toFixed(2),
+        note: `Đóng góp đầu kỳ cho mục tiêu: ${goal.name}`,
+        idempotencyKey: input.idempotencyKey ?? null,
+      });
+
+      return goal;
     });
   }
 

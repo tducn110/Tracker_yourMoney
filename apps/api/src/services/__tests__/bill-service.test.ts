@@ -4,14 +4,42 @@ import type { TransactionRepository } from '@finance/db/src/repositories/transac
 import type { BillRepository } from '@finance/db/src/repositories/bill.repo';
 
 // Mock @finance/db for db.transaction()
-vi.mock('@finance/db', () => ({
-  db: {
-    transaction: vi.fn((fn: any) => fn({
-      insert: vi.fn().mockReturnValue({ values: vi.fn() }),
-      select: vi.fn().mockReturnValue({ from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ limit: vi.fn() }) }) }),
-    })),
-  },
-}));
+vi.mock('@finance/db', () => {
+  const mockDb = {
+    select: vi.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockImplementation(() => Promise.resolve([{ id: 'wallet-1', balance: '10000000', version: 1 }])),
+    transaction: vi.fn((fn: any) => {
+      const txMock = {
+        select: vi.fn().mockReturnThis(),
+        from: vi.fn().mockReturnThis(),
+        insert: vi.fn().mockReturnThis(),
+        values: vi.fn().mockReturnThis(),
+        returning: vi.fn().mockImplementation(() => Promise.resolve([{ id: 'tx-1' }])),
+        update: vi.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockImplementation(() => Promise.resolve([{ id: 'wallet-1', balance: '10000000', version: 1 }])),
+        where: vi.fn(),
+      };
+      txMock.where.mockImplementation(() => {
+        const p = Promise.resolve({ rowCount: 1 });
+        (p as any).limit = txMock.limit;
+        return p;
+      });
+      return fn(txMock);
+    }),
+  };
+  return {
+    db: mockDb,
+    wallets: { id: 'wallets' },
+    walletLogs: { id: 'walletLogs' },
+    transactions: { id: 'transactions' },
+    and: vi.fn(),
+    eq: vi.fn(),
+    sql: vi.fn(),
+  };
+});
 
 describe('BillService', () => {
   let service: BillService;

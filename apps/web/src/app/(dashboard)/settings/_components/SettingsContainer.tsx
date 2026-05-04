@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   useUser, useUserSettings, useUpdateUserSettings,
   useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory,
@@ -26,14 +26,16 @@ export function SettingsContainer() {
   const [initialized, setInitialized] = useState(false);
 
   // Sync settings from API to local state on first load
-  if (settings && !initialized) {
-    setEmergencyBuffer(parseFloat(settings.emergencyBuffer || '0'));
-    setMonthlyBudget(settings.monthlyBudget || '0');
-    setIncomeDate(settings.incomeDate || 1);
-    setEmailNotifications(Boolean(settings.notifyEmail));
-    setPushNotifications(Boolean(settings.notifyPush));
-    setInitialized(true);
-  }
+  useEffect(() => {
+    if (settings && !initialized) {
+      setEmergencyBuffer(parseFloat(settings.emergencyBuffer || '0'));
+      setMonthlyBudget(settings.monthlyBudget || '0');
+      setIncomeDate(settings.incomeDate || 1);
+      setEmailNotifications(Boolean(settings.notifyEmail));
+      setPushNotifications(Boolean(settings.notifyPush));
+      setInitialized(true);
+    }
+  }, [settings, initialized]);
 
   const handleSave = async () => {
     try {
@@ -41,8 +43,8 @@ export function SettingsContainer() {
         emergencyBuffer: String(emergencyBuffer),
         monthlyBudget: monthlyBudget,
         incomeDate: incomeDate,
-        notifyEmail: emailNotifications ? 1 : 0,
-        notifyPush: pushNotifications ? 1 : 0,
+        notifyEmail: emailNotifications,
+        notifyPush: pushNotifications,
       });
     } catch {
       // Toast handled in mutation onError

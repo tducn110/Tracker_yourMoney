@@ -65,7 +65,7 @@ export class AnalyticsService {
 
     const rows = await (db as any)
       .select({
-        month: sql<string>`DATE_FORMAT(${transactions.displayDate}, '%Y-%m')`.as("month"),
+        month: sql<string>`TO_CHAR(${transactions.displayDate}::DATE, 'YYYY-MM')`.as("month"),
         type: transactions.type,
         total: sum(transactions.amount),
       })

@@ -18,7 +18,7 @@ export const categoryResponseSchema = z.object({
   type:      z.enum(["income", "expense"]),
   icon:      z.string(),
   color:     z.string(),
-  isDefault: z.number(),
+  isDefault: z.boolean(),
   sortOrder: z.number(),
   createdAt: z.coerce.date(),
 });

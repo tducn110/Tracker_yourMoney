@@ -91,7 +91,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       initialBalance: String(data.balance),
       icon: data.icon,
       color: data.colorHex,
-      isDefault: data.isDefault ? 1 : 0,
+      isDefault: data.isDefault,
     });
     queryClient.invalidateQueries({ queryKey: ['wallets'] });
     return mapApiWallet(newWallet);
@@ -102,7 +102,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (updates.name !== undefined) payload.name = updates.name;
     if (updates.icon !== undefined) payload.icon = updates.icon;
     if (updates.colorHex !== undefined) payload.color = updates.colorHex;
-    if (updates.isDefault !== undefined) payload.isDefault = updates.isDefault ? 1 : 0;
+    if (updates.isDefault !== undefined) payload.isDefault = updates.isDefault;
     await walletAPI.update(id, payload);
     queryClient.invalidateQueries({ queryKey: ['wallets'] });
   };
