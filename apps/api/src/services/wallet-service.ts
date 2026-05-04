@@ -293,7 +293,7 @@ export class WalletService {
       }).returning({ id: transactions.id });
 
       // Credit: income to target wallet
-      await tx.insert(transactions).values({
+      const [txIn] = await tx.insert(transactions).values({
         userId: userId as any,
         walletId: toWalletId as any,
         categoryId: catId,
@@ -303,7 +303,7 @@ export class WalletService {
         displayDate: new Date().toISOString().split('T')[0],
         source: "transfer",
         idempotencyKey: idempotencyKey ? `${idempotencyKey}_in` : undefined,
-      });
+      }).returning({ id: transactions.id });
 
       // OCC: update source wallet balance
       const srcUpdate = await tx.update(wallets).set({
@@ -337,6 +337,8 @@ export class WalletService {
 
       // Audit logs
       const txOutId = txOut?.id ? String(txOut.id) : null;
+      const txInId = txIn?.id ? String(txIn.id) : null;
+
       await tx.insert(walletLogs).values({
         walletId: fromWalletId as any,
         userId: userId as any,
@@ -351,7 +353,7 @@ export class WalletService {
       await tx.insert(walletLogs).values({
         walletId: toWalletId as any,
         userId: userId as any,
-        transactionId: txOutId as any,
+        transactionId: txInId as any,
         balanceBefore: targetBefore.toFixed(2),
         balanceAfter: targetAfter.toFixed(2),
         difference: amt.toFixed(2),

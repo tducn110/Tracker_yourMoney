@@ -23,6 +23,7 @@ export const insertGoalSchema = z.object({
   icon:                z.string().max(20).default("🎯"),
   targetAmount:        positiveDecimal,
   monthlyContribution: decimalString.default("0.00"),
+  walletId:            z.string().optional(),
   deadline:            z.coerce.date().transform((d) =>
     d.toISOString().split("T")[0], // "YYYY-MM-DD"
   ).optional(),

@@ -161,7 +161,8 @@ app.onError((err, c) => {
 
   const isDuplicate = errorMessage.includes('ER_DUP_ENTRY') || 
                      errorMessage.includes('Duplicate entry') || 
-                     (err as any).code === 'ER_DUP_ENTRY';
+                     (err as any).code === 'ER_DUP_ENTRY' ||
+                     (err as any).code === '23505';
 
   if (isDuplicate) {
     return c.json({

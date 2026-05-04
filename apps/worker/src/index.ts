@@ -27,8 +27,9 @@ if (process.env.NODE_ENV !== "production") {
  * For serverless: trigger via HTTP endpoint or cron service.
  */
 
-import { db, bills, billPayments, transactions, wallets, categories } from "@finance/db";
+import { db, bills, billPayments, transactions, wallets, categories, walletLogs } from "@finance/db";
 import { eq, and, sql } from "drizzle-orm";
+import Decimal from "decimal.js";
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000; // Every hour
 const AUTO_PAY_WALLET_ID = "1"; // Default wallet for auto-pay (configurable later)
@@ -79,8 +80,8 @@ async function findDueBills(): Promise<BillDue[]> {
         ),
       );
 
-    const totalPaid = parseFloat(payments[0]?.total || "0");
-    if (totalPaid >= parseFloat(bill.amount)) continue; // Already fully paid
+    const totalPaid = new Decimal(payments[0]?.total || "0");
+    if (totalPaid.gte(new Decimal(bill.amount))) continue; // Already fully paid
 
     dueBills.push({
       billId: String(bill.id),
@@ -99,27 +100,30 @@ async function findDueBills(): Promise<BillDue[]> {
 
 async function processAutoPay(bill: BillDue) {
   try {
-    // Find user's default wallet
-    const [wallet] = await db
-      .select()
-      .from(wallets)
-      .where(and(eq(wallets.userId, bill.userId as any), eq(wallets.isDefault, true)))
-      .limit(1);
-
-    if (!wallet) {
-      console.log(`[Worker] Auto-pay skipped for "${bill.name}": no default wallet`);
-      return;
-    }
-
-    // Check balance
-    if (parseFloat(wallet.balance) < parseFloat(bill.amount)) {
-      console.log(`[Worker] Auto-pay skipped for "${bill.name}": insufficient balance`);
-      return;
-    }
-
     // Process payment in transaction
     await db.transaction(async (tx: any) => {
-      // Create bill payment
+      // 1. Fetch wallet inside transaction for OCC + race condition prevention
+      const [wallet] = await tx
+        .select()
+        .from(wallets)
+        .where(and(eq(wallets.userId, bill.userId as any), eq(wallets.isDefault, true)))
+        .limit(1);
+
+      if (!wallet) {
+        console.log(`[Worker] Auto-pay skipped for "${bill.name}": no default wallet`);
+        return;
+      }
+
+      // 2. Check balance with Decimal.js
+      const balanceBefore = new Decimal(wallet.balance);
+      const billAmount = new Decimal(bill.amount);
+      if (balanceBefore.lt(billAmount)) {
+        console.log(`[Worker] Auto-pay skipped for "${bill.name}": insufficient balance`);
+        return;
+      }
+
+      const balanceAfter = balanceBefore.minus(billAmount);
+      // 3. Create bill payment
       await tx.insert(billPayments).values({
         billId: bill.billId as any,
         userId: bill.userId as any,
@@ -129,8 +133,8 @@ async function processAutoPay(bill: BillDue) {
         idempotencyKey: `autopay_${bill.billId}_${bill.periodMonth}`,
       });
 
-      // Create transaction
-      await tx.insert(transactions).values({
+      // 4. Create transaction
+      const [newTx] = await tx.insert(transactions).values({
         userId: bill.userId as any,
         walletId: wallet.id,
         categoryId: bill.categoryId,
@@ -139,15 +143,36 @@ async function processAutoPay(bill: BillDue) {
         note: `Thanh toán tự động: ${bill.name}`,
         displayDate: new Date().toISOString().split("T")[0],
         source: "recurring",
-      });
+      }).returning({ id: transactions.id });
 
-      // Deduct wallet balance
-      await tx
+      // 5. Deduct wallet balance (OCC)
+      const updateResult = await tx
         .update(wallets)
         .set({
-          balance: String(parseFloat(wallet.balance) - parseFloat(bill.amount)),
+          balance: balanceAfter.toFixed(2),
+          version: sql`version + 1`,
+          updatedAt: new Date(),
         })
-        .where(eq(wallets.id, wallet.id));
+        .where(and(
+          eq(wallets.id, wallet.id),
+          eq(wallets.version, wallet.version ?? 0)
+        ));
+
+      if (updateResult.rowCount === 0) {
+        throw new Error("Xung đột cập nhật ví trong worker (OCC)");
+      }
+
+      // 6. Audit log
+      await tx.insert(walletLogs).values({
+        walletId: wallet.id as any,
+        userId: bill.userId as any,
+        transactionId: newTx?.id as any ?? null,
+        balanceBefore: balanceBefore.toFixed(2),
+        balanceAfter: balanceAfter.toFixed(2),
+        difference: billAmount.negated().toFixed(2),
+        note: `Tự động thanh toán: ${bill.name}`,
+        idempotencyKey: `autopay_log_${bill.billId}_${bill.periodMonth}`,
+      });
     });
 
     console.log(`[Worker] Auto-paid "${bill.name}" — ${bill.amount} ₫`);

@@ -299,6 +299,9 @@ export function useCreateGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || err?.message || 'Không thể tạo mục tiêu');
@@ -362,6 +365,8 @@ export function useDeleteGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || err?.message || 'Không thể xoá mục tiêu');
@@ -451,6 +456,8 @@ export function useCreateBill() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bills'] });
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || err?.message || 'Không thể tạo hoá đơn');

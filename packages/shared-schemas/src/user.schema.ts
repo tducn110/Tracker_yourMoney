@@ -38,8 +38,8 @@ export const userResponseSchema = z.object({
   username:      z.string(),
   avatarUrl:     z.string().url().nullable(),
   avatarText:    z.string().nullable(),
-  isActive:      z.number(),
-  emailVerified: z.number(),
+  isActive:      z.boolean(),
+  emailVerified: z.boolean(),
   createdAt:     z.coerce.date(),
 });
 
@@ -54,8 +54,8 @@ export const updateUserSettingsSchema = z.object({
   theme:                z.enum(["light", "dark", "system"]).optional(),
   notifyBillBeforeDays: z.number().int().min(0).max(30).optional(),
   notifyBudgetThreshold:z.number().min(0).max(100).optional(),
-  notifyEmail:          z.number().min(0).max(1).optional(),
-  notifyPush:           z.number().min(0).max(1).optional(),
+  notifyEmail:          z.boolean().optional(),
+  notifyPush:           z.boolean().optional(),
 });
 
 export type InsertUser        = z.infer<typeof insertUserSchema>;

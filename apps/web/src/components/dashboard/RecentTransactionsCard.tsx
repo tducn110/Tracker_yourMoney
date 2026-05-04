@@ -20,13 +20,17 @@ type FilterType = 'all' | 'income' | 'expense';
 
 // ─── Filter Tab ───────────────────────────────────────────────────────────────
 
-const getFilters = (t: any): { key: FilterType; label: string; activeColor: string }[] => [
+type TFunction = (key: string, params?: any) => string;
+
+// ─── Filter Tab ───────────────────────────────────────────────────────────────
+
+const getFilters = (t: TFunction): { key: FilterType; label: string; activeColor: string }[] => [
   { key: 'all',     label: t('dashboard.transactions.all'),    activeColor: '#4361ee' },
   { key: 'income',  label: t('dashboard.transactions.income'),  activeColor: '#059669' },
   { key: 'expense', label: t('dashboard.transactions.expense'),  activeColor: '#dc2626' },
 ];
 
-function FilterTabs({ active, onChange, t }: { active: FilterType; onChange: (f: FilterType) => void; t: any }) {
+function FilterTabs({ active, onChange, t }: { active: FilterType; onChange: (f: FilterType) => void; t: TFunction }) {
   const filters = getFilters(t);
   return (
     <div className="flex gap-1.5">
@@ -50,7 +54,7 @@ function FilterTabs({ active, onChange, t }: { active: FilterType; onChange: (f:
 
 // ─── Transaction Row ──────────────────────────────────────────────────────────
 
-function TransactionRow({ tx, t }: { tx: Transaction; t: any }) {
+function TransactionRow({ tx, t }: { tx: Transaction; t: TFunction }) {
   const isIncome = tx.type === 'income';
   return (
     <div className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors group">
@@ -130,12 +134,17 @@ export function RecentTransactionsCard() {
   const { t } = useTranslations();
   const [filter, setFilter] = useState<FilterType>('all');
   
-  const { data: transactionsData, isLoading } = useTransactions({ limit: DISPLAY_LIMIT * 2 });
-  const allTransactions = (transactionsData as any)?.transactions ?? (Array.isArray(transactionsData) ? transactionsData : []);
+  const { data: transactionsData } = useTransactions({ limit: DISPLAY_LIMIT * 2 });
+  
+  const allTransactions = useMemo((): Transaction[] => {
+    if (!transactionsData) return [];
+    if (Array.isArray(transactionsData)) return transactionsData;
+    return (transactionsData as any).transactions || [];
+  }, [transactionsData]);
 
-  const filtered = useMemo(() =>
+  const filtered = useMemo((): Transaction[] =>
     allTransactions
-      .filter((tx) => filter === 'all' || tx.type === filter)
+      .filter((tx: Transaction) => filter === 'all' || tx.type === filter)
       .slice(0, DISPLAY_LIMIT),
     [allTransactions, filter],
   );
