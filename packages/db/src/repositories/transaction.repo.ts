@@ -1,4 +1,4 @@
-import { and, eq, between } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { transactions, type Transaction, type NewTransaction } from "../schema/transactions";
 import { BaseRepository, type DB } from "./base-repository";
 
@@ -88,7 +88,8 @@ export class TransactionRepository extends BaseRepository {
       .where(
         and(
           eq(transactions.userId, userId),
-          between(transactions.displayDate, startDate, endDate)
+          sql`${transactions.displayDate} >= ${startDate}`,
+          sql`${transactions.displayDate} <= ${endDate}`,
         )
       )
       .orderBy(transactions.displayDate);
@@ -99,7 +100,7 @@ export class TransactionRepository extends BaseRepository {
    */
   async update(id: string, userId: string, data: Partial<NewTransaction>, tx?: DB) {
     const client = tx || this.db;
-    await client
+    const [record] = await client
       .update(transactions)
       .set({ ...data, updatedAt: new Date() })
       .where(
@@ -107,8 +108,9 @@ export class TransactionRepository extends BaseRepository {
           eq(transactions.id, id),
           eq(transactions.userId, userId)
         )
-      );
+      )
+      .returning();
 
-    return this.findById(id, userId, client);
+    return record || null;
   }
 }

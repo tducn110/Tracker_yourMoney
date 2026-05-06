@@ -4,7 +4,7 @@ import { customType } from "drizzle-orm/pg-core";
 /**
  * BigInt Safe ID Helper — PostgreSQL edition
  *
- * PostgreSQL bigint maps to JS number natively via node-postgres,
+ * PostgreSQL bigint maps to JS number natively via pg,
  * but we want strings for JSON serialization safety.
  */
 export const bigintSafe = (name: string) => customType<{ data: string; driverData: string | number }>({

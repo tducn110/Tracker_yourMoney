@@ -47,6 +47,7 @@ export class CategoryRepository extends BaseRepository {
   async create(data: NewCategory, tx?: DB) {
     const client = tx || this.db;
     const [newCategory] = await client.insert(categories).values(data).returning();
+    if (!newCategory) throw new Error("Failed to create category");
     return newCategory;
   }
 
@@ -55,7 +56,7 @@ export class CategoryRepository extends BaseRepository {
    */
   async update(id: number, userId: string, data: Partial<NewCategory>, tx?: DB) {
     const client = tx || this.db;
-    await client
+    const [updated] = await client
       .update(categories)
       .set({ ...data, updatedAt: new Date() })
       .where(
@@ -63,9 +64,10 @@ export class CategoryRepository extends BaseRepository {
           eq(categories.id, id),
           eq(categories.userId, userId)
         )
-      );
+      )
+      .returning();
 
-    return this.findById(id, userId, client);
+    return updated || null;
   }
 
   /**

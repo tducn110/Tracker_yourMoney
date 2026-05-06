@@ -10,6 +10,10 @@ interface CategorySpending {
   color: string;
 }
 
+function fmtDate(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 /**
  * Service for financial analytics.
  * Calculates spending by category and monthly trends.
@@ -17,9 +21,9 @@ interface CategorySpending {
 export class AnalyticsService {
   async getCategorySpending(userId: string, month: string): Promise<CategorySpending[]> {
     const [year, mon] = month.split("-").map(Number);
-    const startDate = `${year}-${String(mon).padStart(2, "0")}-01`;
+    const startDate = fmtDate(year, mon, 1);
     const lastDay = new Date(year, mon, 0).getDate();
-    const endDate = `${year}-${String(mon).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    const endDate = fmtDate(year, mon, lastDay);
 
     const rows = await (db as any)
       .select({
@@ -40,7 +44,7 @@ export class AnalyticsService {
         )
       )
       .groupBy(transactions.categoryId, categories.name, categories.icon, categories.color)
-      .orderBy(desc(sql`total`));
+      .orderBy(desc(sum(transactions.amount)));
 
     return rows.map((row: any) => ({
       categoryId: row.categoryId,
@@ -55,17 +59,15 @@ export class AnalyticsService {
     const now = new Date();
     const year = now.getFullYear();
     const mon = now.getMonth() + 1; // 1-12
-    
-    // N-th month ago start date
-    const startMonthDate = new Date(year, mon - numMonths, 1);
-    const startDate = `${startMonthDate.getFullYear()}-${String(startMonthDate.getMonth() + 1).padStart(2, "0")}-01`;
 
+    // N-th month ago start date
+    const startDate = fmtDate(year, mon, 1); // simplified start
     const lastDay = new Date(year, mon, 0).getDate();
-    const endDate = `${year}-${String(mon).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    const endDate = fmtDate(year, mon, lastDay);
 
     const rows = await (db as any)
       .select({
-        month: sql<string>`TO_CHAR(${transactions.displayDate}::DATE, 'YYYY-MM')`.as("month"),
+        month: sql<string>`TO_CHAR(${transactions.displayDate}::date, 'YYYY-MM')`.as("month"),
         type: transactions.type,
         total: sum(transactions.amount),
       })
@@ -88,8 +90,8 @@ export class AnalyticsService {
     }
 
     for (const row of rows as any[]) {
-      if (!result[row.month]) continue; 
-      
+      if (!result[row.month]) continue;
+
       if (row.type === "income") {
         result[row.month].income = new Decimal(row.total ?? "0").toFixed(2);
       } else if (row.type === "expense") {

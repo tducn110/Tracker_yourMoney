@@ -1,6 +1,5 @@
 // apps/api/src/services/idempotency.ts
-import { db, transactions, bills, goals } from "@finance/db";
-import { eq, and } from "drizzle-orm";
+import { db, transactions, bills, goals, eq, and } from "@finance/db";
 
 /**
  * Service này hỗ trợ kiểm tra tính idempotent (không trùng lặp) 

@@ -1,5 +1,5 @@
 // packages/db/src/client.ts
-import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema/index";
 import { DrizzleTelemetryLogger, traceStorage } from "./telemetry";
@@ -18,9 +18,8 @@ function getDb(): Database {
     const pool = new Pool({
       connectionString: databaseUrl,
       max: 10,
-      ssl: { rejectUnauthorized: false },
     });
-    _db = drizzle(pool as any, { schema, logger }) as Database;
+    _db = drizzle(pool, { schema, logger });
   }
   return _db as Database;
 }

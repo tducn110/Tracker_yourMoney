@@ -44,16 +44,11 @@ export class GoalRepository extends BaseRepository {
 
   async update(id: string, userId: string, data: Partial<NewGoal>, tx?: DB): Promise<Goal> {
     const client = tx || this.db;
-    await client
+    const [row] = await client
       .update(goals)
       .set({ ...data, updatedAt: new Date() })
-      .where(and(eq(goals.id, id), eq(goals.userId, userId)));
-
-    const [row] = await client
-      .select()
-      .from(goals)
       .where(and(eq(goals.id, id), eq(goals.userId, userId)))
-      .limit(1);
+      .returning();
 
     if (!row) throw new Error("Goal not found after update");
     return row;
