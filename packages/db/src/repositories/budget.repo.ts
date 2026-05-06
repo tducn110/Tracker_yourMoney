@@ -58,8 +58,8 @@ export class BudgetRepository extends BaseRepository {
 
   async create(data: NewBudget, categoryIds?: number[]): Promise<string> {
     return await this.db.transaction(async (tx) => {
-      const [created] = await tx.insert(budgets).values(data).returning({ id: budgets.id });
-      const budgetId = String(created.id);
+      const [inserted] = await tx.insert(budgets).values(data).returning();
+      const budgetId = inserted.id;
 
       if (categoryIds && categoryIds.length > 0) {
         await tx.insert(budgetCategories).values(

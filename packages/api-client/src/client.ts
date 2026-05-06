@@ -1,6 +1,12 @@
 import axios, { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
-const API_BASE_URL = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001' : 'http://localhost:3001';
+// In production (Vercel), the API is served via the catch-all route handler on the same origin.
+// In local development, the standalone Hono API runs on port 3001.
+// Set NEXT_PUBLIC_API_URL to override (e.g., for custom API domains).
+// On Vercel, next.js inlines NEXT_PUBLIC_* values at build time.
+const API_BASE_URL = typeof process !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001'))
+  : '';
 const API_TIMEOUT = 15000;
 
 /**

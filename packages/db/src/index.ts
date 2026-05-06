@@ -1,8 +1,5 @@
 // packages/db/src/index.ts
-// PostgreSQL driver via node-postgres + Drizzle ORM
-import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
-import * as schema from "./schema/index";
+// PostgreSQL driver via pg + Drizzle ORM
 
 export * from "./client";
 export * from "drizzle-orm";

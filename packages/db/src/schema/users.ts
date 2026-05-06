@@ -1,9 +1,9 @@
 import {
-  bigint, varchar, boolean, timestamp, pgTable, index,
+  bigint, varchar, boolean, timestamp, pgTable, index, bigserial,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
-  id:            bigint("id", { mode: "bigint" }).$type<string>().generatedAlwaysAsIdentity().primaryKey(),
+  id:            bigint("id", { mode: "bigint" }).$type<string>().primaryKey().generatedAlwaysAsIdentity(),
   username:      varchar("username", { length: 50 }).notNull().unique(),
   email:         varchar("email", { length: 255 }).notNull().unique(),
   passwordHash:  varchar("password_hash", { length: 255 }), // Nullable for social login

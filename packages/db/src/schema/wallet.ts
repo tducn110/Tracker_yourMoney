@@ -4,24 +4,23 @@
 //
 // [v13.0] Replaced 1:1 cash_wallet with multi-wallet design per ERD.
 import {
-  bigint, integer, numeric, timestamp, varchar, boolean,
-  pgTable, pgEnum, index, check,
+  bigint, integer, decimal, timestamp, varchar, boolean,
+  pgTable, pgEnum, index, check, bigserial,
 } from "drizzle-orm/pg-core";
-import { sql, relations } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { users } from "./users";
-import { transactions } from "./transactions";
 
 export const walletTypeEnum = pgEnum("wallet_type", ["cash", "bank", "credit", "e_wallet", "investment", "other"]);
 
 // ── WALLETS ─────────────────────────────────────────────────────────
 export const wallets = pgTable("wallets", {
-  id:             bigint("id", { mode: "bigint" }).$type<string>().generatedAlwaysAsIdentity().primaryKey(),
+  id:             bigint("id", { mode: "bigint" }).$type<string>().primaryKey().generatedAlwaysAsIdentity(),
   userId:         bigint("user_id", { mode: "bigint" }).$type<string>().notNull()
                     .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
   name:           varchar("name", { length: 100 }).notNull(),
   type:           walletTypeEnum("type").notNull().default("cash"),
-  balance:        numeric("balance", { precision: 15, scale: 2 }).notNull().default("0.00"),
-  initialBalance: numeric("initial_balance", { precision: 15, scale: 2 }).notNull().default("0.00"),
+  balance:        decimal("balance", { precision: 15, scale: 2 }).notNull().default("0.00"),
+  initialBalance: decimal("initial_balance", { precision: 15, scale: 2 }).notNull().default("0.00"),
   icon:           varchar("icon", { length: 50 }).notNull().default("💵"),
   color:          varchar("color", { length: 7 }).notNull().default("#6B7280"),
   isDefault:      boolean("is_default").notNull().default(false),
@@ -34,29 +33,24 @@ export const wallets = pgTable("wallets", {
   userTypeIdx:       index("idx_wallets_user_type").on(table.userId, table.type),
   userDefaultIdx:    index("idx_wallets_user_default").on(table.userId, table.isDefault),
   userDeletedIdx:    index("idx_wallets_user_deleted").on(table.userId, table.deletedAt),
-  balanceCheck:      check("chk_wallets_balance_non_negative", sql`balance >= 0`),
-  initialBalanceCheck: check("chk_wallets_initial_non_negative", sql`initial_balance >= 0`),
+  balanceCheck:      check("chk_wallets_balance_non_negative", sql`${table.balance} >= 0`),
+  initialBalanceCheck: check("chk_wallets_initial_non_negative", sql`${table.initialBalance} >= 0`),
 }));
 
 export type Wallet    = typeof wallets.$inferSelect;
 export type NewWallet = typeof wallets.$inferInsert;
 
-export const walletsRelations = relations(wallets, ({ many }) => ({
-  transactions: many(transactions),
-}));
-
 // ── WALLET LOGS ──────────────────────────────────────────────────────
 export const walletLogs = pgTable("wallet_logs", {
-  id:            bigint("id", { mode: "bigint" }).$type<string>().generatedAlwaysAsIdentity().primaryKey(),
+  id:            bigint("id", { mode: "bigint" }).$type<string>().primaryKey().generatedAlwaysAsIdentity(),
   walletId:      bigint("wallet_id", { mode: "bigint" }).$type<string>().notNull()
                    .references(() => wallets.id, { onDelete: "cascade", onUpdate: "cascade" }),
   userId:        bigint("user_id", { mode: "bigint" }).$type<string>().notNull()
                    .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-  transactionId: bigint("transaction_id", { mode: "bigint" }).$type<string>()
-                   .references(() => transactions.id, { onDelete: "set null", onUpdate: "cascade" }),
-  balanceBefore: numeric("balance_before", { precision: 15, scale: 2 }).notNull(),
-  balanceAfter:  numeric("balance_after", { precision: 15, scale: 2 }).notNull(),
-  difference:    numeric("difference", { precision: 15, scale: 2 }).notNull(),
+  transactionId: bigint("transaction_id", { mode: "bigint" }).$type<string>(),
+  balanceBefore: decimal("balance_before", { precision: 15, scale: 2 }).notNull(),
+  balanceAfter:  decimal("balance_after", { precision: 15, scale: 2 }).notNull(),
+  difference:    decimal("difference", { precision: 15, scale: 2 }).notNull(),
   note:          varchar("note", { length: 255 }),
   idempotencyKey: varchar("idempotency_key", { length: 255 }).unique(),
   createdAt:     timestamp("created_at").notNull().defaultNow(),

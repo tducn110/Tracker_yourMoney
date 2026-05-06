@@ -75,7 +75,7 @@ export class BillService {
         eq(wallets.version, wallet.version ?? 0),
       ));
 
-      if (updateResult.rowCount === 0) {
+      if ((updateResult as any).rowCount === 0) {
         throw Object.assign(new Error("Xung đột cập nhật ví — vui lòng thử lại"), { code: "CONFLICT" });
       }
 

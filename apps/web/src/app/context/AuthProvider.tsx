@@ -54,6 +54,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(data.data);
           } else {
             // Token expired or invalid at backend
+            let errorText = "";
+            try {
+              errorText = await response.text();
+            } catch {
+              errorText = "[response.text() failed]";
+            }
+            console.error(
+              `Auth /me failed: HTTP ${response.status} ${response.statusText} — ${errorText || "(empty body)"}`,
+            );
             setUser(null);
           }
         } catch (error) {
@@ -84,12 +93,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Auth failed:", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData
-        });
+        let errorText = "";
+        try {
+          errorText = await response.text();
+        } catch {
+          errorText = "[response.text() failed]";
+        }
+        console.error(
+          `Auth /social failed: HTTP ${response.status} ${response.statusText} — ${errorText || "(empty body)"}`,
+        );
         throw new Error("Xác thực với backend thất bại");
       }
 

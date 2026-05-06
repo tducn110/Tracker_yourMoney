@@ -42,12 +42,12 @@ export class BillRepository extends BaseRepository {
   }
 
   async update(id: string, userId: string, data: Partial<NewBill>): Promise<Bill> {
-    await this.db
+    const [row] = await this.db
       .update(bills)
       .set({ ...data, updatedAt: new Date() })
-      .where(and(eq(bills.id, id), eq(bills.userId, userId)));
+      .where(and(eq(bills.id, id), eq(bills.userId, userId)))
+      .returning();
 
-    const row = await this.findById(id, userId);
     if (!row) throw new Error("Bill not found after update");
     return row;
   }

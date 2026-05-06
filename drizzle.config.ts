@@ -13,7 +13,7 @@ if (!process.env.DATABASE_URL) {
 export default {
   schema: './packages/db/src/schema/index.ts',
   out: './packages/db/drizzle/migrations',
-  dialect: 'mysql',
+  dialect: 'postgresql',
   dbCredentials: {
     url: process.env.DATABASE_URL,
   },

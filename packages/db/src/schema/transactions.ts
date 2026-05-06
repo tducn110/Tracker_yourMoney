@@ -7,8 +7,8 @@
 //
 // ⚡ COMPOSITE INDEX (user_id, display_date) — CRITICAL for Budget Engine performance
 import {
-  bigint, integer, numeric, varchar, timestamp, date,
-  pgTable, pgEnum, index, check,
+  bigint, integer, decimal, varchar, timestamp, date,
+  pgTable, pgEnum, index, check, bigserial,
 } from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
 import { users } from "./users";
@@ -17,12 +17,10 @@ import { wallets } from "./wallet";
 import { goals } from "./goals";
 
 export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense", "transfer"]);
-export const transactionSourceEnum = pgEnum("transaction_source", [
-  "manual", "quick_add", "ocr", "import", "recurring", "bill_payment", "goal_contribution",
-]);
+export const transactionSourceEnum = pgEnum("transaction_source", ["manual", "quick_add", "ocr", "import", "recurring", "bill_payment", "goal_contribution"]);
 
 export const transactions = pgTable("transactions", {
-  id:          bigint("id", { mode: "bigint" }).$type<string>().generatedAlwaysAsIdentity().primaryKey(),
+  id:          bigint("id", { mode: "bigint" }).$type<string>().primaryKey().generatedAlwaysAsIdentity(),
   userId:      bigint("user_id", { mode: "bigint" }).$type<string>().notNull()
                  .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
   walletId:    bigint("wallet_id", { mode: "bigint" }).$type<string>().notNull()
@@ -34,7 +32,7 @@ export const transactions = pgTable("transactions", {
 
   // Decimal Trap: amount từ DB là string → dùng new Decimal(tx.amount) tại service layer
   // KHÔNG .toNumber() trực tiếp
-  amount:      numeric("amount", { precision: 15, scale: 2 }).notNull(),
+  amount:      decimal("amount", { precision: 15, scale: 2 }).notNull(),
 
   type:        transactionTypeEnum("type").notNull(),
 
@@ -57,7 +55,7 @@ export const transactions = pgTable("transactions", {
   userTypeDateIdx: index("idx_tx_user_type_date").on(table.userId, table.type, table.displayDate),
   walletIdx:    index("idx_tx_wallet").on(table.walletId),
   goalIdx:      index("idx_tx_goal").on(table.goalId),
-  amountCheck:  check("chk_tx_amount_positive", sql`amount > 0`),
+  amountCheck:  check("chk_tx_amount_positive", sql`${table.amount} > 0`),
 }));
 
 export type Transaction    = typeof transactions.$inferSelect;

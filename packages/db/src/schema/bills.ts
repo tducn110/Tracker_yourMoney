@@ -5,8 +5,8 @@
 // Mỗi row = 1 payment event thực tế (partial payments OK)
 // Trạng thái tính tại API: SUM(amount_paid) WHERE bill_id + period_month
 import {
-  bigint, integer, numeric, varchar, boolean, timestamp, char, text,
-  pgTable, pgEnum, index, check,
+  bigint, integer, decimal, varchar, boolean, timestamp, char, text,
+  pgTable, pgEnum, index, check, bigserial,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { users } from "./users";
@@ -16,14 +16,14 @@ export const billFrequencyEnum = pgEnum("bill_frequency", ["monthly", "quarterly
 
 // ── TABLE 6: bills ──────────────────────────────────────────────
 export const bills = pgTable("bills", {
-  id:         bigint("id", { mode: "bigint" }).$type<string>().generatedAlwaysAsIdentity().primaryKey(),
+  id:         bigint("id", { mode: "bigint" }).$type<string>().primaryKey().generatedAlwaysAsIdentity(),
   userId:     bigint("user_id", { mode: "bigint" }).$type<string>().notNull()
                 .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
   categoryId: integer("category_id").notNull()
                 .references(() => categories.id, { onDelete: "restrict", onUpdate: "cascade" }),
   name:       varchar("name", { length: 100 }).notNull(),
   icon:       varchar("icon", { length: 20 }).notNull().default("📄"),
-  amount:     numeric("amount", { precision: 15, scale: 2 }).notNull(),
+  amount:     decimal("amount", { precision: 15, scale: 2 }).notNull(),
   dueDay:     integer("due_day").notNull(), // 1-31
   frequency:  billFrequencyEnum("frequency").notNull().default("monthly"),
   autoPay:    boolean("auto_pay").notNull().default(false),
@@ -37,8 +37,8 @@ export const bills = pgTable("bills", {
   userDueDayIdx: index("idx_bills_user_dueday").on(table.userId, table.dueDay),
   userFreqIdx:   index("idx_bills_user_freq").on(table.userId, table.frequency),
   catIdx:        index("idx_bills_category").on(table.categoryId),
-  amountCheck:   check("chk_bills_amount_positive", sql`amount > 0`),
-  dueDayCheck:   check("chk_bills_due_day", sql`due_day BETWEEN 1 AND 31`),
+  amountCheck:   check("chk_bills_amount_positive", sql`${table.amount} > 0`),
+  dueDayCheck:   check("chk_bills_due_day", sql`${table.dueDay} BETWEEN 1 AND 31`),
 }));
 
 export type Bill    = typeof bills.$inferSelect;
@@ -48,13 +48,13 @@ export type NewBill = typeof bills.$inferInsert;
 // NO unique constraint on (bill_id, period_month)
 // Mỗi row = 1 payment event. UI tính status qua SUM tại API layer.
 export const billPayments = pgTable("bill_payments", {
-  id:          bigint("id", { mode: "bigint" }).$type<string>().generatedAlwaysAsIdentity().primaryKey(),
+  id:             bigint("id", { mode: "bigint" }).$type<string>().primaryKey().generatedAlwaysAsIdentity(),
   billId:      bigint("bill_id", { mode: "bigint" }).$type<string>().notNull()
                  .references(() => bills.id, { onDelete: "cascade", onUpdate: "cascade" }),
   userId:      bigint("user_id", { mode: "bigint" }).$type<string>().notNull()
                  .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
   periodMonth: char("period_month", { length: 7 }).notNull(), // YYYY-MM
-  amountPaid:  numeric("amount_paid", { precision: 15, scale: 2 }).notNull(),
+  amountPaid:  decimal("amount_paid", { precision: 15, scale: 2 }).notNull(),
   paidAt:      timestamp("paid_at").notNull().defaultNow(),
   note:        varchar("note", { length: 255 }),
   createdAt:   timestamp("created_at").notNull().defaultNow(),
@@ -62,7 +62,7 @@ export const billPayments = pgTable("bill_payments", {
 }, (table) => ({
   userPeriodIdx:  index("idx_bill_payments_user").on(table.userId, table.periodMonth),
   billPeriodIdx:  index("idx_bill_payments_bill_period").on(table.billId, table.periodMonth),
-  amountCheck:    check("chk_bill_payment_positive", sql`amount_paid > 0`),
+  amountCheck:    check("chk_bill_payment_positive", sql`${table.amountPaid} > 0`),
 }));
 
 export type BillPayment    = typeof billPayments.$inferSelect;
