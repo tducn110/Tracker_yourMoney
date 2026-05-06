@@ -33,18 +33,21 @@ export const authRoutes = new Hono()
       // 1. Verify Firebase ID Token
       const decodedToken = await verifyFirebaseIdToken(idToken);
       const { uid, email, name, picture } = decodedToken;
+      logger.info({ event: "FIREBASE_TOKEN_VERIFIED", uid, email });
 
       if (!email) {
         return err(c, 400, "INVALID_TOKEN", "Token không chứa email");
       }
 
       // 2. Sync user với database
+      logger.info({ event: "DB_SYNC_START", uid });
       let user = await db
         .select()
         .from(users)
         .where(eq(users.firebaseUid, uid))
         .limit(1)
         .then((rows) => rows[0]);
+      logger.info({ event: "DB_SYNC_FOUND", found: !!user });
 
       if (!user) {
         // Thử tìm bằng email
@@ -56,10 +59,10 @@ export const authRoutes = new Hono()
           .then((rows) => rows[0]);
 
         if (user) {
-          // Link tài khoản hiện có với Firebase UID
+          // Link existing account with Firebase UID
           await db.update(users).set({ firebaseUid: uid }).where(eq(users.id, user.id));
         } else {
-          // Tạo tài khoản mới
+          // Create new account
           const username = email.split("@")[0] + Math.floor(Math.random() * 1000);
           const [createdUser] = await db.insert(users).values({
             firebaseUid: uid,
@@ -71,14 +74,6 @@ export const authRoutes = new Hono()
           }).returning();
 
           user = createdUser;
-          if (!user) {
-            user = await db
-              .select()
-              .from(users)
-              .where(eq(users.email, email))
-              .limit(1)
-              .then((rows) => rows[0]);
-          }
         }
       }
 
@@ -102,7 +97,7 @@ export const authRoutes = new Hono()
       });
     } catch (e: any) {
       logError(e, c.req.path, c.req.method, "social-login");
-      return err(c, 401, "AUTH_ERROR", "Đăng nhập thất bại");
+      return err(c, 401, "AUTH_ERROR", process.env.NODE_ENV === "development" ? e.message : "Đăng nhập thất bại");
     }
   })
 

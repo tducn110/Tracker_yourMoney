@@ -6,7 +6,7 @@ import {
 } from "@finance/db/src/schema/budgets";
 import { transactions } from "@finance/db/src/schema/transactions";
 import { categories } from "@finance/db/src/schema/categories";
-import { and, eq, sum, between, inArray, sql, desc } from "drizzle-orm";
+import { and, eq, sum, gte, lte, inArray, sql, desc } from "@finance/db";
 import Decimal from "decimal.js";
 
 export class BudgetService {
@@ -41,7 +41,8 @@ export class BudgetService {
           and(
             eq(transactions.userId, userId),
             eq(transactions.type, "expense"),
-            between(transactions.displayDate, minDate, maxDate),
+            gte(transactions.displayDate, minDate),
+            lte(transactions.displayDate, maxDate),
           ),
         ),
     ]);
@@ -121,7 +122,8 @@ export class BudgetService {
           and(
             eq(transactions.userId, userId),
             eq(transactions.type, "expense"),
-            between(transactions.displayDate, minDate, maxDate),
+            gte(transactions.displayDate, minDate),
+            lte(transactions.displayDate, maxDate),
           ),
         ),
       (async () => {
@@ -136,7 +138,8 @@ export class BudgetService {
             and(
               eq(transactions.userId, userId),
               eq(transactions.type, "income"),
-              between(transactions.displayDate, incomeStart, incomeEnd),
+              gte(transactions.displayDate, incomeStart),
+              lte(transactions.displayDate, incomeEnd),
             ),
           );
         return row;
@@ -228,7 +231,8 @@ export class BudgetService {
     const txFilters = [
       eq(transactions.userId, userId),
       eq(transactions.type, "expense"),
-      between(transactions.displayDate, budget.startDate, budget.endDate),
+      gte(transactions.displayDate, budget.startDate),
+      lte(transactions.displayDate, budget.endDate),
     ];
     if (!budget.isAllCategories && categoryIds.length > 0) {
       txFilters.push(inArray(transactions.categoryId, categoryIds));
@@ -302,8 +306,8 @@ export class BudgetService {
       walletScope: input.walletScope,
       status: "active",
     };
-    const [created] = await db.insert(budgets).values(newBudget).returning({ id: budgets.id });
-    const budgetId = created.id;
+    const [insertedBudget] = await db.insert(budgets).values(newBudget).returning();
+    const budgetId = String(insertedBudget?.id ?? "");
     if (!input.isAllCategories && input.categoryIds?.length) {
       await db.insert(budgetCategories).values(
         input.categoryIds.map((catId: number) => ({
@@ -392,7 +396,8 @@ export class BudgetService {
     const filters = [
       eq(transactions.userId, budget.userId),
       eq(transactions.type, "expense"),
-      between(transactions.displayDate, budget.startDate, budget.endDate),
+      gte(transactions.displayDate, budget.startDate),
+      lte(transactions.displayDate, budget.endDate),
     ];
     if (!budget.isAllCategories && categoryIds.length > 0) {
       filters.push(inArray(transactions.categoryId, categoryIds));

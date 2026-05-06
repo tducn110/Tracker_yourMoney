@@ -44,15 +44,14 @@ internalRoutes.post("/seed-user", async (c) => {
     let insertedUserId: string = "";
 
     await db.transaction(async (tx: any) => {
-      // Create user with autoincrement ID
-      const [result] = await tx.insert(users).values({
+      // Create user with auto-generated ID
+      const [newUser] = await tx.insert(users).values({
         email,
         username,
         fullName,
         passwordHash,
-      }).returning({ id: users.id });
-
-      insertedUserId = String(result.id);
+      }).returning();
+      insertedUserId = String(newUser?.id ?? "");
 
       // Initialize Settings & Wallet using the auto-generated ID
       await tx.insert(userSettings).values({ userId: insertedUserId as any });

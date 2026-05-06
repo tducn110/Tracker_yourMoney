@@ -46,14 +46,19 @@ export class TransactionService {
     const isIncome = input.type === "income";
     const balanceAfter = isIncome ? balanceBefore.plus(amount) : balanceBefore.minus(amount);
 
+    // Normalize displayDate: shared-schema sends string, DB expects Date
+    const displayDate = input.displayDate
+      ? new Date(input.displayDate as string)
+      : new Date();
+
     // Atomic: insert transaction + update wallet balance + audit log
     const result = await db.transaction(async (tx: any) => {
       const [created] = await tx.insert(transactions).values({
         ...input,
         userId: userId as any,
         walletId: input.walletId as any,
+        displayDate,
       }).returning();
-
       if (!created) throw new Error("Failed to create transaction");
 
       // OCC: update wallet balance with version check
@@ -273,7 +278,7 @@ export class TransactionService {
       amount: parsed.amount,
       type: parsed.type,
       note: parsed.note,
-      displayDate: new Date().toISOString().split('T')[0],
+      displayDate: new Date().toISOString().split('T')[0] as any,
       source: 'quick_add',
       idempotencyKey: options.idempotencyKey,
     });

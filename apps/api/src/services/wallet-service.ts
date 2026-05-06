@@ -68,7 +68,8 @@ export class WalletService {
       icon: input.icon ?? "💵",
       color: input.color ?? "#6B7280",
       isDefault: input.isDefault ?? false,
-    } as any).returning({ id: wallets.id });
+    } as any).returning();
+    if (!created) throw new Error("Failed to create wallet");
     return this.getWallet(userId, String(created.id));
   }
 
@@ -126,7 +127,7 @@ export class WalletService {
           throw new Error("Không tìm thấy danh mục 'Khác' để tạo giao dịch tự động");
         }
 
-        const [txResult] = await tx.insert(transactions).values({
+        const [autoTx] = await tx.insert(transactions).values({
           userId: userId as any,
           walletId: walletId as any,
           categoryId: catId,
@@ -135,9 +136,8 @@ export class WalletService {
           note: note ?? "Chi phí không ghi nhận (Quick Sync)",
           displayDate: new Date().toISOString().split('T')[0],
           source: "quick_add",
-        }).returning({ id: transactions.id });
-
-        autoTxId = txResult?.id ? String(txResult.id) : null;
+        }).returning();
+        autoTxId = autoTx ? String(autoTx.id) : null;
       }
 
       // OCC: update wallet balance with version check
@@ -181,7 +181,7 @@ export class WalletService {
     const after = before.plus(amount);
 
     await db.transaction(async (tx: any) => {
-      const [txResult] = await tx.insert(transactions).values({
+      const [fundsTx] = await tx.insert(transactions).values({
         userId: userId as any,
         walletId: walletId as any,
         categoryId,
@@ -191,9 +191,8 @@ export class WalletService {
         displayDate: new Date().toISOString().split('T')[0],
         source: "manual",
         idempotencyKey: options?.idempotencyKey,
-      }).returning({ id: transactions.id });
-
-      const autoTxId = txResult?.id ? String(txResult.id) : null;
+      }).returning();
+      const autoTxId = fundsTx ? String(fundsTx.id) : null;
 
       // OCC: update wallet balance with version check
       const updateResult = await tx.update(wallets).set({
@@ -290,7 +289,8 @@ export class WalletService {
         displayDate: new Date().toISOString().split('T')[0],
         source: "transfer",
         idempotencyKey: idempotencyKey ? `${idempotencyKey}_out` : undefined,
-      }).returning({ id: transactions.id });
+      }).returning();
+      const txOutId = txOut?.id;
 
       // Credit: income to target wallet
       const [txIn] = await tx.insert(transactions).values({
@@ -303,7 +303,8 @@ export class WalletService {
         displayDate: new Date().toISOString().split('T')[0],
         source: "transfer",
         idempotencyKey: idempotencyKey ? `${idempotencyKey}_in` : undefined,
-      }).returning({ id: transactions.id });
+      }).returning();
+      const txInId = txIn?.id;
 
       // OCC: update source wallet balance
       const srcUpdate = await tx.update(wallets).set({
@@ -336,13 +337,13 @@ export class WalletService {
       }
 
       // Audit logs
-      const txOutId = txOut?.id ? String(txOut.id) : null;
-      const txInId = txIn?.id ? String(txIn.id) : null;
+      const txOutIdStr = txOutId ? String(txOutId) : null;
+      const txInIdStr = txInId ? String(txInId) : null;
 
       await tx.insert(walletLogs).values({
         walletId: fromWalletId as any,
         userId: userId as any,
-        transactionId: txOutId as any,
+        transactionId: txOutIdStr as any,
         balanceBefore: sourceBefore.toFixed(2),
         balanceAfter: sourceAfter.toFixed(2),
         difference: amt.negated().toFixed(2),
@@ -353,7 +354,7 @@ export class WalletService {
       await tx.insert(walletLogs).values({
         walletId: toWalletId as any,
         userId: userId as any,
-        transactionId: txInId as any,
+        transactionId: txInIdStr as any,
         balanceBefore: targetBefore.toFixed(2),
         balanceAfter: targetAfter.toFixed(2),
         difference: amt.toFixed(2),

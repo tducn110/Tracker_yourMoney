@@ -3,7 +3,7 @@
 // user_id = NULL → system category (global cho tất cả users)
 // user_id = có giá trị → user-defined category
 import {
-  bigint, integer, varchar, boolean, timestamp, pgTable, index, uniqueIndex, pgEnum,
+  bigint, integer, varchar, boolean, timestamp, pgTable, pgEnum, index, uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
 

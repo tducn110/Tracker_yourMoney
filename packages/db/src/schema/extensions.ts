@@ -3,7 +3,7 @@
 // TABLE 12: audit_logs — Ghi log thao tác quan trọng (Phase 2)
 import {
   bigint, varchar, boolean, timestamp, text, json,
-  pgTable, pgEnum, index,
+  pgTable, pgEnum, index, bigserial,
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
 
@@ -17,7 +17,7 @@ export const auditStatusEnum = pgEnum("audit_status", ["success", "failed"]);
 
 // ── TABLE 11: notifications ──────────────────────────────────────
 export const notifications = pgTable("notifications", {
-  id:        bigint("id", { mode: "bigint" }).$type<string>().generatedAlwaysAsIdentity().primaryKey(),
+  id:             bigint("id", { mode: "bigint" }).$type<string>().primaryKey().generatedAlwaysAsIdentity(),
   userId:    bigint("user_id", { mode: "bigint" }).$type<string>().notNull()
                .references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
   type:      notificationTypeEnum("type").notNull(),

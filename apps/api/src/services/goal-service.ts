@@ -81,7 +81,7 @@ export class GoalService {
         eq(wallets.version, wallet.version ?? 0),
       ));
 
-      if (updateResult.rowCount === 0) {
+      if ((updateResult as any).rowCount === 0) {
         throw Object.assign(new Error("Xung đột cập nhật ví — vui lòng thử lại"), { code: "CONFLICT" });
       }
 
@@ -159,7 +159,7 @@ export class GoalService {
         eq(wallets.version, wallet.version ?? 0),
       ));
 
-      if (updateResult.rowCount === 0) {
+      if ((updateResult as any).rowCount === 0) {
         throw Object.assign(new Error("Xung đột cập nhật — vui lòng thử lại"), { code: "CONFLICT" });
       }
 
@@ -180,7 +180,7 @@ export class GoalService {
       }
 
       // 4. Create Transaction (Expense from cash wallet)
-      const [createdTx] = await tx.insert(transactions).values({
+      const [contributionTx] = await tx.insert(transactions).values({
         userId: userId as any,
         walletId: input.walletId as any,
         categoryId: savingsCategory.id,
@@ -190,13 +190,14 @@ export class GoalService {
         displayDate: new Date().toISOString().split('T')[0],
         source: "goal_contribution",
         idempotencyKey: input.idempotencyKey ?? null,
-      }).returning({ id: transactions.id });
+      }).returning();
+      const createdTxId = contributionTx?.id ?? null;
 
       // 5. Audit log
       await tx.insert(walletLogs).values({
         walletId: input.walletId as any,
         userId: userId as any,
-        transactionId: createdTx?.id as any ?? null,
+        transactionId: createdTxId as any,
         balanceBefore: balanceBefore.toFixed(2),
         balanceAfter: balanceAfter.toFixed(2),
         difference: amount.negated().toFixed(2),
@@ -223,7 +224,7 @@ export class GoalService {
 
     return this.repository.update(id, userId, {
       ...input,
-      deadline: input.deadline ?? undefined,
+      deadline: input.deadline ? String(input.deadline) : undefined,
     });
   }
 

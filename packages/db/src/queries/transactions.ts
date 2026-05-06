@@ -59,8 +59,8 @@ export async function getTransactionsPaginated(
     filters.push(sql`${transactions.displayDate} >= ${startDate}`);
     filters.push(sql`${transactions.displayDate} <= ${endDate}`);
   } else {
-    if (dateFrom) filters.push(gte(transactions.displayDate, dateFrom));
-    if (dateTo) filters.push(lte(transactions.displayDate, dateTo));
+    if (dateFrom) filters.push(sql`${transactions.displayDate} >= ${dateFrom}`);
+    if (dateTo) filters.push(sql`${transactions.displayDate} <= ${dateTo}`);
   }
 
   if (categoryId) filters.push(eq(transactions.categoryId, categoryId));

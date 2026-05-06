@@ -1,13 +1,22 @@
 import * as dotenv from "dotenv";
 import * as path from "path";
-import { fileURLToPath } from "url";
+import * as fs from "fs";
 
 // ── ENVIRONMENT INITIALIZATION ──────────────────────────────────────
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const rootPath = path.resolve(__dirname, "../../../");
+// Walk up from __dirname (or cwd) to find the monorepo root with .env
+function findMonorepoRoot(startDir: string): string {
+  let dir = startDir;
+  for (let i = 0; i < 10; i++) {
+    if (fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return startDir;
+}
 
 if (process.env.NODE_ENV !== "production") {
+  const rootPath = findMonorepoRoot(process.cwd());
   const envPath = path.join(rootPath, ".env");
   const envLocalPath = path.join(rootPath, ".env.local");
 
@@ -134,16 +143,17 @@ async function processAutoPay(bill: BillDue) {
       });
 
       // 4. Create transaction
-      const [newTx] = await tx.insert(transactions).values({
+      const [autoTx] = await tx.insert(transactions).values({
         userId: bill.userId as any,
         walletId: wallet.id,
         categoryId: bill.categoryId,
         amount: bill.amount,
         type: "expense",
         note: `Thanh toán tự động: ${bill.name}`,
-        displayDate: new Date().toISOString().split("T")[0],
+        displayDate: new Date().toISOString().split('T')[0],
         source: "recurring",
-      }).returning({ id: transactions.id });
+      }).returning();
+      const newTxId = autoTx?.id ?? null;
 
       // 5. Deduct wallet balance (OCC)
       const updateResult = await tx
@@ -158,7 +168,7 @@ async function processAutoPay(bill: BillDue) {
           eq(wallets.version, wallet.version ?? 0)
         ));
 
-      if (updateResult.rowCount === 0) {
+      if ((updateResult as any).rowCount === 0) {
         throw new Error("Xung đột cập nhật ví trong worker (OCC)");
       }
 
@@ -166,7 +176,7 @@ async function processAutoPay(bill: BillDue) {
       await tx.insert(walletLogs).values({
         walletId: wallet.id as any,
         userId: bill.userId as any,
-        transactionId: newTx?.id as any ?? null,
+        transactionId: newTxId as any,
         balanceBefore: balanceBefore.toFixed(2),
         balanceAfter: balanceAfter.toFixed(2),
         difference: billAmount.negated().toFixed(2),
@@ -178,7 +188,7 @@ async function processAutoPay(bill: BillDue) {
     console.log(`[Worker] Auto-paid "${bill.name}" — ${bill.amount} ₫`);
   } catch (err: any) {
     // Duplicate idempotency key = already processed, safe to ignore
-    if (err.message?.includes("ER_DUP_ENTRY") || err.message?.includes("Duplicate")) {
+    if (err.message?.includes("23505") || err.message?.includes("Duplicate") || err.message?.includes("unique constraint")) {
       console.log(`[Worker] Auto-pay for "${bill.name}" already processed (idempotent)`);
       return;
     }

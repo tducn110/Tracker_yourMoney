@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "ignoreDeprecations": "5.0",
     "outDir": "dist",
     "rootDir": "src",
     "lib": ["ESNext"],

@@ -16,19 +16,19 @@ async function seed() {
   const email = "demouser@gmail.com";
   const passwordHash = "adc7e5451f44847766d34dd4e86d85f3:b173add1200aca979e727fda687c86e774ea347195e9b5be0133535b586ab409"; // Valid PBKDF2 hash for 'password123'
 
-  // 1. Create User (PostgreSQL uses returning() instead of insertId)
+  // 1. Create User
   const existingUsers = await db.select().from(users).where(eq(users.email, email));
   let user = existingUsers[0];
 
   if (!user) {
     console.log("Creating demouser...");
-    const [newUser] = await db.insert(users).values({
+    const [justCreated] = await db.insert(users).values({
       email,
       username: "demouser",
       fullName: "Demo User",
       passwordHash,
     }).returning();
-    user = newUser;
+    user = justCreated;
   } else {
     console.log("Demo user exists, updating password hash...");
     await db.update(users).set({ passwordHash }).where(eq(users.id, user.id));
@@ -37,7 +37,7 @@ async function seed() {
   if (!user) throw new Error("User creation failed");
   const userId = user.id;
 
-  // 2. Settings & Wallet (PG: use ON CONFLICT DO UPDATE via onConflictDoUpdate)
+  // 2. Settings & Wallet
   console.log("Seeding settings & wallet...");
   await db.insert(userSettings).values({
     userId: userId,
