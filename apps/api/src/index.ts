@@ -68,7 +68,17 @@ const app = new Hono<{ Variables: Variables }>();
 app.use('*', compress({ threshold: 1024 }));
 
 app.use('*', cors({
-  origin: ['http://127.0.0.1:3000', 'http://localhost:3000'],
+  origin: (origin) => {
+    if (!origin) return 'http://localhost:3000';
+    if (
+      origin === 'http://127.0.0.1:3000' ||
+      origin === 'http://localhost:3000' ||
+      origin.endsWith('.vercel.app')
+    ) {
+      return origin;
+    }
+    return 'http://localhost:3000';
+  },
   credentials: true,
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'x-correlation-id', 'Idempotency-Key', 'x-e2e-secret'],
