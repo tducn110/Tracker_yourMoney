@@ -42,7 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (firebaseUser) {
         // Skip /auth/me check if social login is about to set the user from /auth/social response
         if (socialLoginInProgress.current) {
-          setLoading(false);
+          // Small delay to ensure any concurrent state updates settle
+          setTimeout(() => setLoading(false), 500);
           return;
         }
         try {
@@ -112,7 +113,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Social login error:", error);
       toast.error(error.message || "Đăng nhập thất bại");
     } finally {
-      socialLoginInProgress.current = false;
+      // Keep guard active for a short bit to prevent race with Auth observer
+      setTimeout(() => {
+        socialLoginInProgress.current = false;
+      }, 1000);
       setLoading(false);
     }
   };
