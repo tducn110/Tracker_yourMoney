@@ -1,38 +1,39 @@
 // packages/db/src/telemetry.ts
 import { AsyncLocalStorage } from "node:async_hooks";
 import { Logger } from "drizzle-orm/logger";
+import pino from "pino";
 
 export interface TraceContext {
   correlationId: string;
 }
 
 // ── ASYNC LOCAL STORAGE ────────────────────────────────────────────
-// Stores the correlationId for the duration of a request, 
+// Stores the correlationId for the duration of a request,
 // allowing the Drizzle logger to access it without passing it manually.
 export const traceStorage = new AsyncLocalStorage<TraceContext>();
 
+// Package-level telemetry logger — structured JSON, not raw console output
+const telemetryLogger = pino({
+  name: "packages/db/telemetry",
+  level: process.env.LOG_LEVEL || "info",
+});
+
 // ── CUSTOM DRIZZLE LOGGER ──────────────────────────────────────────
+// NOTE: Drizzle's Logger.logQuery is called BEFORE query execution,
+// so we log query start. Slow-query detection is handled in client.ts.
 export class DrizzleTelemetryLogger implements Logger {
   logQuery(query: string, params: unknown[]): void {
     const context = traceStorage.getStore();
     const correlationId = context?.correlationId || "system";
-    
-    // In production, we might want to redact params or use a structured logger (pino)
-    const startTime = performance.now();
-    
-    // We wrap the actual logging in a way that captures execution time 
-    // by monkey-patching or using a more sophisticated approach.
-    // For now, we just log the query and intent.
-    
-    // To measure execution time, we need to know when the query finished.
-    // Drizzle's Logger.logQuery is called BEFORE execution.
-    // So we log the start, and we'll rely on the DB driver's logs or 
-    // a wrapper if we need precise latency tracking in Drizzle logs.
-    console.log(JSON.stringify({
-      event: "DB_QUERY_START",
-      correlationId,
-      query: query.substring(0, 100) + (query.length > 100 ? "..." : ""),
-      timestamp: new Date().toISOString()
-    }));
+
+    telemetryLogger.debug(
+      {
+        event: "DB_QUERY_START",
+        correlationId,
+        query: query.length > 100 ? `${query.substring(0, 100)}...` : query,
+        paramCount: params.length,
+      },
+      "DB query"
+    );
   }
 }

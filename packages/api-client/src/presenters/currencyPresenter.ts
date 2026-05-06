@@ -16,8 +16,8 @@ export function toDecimal(amount: string | number | bigint | Decimal): Decimal {
       return new Decimal(cleaned);
     }
     return new Decimal(amount || 0);
-  } catch (e) {
-    console.error('Error converting to Decimal:', amount, e);
+  } catch {
+    // Silent fallback: invalid monetary value — return zero rather than crashing the UI
     return new Decimal(0);
   }
 }

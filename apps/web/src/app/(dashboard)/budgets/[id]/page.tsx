@@ -126,7 +126,7 @@ export default function BudgetDetailPage() {
   const {
     name, targetAmount, spent, left, percent,
     categories: budgetCats, periodType, startDate, endDate,
-    walletScope, isAllCategories, icon,
+    isAllCategories, icon,
   } = budget;
 
   const numericLeft = parseFloat(left || '0');
@@ -182,10 +182,7 @@ export default function BudgetDetailPage() {
               <CalendarDays size={12} />
               {periodLabel[periodType]} • {startDate} → {endDate}
             </span>
-            <span className="flex items-center gap-1">
-              <Wallet size={12} />
-              {walletScope === 'all' ? 'Tất cả ví' : 'Ví cụ thể'}
-            </span>
+
           </div>
         </div>
       </div>

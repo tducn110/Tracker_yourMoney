@@ -8,85 +8,72 @@ import { transactions } from "@finance/db/src/schema/transactions";
 import { categories } from "@finance/db/src/schema/categories";
 import { and, eq, sum, gte, lte, inArray, sql, desc } from "@finance/db";
 import Decimal from "decimal.js";
+import { NotFoundError } from "../lib/errors";
+import type { InsertBudgetInput, UpdateBudgetInput } from "@finance/shared-schemas";
 
 export class BudgetService {
   async getBudgets(userId: string) {
-    const userBudgets = await db
-      .select()
+    // 1. Get all budgets for the user with their calculated spent amount in one query
+    // This optimization uses SQL-level aggregation (SUM) to avoid fetching thousands of transactions
+    const budgetData = await db
+      .select({
+        budget: budgets,
+        spent: sql<string>`COALESCE(SUM(
+          CASE 
+            WHEN ${transactions.id} IS NOT NULL THEN ${transactions.amount} 
+            ELSE 0 
+          END
+        ), '0.00')`.as("spent"),
+      })
       .from(budgets)
-      .where(eq(budgets.userId, userId));
+      // Use LEFT JOIN to catch budgets even with no categories or no transactions
+      .leftJoin(budgetCategories, eq(budgets.id, budgetCategories.budgetId))
+      .leftJoin(
+        transactions,
+        and(
+          eq(transactions.userId, budgets.userId),
+          eq(transactions.type, "expense"),
+          gte(transactions.displayDate, budgets.startDate),
+          lte(transactions.displayDate, budgets.endDate),
+          sql`(${budgets.isAllCategories} = true OR ${transactions.categoryId} = ${budgetCategories.categoryId})`,
+        )
+      )
+      .where(eq(budgets.userId, userId))
+      .groupBy(budgets.id)
+      .orderBy(desc(budgets.createdAt));
 
-    if (userBudgets.length === 0) return [];
-
-    // Compute overall date range
-    let minDate = userBudgets[0].startDate;
-    let maxDate = userBudgets[0].endDate;
-    for (const b of userBudgets) {
-      if (b.startDate < minDate) minDate = b.startDate;
-      if (b.endDate > maxDate) maxDate = b.endDate;
-    }
-
-    const budgetIds = userBudgets.map((b) => b.id);
-
-    // Fetch budget categories + transactions in parallel (2 independent queries)
-    const [allBudgetCats, allTxs] = await Promise.all([
-      db
-        .select()
-        .from(budgetCategories)
-        .where(inArray(budgetCategories.budgetId, budgetIds)),
-      db
-        .select()
-        .from(transactions)
-        .where(
-          and(
-            eq(transactions.userId, userId),
-            eq(transactions.type, "expense"),
-            gte(transactions.displayDate, minDate),
-            lte(transactions.displayDate, maxDate),
-          ),
-        ),
-    ]);
-
-    const budgetCatMap = new Map<string, number[]>();
-    for (const bc of allBudgetCats) {
-      const bid = String(bc.budgetId);
-      if (!budgetCatMap.has(bid)) budgetCatMap.set(bid, []);
-      budgetCatMap.get(bid)!.push(Number(bc.categoryId));
-    }
-
-    return userBudgets.map((budget) => {
-      const bCatIds = budgetCatMap.get(String(budget.id)) || [];
-      const bTxs = allTxs.filter((tx) => {
-        const inDate =
-          tx.displayDate >= budget.startDate &&
-          tx.displayDate <= budget.endDate;
-        if (!inDate) return false;
-        if (budget.isAllCategories) return true;
-        return bCatIds.includes(Number(tx.categoryId));
-      });
-
-      const spent = bTxs.reduce(
-        (sum, tx) => sum.plus(new Decimal(tx.amount)),
-        new Decimal(0),
-      );
-
-      return {
-        ...budget,
-        spent: spent.toFixed(2),
-      };
-    });
+    return budgetData.map(({ budget, spent }) => ({
+      ...budget,
+      spent: new Decimal(spent).toFixed(2),
+    }));
   }
+
 
   async getBudgetSummary(userId: string) {
     const activeBudgets = await db
-      .select()
+      .select({
+        budget: budgets,
+        spent: sql<string>`COALESCE(SUM(
+          CASE 
+            WHEN ${transactions.id} IS NOT NULL THEN ${transactions.amount} 
+            ELSE 0 
+          END
+        ), '0.00')`.as("spent"),
+      })
       .from(budgets)
-      .where(
+      .leftJoin(budgetCategories, eq(budgets.id, budgetCategories.budgetId))
+      .leftJoin(
+        transactions,
         and(
-          eq(budgets.userId, userId),
-          eq(budgets.status, "active"),
-        ),
-      );
+          eq(transactions.userId, budgets.userId),
+          eq(transactions.type, "expense"),
+          gte(transactions.displayDate, budgets.startDate),
+          lte(transactions.displayDate, budgets.endDate),
+          sql`(${budgets.isAllCategories} = true OR ${transactions.categoryId} = ${budgetCategories.categoryId})`,
+        )
+      )
+      .where(and(eq(budgets.userId, userId), eq(budgets.status, "active")))
+      .groupBy(budgets.id);
 
     if (activeBudgets.length === 0) {
       return {
@@ -99,80 +86,34 @@ export class BudgetService {
       };
     }
 
-    // 1. Compute overall date range
-    let minDate = activeBudgets[0].startDate;
-    let maxDate = activeBudgets[0].endDate;
-    for (const b of activeBudgets) {
-      if (b.startDate < minDate) minDate = b.startDate;
-      if (b.endDate > maxDate) maxDate = b.endDate;
-    }
+    // Now fetch total income in current month
+    const now = new Date();
+    const incomeStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const incomeEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
-    const budgetIds = activeBudgets.map(b => b.id);
-
-    // 2. Fetch budget categories + transactions + income in parallel (3 independent queries)
-    const [allBudgetCats, allTxs, incomeRow] = await Promise.all([
-      db
-        .select()
-        .from(budgetCategories)
-        .where(inArray(budgetCategories.budgetId, budgetIds)),
-      db
-        .select()
-        .from(transactions)
-        .where(
-          and(
-            eq(transactions.userId, userId),
-            eq(transactions.type, "expense"),
-            gte(transactions.displayDate, minDate),
-            lte(transactions.displayDate, maxDate),
-          ),
+    const [incomeRow] = await db
+      .select({ total: sum(transactions.amount) })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.type, "income"),
+          gte(transactions.displayDate, incomeStart),
+          lte(transactions.displayDate, incomeEnd),
         ),
-      (async () => {
-        const now = new Date();
-        const incomeStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-        const incomeEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-        const [row] = await db
-          .select({ total: sum(transactions.amount) })
-          .from(transactions)
-          .where(
-            and(
-              eq(transactions.userId, userId),
-              eq(transactions.type, "income"),
-              gte(transactions.displayDate, incomeStart),
-              lte(transactions.displayDate, incomeEnd),
-            ),
-          );
-        return row;
-      })(),
-    ]);
+      );
 
-    const budgetCatMap = new Map<string, number[]>();
-    for (const bc of allBudgetCats) {
-      const bid = String(bc.budgetId);
-      if (!budgetCatMap.has(bid)) budgetCatMap.set(bid, []);
-      budgetCatMap.get(bid)!.push(Number(bc.categoryId));
-    }
-
-    // 4. Calculate spent and projected for each budget
     let totalLimit = new Decimal(0);
     let totalSpent = new Decimal(0);
     let totalProjected = new Decimal(0);
     const today = new Date();
 
-    for (const budget of activeBudgets) {
+    for (const { budget, spent } of activeBudgets) {
       const bLimit = new Decimal(budget.targetAmount);
       totalLimit = totalLimit.plus(bLimit);
 
-      // Filter transactions for this specific budget
-      const bCatIds = budgetCatMap.get(String(budget.id)) || [];
-      const bTxs = allTxs.filter(tx => {
-        const inDate = tx.displayDate >= budget.startDate && tx.displayDate <= budget.endDate;
-        if (!inDate) return false;
-        if (budget.isAllCategories) return true;
-        return bCatIds.includes(Number(tx.categoryId));
-      });
-
-      const bSpent = bTxs.reduce((sum, tx) => sum.plus(tx.amount), new Decimal(0));
+      const bSpent = new Decimal(spent);
       totalSpent = totalSpent.plus(bSpent);
 
       // Calculate projected
@@ -180,7 +121,7 @@ export class BudgetService {
       const end = new Date(budget.endDate);
       const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
       const daysElapsed = Math.max(1, Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-      
+
       const bProjected = bSpent.div(daysElapsed).times(totalDays);
       totalProjected = totalProjected.plus(bProjected);
     }
@@ -210,7 +151,7 @@ export class BudgetService {
       )
       .limit(1);
     if (!budget)
-      throw Object.assign(new Error("Budget not found"), { code: "NOT_FOUND" });
+      throw new NotFoundError("Budget not found");
 
     // Fetch budget categories + related transactions (categories needed for tx filter)
     let categoryIds: number[] = [];
@@ -293,7 +234,7 @@ export class BudgetService {
     };
   }
 
-  async createBudget(userId: string, input: any) {
+  async createBudget(userId: string, input: InsertBudgetInput & { idempotencyKey?: string }) {
     const newBudget: NewBudget = {
       userId: userId,
       name: input.name,
@@ -303,7 +244,6 @@ export class BudgetService {
       startDate: input.startDate,
       endDate: input.endDate,
       isAllCategories: Boolean(input.isAllCategories),
-      walletScope: input.walletScope,
       status: "active",
     };
     const [insertedBudget] = await db.insert(budgets).values(newBudget).returning();
@@ -319,7 +259,7 @@ export class BudgetService {
     return this.getBudgetDetail(userId, String(budgetId));
   }
 
-  async updateBudget(userId: string, budgetId: string, input: any) {
+  async updateBudget(userId: string, budgetId: string, input: UpdateBudgetInput) {
     const [existing] = await db
       .select()
       .from(budgets)
@@ -331,7 +271,7 @@ export class BudgetService {
       )
       .limit(1);
     if (!existing)
-      throw Object.assign(new Error("Budget not found"), { code: "NOT_FOUND" });
+      throw new NotFoundError("Budget not found");
 
     await db
       .update(budgets)
@@ -343,7 +283,6 @@ export class BudgetService {
         startDate: input.startDate,
         endDate: input.endDate,
         isAllCategories: Boolean(input.isAllCategories),
-        walletScope: input.walletScope,
         updatedAt: new Date(),
       })
       .where(eq(budgets.id, budgetId));
@@ -378,34 +317,34 @@ export class BudgetService {
       )
       .limit(1);
     if (!existing)
-      throw Object.assign(new Error("Budget not found"), { code: "NOT_FOUND" });
+      throw new NotFoundError("Budget not found");
     await db
       .delete(budgets)
       .where(and(eq(budgets.id, budgetId), eq(budgets.userId, userId)));
   }
 
   private async calculateSpent(budget: any): Promise<Decimal> {
-    let categoryIds: number[] = [];
-    if (!budget.isAllCategories) {
-      const budgetCats = await db
-        .select({ categoryId: budgetCategories.categoryId })
-        .from(budgetCategories)
-        .where(eq(budgetCategories.budgetId, budget.id));
-      categoryIds = budgetCats.map((c) => Number(c.categoryId));
-    }
-    const filters = [
-      eq(transactions.userId, budget.userId),
-      eq(transactions.type, "expense"),
-      gte(transactions.displayDate, budget.startDate),
-      lte(transactions.displayDate, budget.endDate),
-    ];
-    if (!budget.isAllCategories && categoryIds.length > 0) {
-      filters.push(inArray(transactions.categoryId, categoryIds));
-    }
     const [row] = await db
-      .select({ total: sum(transactions.amount) })
+      .select({
+        total: sql<string>`COALESCE(SUM(
+          CASE 
+            WHEN ${transactions.id} IS NOT NULL THEN ${transactions.amount} 
+            ELSE 0 
+          END
+        ), '0.00')`
+      })
       .from(transactions)
-      .where(and(...filters));
+      .leftJoin(budgetCategories, eq(budgetCategories.budgetId, budget.id))
+      .where(
+        and(
+          eq(transactions.userId, budget.userId),
+          eq(transactions.type, "expense"),
+          gte(transactions.displayDate, budget.startDate),
+          lte(transactions.displayDate, budget.endDate),
+          sql`(${budget.isAllCategories} = true OR ${transactions.categoryId} = ${budgetCategories.categoryId})`
+        )
+      );
+
     return new Decimal(row?.total ?? "0");
   }
 }

@@ -40,6 +40,7 @@ import { logger, logRequest, logError } from './lib/logger';
 import { rateLimitMiddleware } from './middleware/rate-limit';
 import { authMiddleware } from './middleware/auth-guard';
 import { auditMiddleware } from './middleware/audit';
+import { AppError } from './lib/errors';
 
 import { authRoutes } from './routes/auth';
 import { internalRoutes } from './routes/internal';
@@ -146,6 +147,8 @@ if (process.env.NODE_ENV === 'test') {
   app.route('/api/internal', internalRoutes);
 }
 
+// Debug routes have been removed
+
 
 app.get('/', (c) => c.text('API is running'));
 app.get('/ping', (c) => c.text('pong'));
@@ -163,6 +166,12 @@ app.onError((err, c) => {
                      errorMessage.includes('Duplicate entry') || 
                      (err as any).code === 'ER_DUP_ENTRY' ||
                      (err as any).code === '23505';
+
+  if (err instanceof AppError) {
+    return c.json({
+      error: { code: err.code, message: err.message, details: err.details, correlationId }
+    }, err.status as any);
+  }
 
   if (isDuplicate) {
     return c.json({
