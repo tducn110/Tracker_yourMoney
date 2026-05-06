@@ -54,14 +54,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(data.data);
           } else {
             // Token expired or invalid at backend
-            let errorText = "";
+            let errorMsg = "";
             try {
-              errorText = await response.text();
+              const errorData = await response.json();
+              errorMsg = errorData.error?.message || "";
             } catch {
-              errorText = "[response.text() failed]";
+              // fallback to status text
             }
             console.error(
-              `Auth /me failed: HTTP ${response.status} ${response.statusText} — ${errorText || "(empty body)"}`,
+              `Auth /me failed: HTTP ${response.status} ${response.statusText} ${errorMsg ? `— ${errorMsg}` : ""}`,
             );
             setUser(null);
           }
@@ -93,20 +94,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        let errorText = "";
+        let errorMessage = "Xác thực với backend thất bại";
         try {
-          errorText = await response.text();
+          const errorData = await response.json();
+          errorMessage = errorData.error?.message || errorMessage;
+          if (errorData.error?.step) {
+            errorMessage += ` (Lỗi tại bước: ${errorData.error.step})`;
+          }
         } catch {
-          errorText = "[response.text() failed]";
+          // ignore parse error, use default
         }
-        console.error(
-          `Auth /social failed: HTTP ${response.status} ${response.statusText} — ${errorText || "(empty body)"}`,
-        );
-        throw new Error("Xác thực với backend thất bại");
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       setUser(data.data.user);
+      toast.success("Đăng nhập thành công");
       router.push("/");
     } catch (error: any) {
       console.error("Social login error:", error);
