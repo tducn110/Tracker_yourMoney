@@ -138,8 +138,8 @@ v1.get('/health', (c) => {
   });
 });
 
-// Auth routes — strict rate limit for brute force protection (10 req/min per IP)
-app.use('/api/auth/*', rateLimitMiddleware({ limit: 10, windowMs: 60_000 }));
+// Auth routes — strict rate limit for brute force protection (30 req/min per IP)
+app.use('/api/auth/*', rateLimitMiddleware({ limit: 30, windowMs: 60_000 }));
 app.route('/api/auth', authRoutes);
 app.route('/api/v1', v1);
 
