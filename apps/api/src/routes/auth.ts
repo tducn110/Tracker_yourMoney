@@ -27,10 +27,12 @@ export const authRoutes = new Hono()
   // POST /api/auth/social
   .post("/social", zValidator("json", socialLoginSchema), async (c) => {
     logger.info({ event: "SOCIAL_LOGIN_REQUEST", path: c.req.path });
+    let step = "init";
     try {
       const { idToken } = c.req.valid("json");
 
       // 1. Verify Firebase ID Token
+      step = "verify_firebase_token";
       const decodedToken = await verifyFirebaseIdToken(idToken);
       const { uid, email, name, picture } = decodedToken;
       logger.info({ event: "FIREBASE_TOKEN_VERIFIED", uid, email });
@@ -40,6 +42,7 @@ export const authRoutes = new Hono()
       }
 
       // 2. Sync user với database
+      step = "sync_user_db";
       logger.info({ event: "DB_SYNC_START", uid });
       let user = await db
         .select()
@@ -78,9 +81,11 @@ export const authRoutes = new Hono()
       }
 
       // 3. Tạo Firebase Session Cookie
+      step = "create_session_cookie";
       const sessionCookie = await createSessionCookie(idToken, SESSION_TTL_MS);
 
       // 4. Set HttpOnly cookie
+      step = "set_hono_cookie";
       setCookie(c, "session", sessionCookie, {
         ...COOKIE_BASE,
         maxAge: SESSION_TTL_MS / 1000,
@@ -96,8 +101,11 @@ export const authRoutes = new Hono()
         },
       });
     } catch (e: any) {
-      logError(e, c.req.path, c.req.method, "social-login");
-      return err(c, 401, "AUTH_ERROR", process.env.NODE_ENV === "development" ? e.message : "Đăng nhập thất bại");
+      logError(e, c.req.path, c.req.method, `social-login:${step}`);
+      return err(c, 401, "AUTH_ERROR", `Xác thực thất bại tại bước: ${step}`, {
+        step,
+        internalMessage: e.message
+      });
     }
   })
 
