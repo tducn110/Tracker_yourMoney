@@ -77,6 +77,7 @@ export function rateLimitMiddleware(opts: RateLimitOptions) {
       });
       return c.json(
         {
+          success: false,
           error: {
             code: "rate_limit_exceeded",
             message: "Bạn đang gửi quá nhiều yêu cầu. Vui lòng thử lại sau.",
