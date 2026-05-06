@@ -4,7 +4,6 @@
   "installCommand": "pnpm install",
   "framework": "nextjs",
   "outputDirectory": "apps/web/.next",
-  "ignoreCommand": "bash ./scripts/ignore-build.sh",
   "rewrites": [
     {
       "source": "/api/:path*",
