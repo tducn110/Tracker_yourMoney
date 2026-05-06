@@ -27,7 +27,6 @@ export interface BudgetFormData {
   endDate: string;
   isAllCategories: boolean;
   categoryIds: number[];
-  walletScope: 'all' | 'specific';
 }
 
 const PERIODS: { value: BudgetPeriod; label: string }[] = [
@@ -91,7 +90,7 @@ export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData }: Budg
   const [endDate, setEndDate] = useState('');
   const [isAllCategories, setIsAllCategories] = useState(false);
   const [selectedCats, setSelectedCats] = useState<number[]>([]);
-  const [walletScope, setWalletScope] = useState<'all' | 'specific'>('all');
+
 
   // Điền dữ liệu khi edit
   useEffect(() => {
@@ -106,7 +105,7 @@ export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData }: Budg
       const catIds = initialData.categories ? initialData.categories.map((c: any) => c.id) : (initialData.categoryIds || []);
       setSelectedCats(catIds);
       
-      setWalletScope(initialData.walletScope || initialData.wallet_scope || 'all');
+
     } else {
       setName('');
       setLimitInput('');
@@ -116,7 +115,7 @@ export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData }: Budg
       setEndDate(dates.end);
       setIsAllCategories(false);
       setSelectedCats([]);
-      setWalletScope('all');
+
     }
   }, [initialData, isOpen]);
 
@@ -149,7 +148,7 @@ export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData }: Budg
       endDate,
       isAllCategories,
       categoryIds: selectedCats,
-      walletScope,
+
     });
     onClose();
   };
@@ -327,28 +326,7 @@ export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData }: Budg
                   )}
                 </div>
 
-                {/* Ví áp dụng */}
-                <div>
-                  <label className="block text-[12px] font-bold text-gray-700 mb-1.5">
-                    Ví áp dụng
-                  </label>
-                  <div className="flex gap-2">
-                    {(['all', 'specific'] as const).map((scope) => (
-                      <button
-                        key={scope}
-                        type="button"
-                        onClick={() => setWalletScope(scope)}
-                        className={`flex-1 py-2.5 rounded-xl text-[12px] font-semibold border transition-all ${
-                          walletScope === scope
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
-                        }`}
-                      >
-                        {scope === 'all' ? 'Tất cả ví' : 'Ví cụ thể'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+
 
                 {/* Submit */}
                 <div className="flex gap-3 pt-2">

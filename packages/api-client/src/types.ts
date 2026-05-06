@@ -75,7 +75,6 @@ export interface Budget {
   startDate: string;
   endDate: string;
   isAllCategories: boolean;
-  walletScope: 'all' | 'specific';
   status: 'active' | 'completed' | 'paused';
   createdAt: string;
   updatedAt: string;

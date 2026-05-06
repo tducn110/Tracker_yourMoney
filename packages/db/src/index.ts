@@ -12,3 +12,5 @@ export type { Goal, NewGoal } from "./schema/index";
 export type { BillPayment, NewBillPayment } from "./schema/index";
 export type { Wallet, NewWallet, WalletLog, NewWalletLog } from "./schema/index";
 export { traceStorage } from "./telemetry";
+export { SYSTEM_CATEGORY_NAMES, SAVINGS_CATEGORY_DEFAULTS } from "./constants/system-categories";
+export type { SystemCategoryName } from "./constants/system-categories";

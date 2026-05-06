@@ -4,7 +4,6 @@ import { categories } from "./categories";
 
 export const budgetPeriodTypeEnum = pgEnum("budget_period_type", ["weekly", "monthly", "quarterly", "yearly", "custom"]);
 export const budgetStatusEnum = pgEnum("budget_status", ["active", "finished"]);
-export const budgetWalletScopeEnum = pgEnum("budget_wallet_scope", ["all", "specific"]);
 
 export const budgets = pgTable(
   "budgets",
@@ -18,7 +17,6 @@ export const budgets = pgTable(
     startDate: date("start_date").notNull(),
     endDate: date("end_date").notNull(),
     isAllCategories: boolean("is_all_categories").default(false).notNull(),
-    walletScope: budgetWalletScopeEnum("wallet_scope").default("all").notNull(),
     status: budgetStatusEnum("status").default("active").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),

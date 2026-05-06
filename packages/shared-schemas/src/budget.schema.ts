@@ -8,7 +8,6 @@ export const insertBudgetSchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày bắt đầu không hợp lệ (YYYY-MM-DD)"),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày kết thúc không hợp lệ (YYYY-MM-DD)"),
   isAllCategories: z.boolean().default(false),
-  walletScope: z.enum(["all", "specific"]).default("all"),
   categoryIds: z.array(z.number()).optional(),
 });
 

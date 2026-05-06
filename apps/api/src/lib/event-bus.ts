@@ -11,6 +11,7 @@
  */
 
 import { EventEmitter } from 'events';
+import { logger } from './logger';
 
 // ── Event Types ─────────────────────────────────────────────────────────
 export interface TransactionCreatedEvent {
@@ -89,7 +90,7 @@ class EventBus {
   on<T extends AppEvent>(eventType: T['type'], handler: (event: T) => void | Promise<void>): void {
     this.emitter.on(eventType, (event: AppEvent) => {
       Promise.resolve(handler(event as T)).catch((err) => {
-        console.error(`[EventBus] Unhandled error in handler for "${eventType}":`, err);
+        logger.error({ event: 'EVENT_BUS_HANDLER_ERROR', eventType, err }, `Unhandled error in handler for "${eventType}"`);
       });
     });
   }
@@ -98,7 +99,7 @@ class EventBus {
   once<T extends AppEvent>(eventType: T['type'], handler: (event: T) => void | Promise<void>): void {
     this.emitter.once(eventType, (event: AppEvent) => {
       Promise.resolve(handler(event as T)).catch((err) => {
-        console.error(`[EventBus] Unhandled error in once-handler for "${eventType}":`, err);
+        logger.error({ event: 'EVENT_BUS_HANDLER_ERROR', eventType, err }, `Unhandled error in once-handler for "${eventType}"`);
       });
     });
   }
