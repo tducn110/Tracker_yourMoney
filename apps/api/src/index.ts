@@ -1,20 +1,3 @@
-import * as dotenv from 'dotenv';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-
-// ── ENVIRONMENT INITIALIZATION ──────────────────────────────────────
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const rootPath = path.resolve(__dirname, '../../../');
-
-if (process.env.NODE_ENV !== 'production') {
-  const envPath = path.join(rootPath, '.env');
-  const envLocalPath = path.join(rootPath, '.env.local');
-
-  dotenv.config({ path: envPath, override: true });
-  dotenv.config({ path: envLocalPath, override: true });
-}
-
 // ── INSTRUMENTATION ──────────────────────────────────────────────────
 // Only load Sentry in Node.js fallback if DSN is present.
 // For Cloudflare Workers, use @sentry/cloudflare middleware if needed.
