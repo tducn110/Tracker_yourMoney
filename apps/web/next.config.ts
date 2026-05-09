@@ -41,7 +41,14 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  // ── API Rewrites ─────────────────────────────────────────────────────
+  // In development: proxy /api/* to the separate Hono dev server (localhost:3001).
+  // In production (Vercel): /api/* is handled by the catch-all route at
+  //   src/app/api/[[...route]]/route.ts which embeds the Hono app directly.
   async rewrites() {
+    if (process.env.NODE_ENV !== 'development') {
+      return [];
+    }
     return [
       {
         source: '/api/:path*',
@@ -55,7 +62,9 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  transpilePackages: ['@finance/db', '@finance/shared-schemas', '@finance/api-client'],
+  // @finance/api is included so Next.js transpiles the Hono app for the
+  // catch-all serverless route on Vercel.
+  transpilePackages: ['@finance/db', '@finance/shared-schemas', '@finance/api-client', '@finance/api'],
   // Next.js 16.2.x + pnpm monorepo workarounds for "module factory is not available"
   experimental: {
     optimizePackageImports: ['@finance/db', '@finance/shared-schemas', '@finance/api-client'],

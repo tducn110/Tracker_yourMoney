@@ -26,6 +26,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@finance/api": [
+        "../api/src/index.ts"
       ]
     }
   },
