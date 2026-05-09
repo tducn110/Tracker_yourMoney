@@ -1,3 +1,4 @@
+import './env';
 // ── INSTRUMENTATION ──────────────────────────────────────────────────
 // Only load Sentry in Node.js fallback if DSN is present.
 // For Cloudflare Workers, use @sentry/cloudflare middleware if needed.

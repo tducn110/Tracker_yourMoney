@@ -2,9 +2,6 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { 
   getAuth, 
   GoogleAuthProvider, 
-  FacebookAuthProvider, 
-  GithubAuthProvider, 
-  OAuthProvider,
   type Auth
 } from "firebase/auth";
 
@@ -34,9 +31,6 @@ function getFirebaseAuth(): Auth {
 
 // Providers are stateless and safe to create eagerly
 const googleProvider = new GoogleAuthProvider();
-const facebookProvider = new FacebookAuthProvider();
-const githubProvider = new GithubAuthProvider();
-const appleProvider = new OAuthProvider("apple.com");
 
 // Lazy proxy for auth — evaluated only when called in the browser
 const auth = new Proxy({} as Auth, {
@@ -45,4 +39,4 @@ const auth = new Proxy({} as Auth, {
   },
 });
 
-export { auth, googleProvider, facebookProvider, githubProvider, appleProvider };
+export { auth, googleProvider };

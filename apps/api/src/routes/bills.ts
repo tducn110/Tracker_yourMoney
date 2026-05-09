@@ -1,7 +1,8 @@
 // apps/api/src/routes/bills.ts
 import { Hono } from "hono";
+import { z } from "zod";
 import { zValidator } from "../lib/validator";
-import { insertBillSchema, updateBillSchema, insertBillPaymentSchema } from "@finance/shared-schemas";
+import { insertBillSchema, updateBillSchema } from "@finance/shared-schemas";
 import { billService } from "../services/container";
 import { ok, created, err } from "../lib/response";
 
@@ -10,7 +11,21 @@ export const billRoutes = new Hono<{ Variables: { userId: string } }>()
   .get("/", async (c) => {
     const userId = c.get("userId");
     const bills = await billService.getActiveBills(userId);
-    return ok(c, bills);
+    
+    // Compute payment status for current month
+    const now = new Date();
+    const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    const billsWithStatus = await Promise.all(
+      bills.map(async (bill) => {
+        const { status: paymentStatus, totalPaid } = await billService.getBillPaymentStatus(
+          userId, bill.id, currentPeriod
+        );
+        return { ...bill, paymentStatus, totalPaid };
+      })
+    );
+    
+    return ok(c, billsWithStatus);
   })
 
   .post("/", zValidator("json", insertBillSchema), async (c) => {
@@ -46,20 +61,39 @@ export const billRoutes = new Hono<{ Variables: { userId: string } }>()
     }
   })
 
-  .patch("/:id/pay", zValidator("json", insertBillPaymentSchema), async (c) => {
+  .patch("/:id/pay", zValidator("json", z.object({
+    walletId: z.string(),
+    amount: z.union([z.string(), z.number()]).transform((val) => {
+      const n = typeof val === "number" ? val : parseFloat(val);
+      if (isNaN(n) || n <= 0) throw new Error("Số tiền phải là số dương");
+      return n.toFixed(2);
+    }),
+    paymentDate: z.string(),
+    note: z.string().max(255).optional(),
+  })), async (c) => {
     const userId = c.get("userId");
+    const { id } = c.req.param();
     const idempotencyKey = c.req.header("Idempotency-Key");
+    const input = c.req.valid("json");
+
+    // Convert paymentDate → periodMonth (YYYY-MM)
+    const d = new Date(input.paymentDate);
+    const periodMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 
     if (idempotencyKey) {
       const existing = await billService.getPaymentByIdempotencyKey(userId, idempotencyKey);
       if (existing) {
-        return ok(c, existing); // Return existing payment for idempotent retries
+        return ok(c, existing);
       }
     }
 
     try {
       const payment = await billService.payBill(userId, {
-        ...c.req.valid("json"),
+        billId: id,
+        walletId: input.walletId,
+        amountPaid: input.amount,
+        periodMonth,
+        note: input.note,
         idempotencyKey: idempotencyKey || undefined,
       });
       return ok(c, payment);
