@@ -91,7 +91,7 @@ function getDefaultDates(period: BudgetPeriod): { start: string; end: string } {
 export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData }: BudgetFormModalProps) {
   const isEditing = !!initialData;
   const { data: categories = [], isLoading: categoriesLoading } = useCategories();
-  const apiExpenseCategories = categories.filter((c: Category) => c.type !== 'income');
+  const apiExpenseCategories = categories.filter((c: Category) => c.type === 'expense');
 
   // Fallback mock categories khi backend chưa chạy / chưa có data
   const MOCK_EXPENSE_CATEGORIES: Category[] = [
