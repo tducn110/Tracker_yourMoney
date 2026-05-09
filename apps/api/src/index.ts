@@ -47,6 +47,24 @@ type Variables = {
 
 const app = new Hono<{ Variables: Variables }>();
 
+// Helper for correlation ID (portable across Node.js versions)
+const getCorrelationId = (c: Context) => {
+  const fromHeader = c.req.header('x-correlation-id');
+  if (fromHeader) return fromHeader;
+  
+  // Try global crypto (standard in Node 20+, available in Node 18)
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    try {
+      return crypto.randomUUID();
+    } catch {
+      // Fallback
+    }
+  }
+  
+  // Generic fallback for older environments
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+};
+
 // ── GLOBAL MIDDLEWARES ──────────────────────────────────────────────
 // Payload Compression (Phase 29) — gzip/deflate for JSON responses >1KB
 app.use('*', compress({ threshold: 1024 }));
@@ -70,8 +88,10 @@ app.use('*', cors({
 
 // Structured Logging & Correlation ID
 app.use('*', async (c, next) => {
-  const correlationId = c.req.header('x-correlation-id') || crypto.randomUUID();
+  const correlationId = getCorrelationId(c);
   c.set('correlationId', correlationId);
+  c.header('x-correlation-id', correlationId); // Echo back for debugging
+  c.header('x-hono-matched', 'true'); // Verify Hono is hit
   const start = Date.now();
 
   logRequest('API_REQUEST_START', c.req.path, c.req.method, correlationId);
@@ -99,18 +119,14 @@ const v1 = new Hono<{ Variables: Variables }>();
 v1.use('*', rateLimitMiddleware({ limit: 100, windowMs: 60_000 }));
 // Quick Add: 10 req/min (NLP parsing is the most expensive endpoint)
 v1.use('/transactions/quick', rateLimitMiddleware({ limit: 10, windowMs: 60_000 }));
-// Mutation-heavy endpoints: 30 req/min
-v1.use('/transactions/*', rateLimitMiddleware({ limit: 30, windowMs: 60_000 }));
-v1.use('/bills/*', rateLimitMiddleware({ limit: 30, windowMs: 60_000 }));
-v1.use('/goals/*', rateLimitMiddleware({ limit: 30, windowMs: 60_000 }));
-v1.use('/budgets/*', rateLimitMiddleware({ limit: 30, windowMs: 60_000 }));
-v1.use('/wallet/*', rateLimitMiddleware({ limit: 30, windowMs: 60_000 }));
 
-v1.use('/*', authMiddleware);
+// Authentication Guard (Phase 13) — apply to all business logic routes
+v1.use('*', authMiddleware);
 
-// Audit Trail (Phase 8) — logs mutations to audit_logs (fire-and-forget)
+// Audit Logging (Phase 24) — records all financial mutations (non-GET)
 v1.use('*', auditMiddleware);
 
+// Feature Route Modules
 v1.route('/wallet', walletRoutes);
 v1.route('/analytics', analyticsRoutes);
 v1.route('/transactions', transactionRoutes);
@@ -132,26 +148,46 @@ v1.get('/health', (c) => {
   });
 });
 
+// ── API ROUTES DEFINITION ──────────────────────────────────────────
+const apiRouter = new Hono<{ Variables: Variables }>();
+
+// Health check and root route
+apiRouter.get('/', (c) => c.text('S2S Finance API v1.0.0 is running'));
+apiRouter.get('/ping', (c) => c.text('pong'));
+
 // Auth routes — strict rate limit for brute force protection (30 req/min per IP)
-app.use('/api/auth/*', rateLimitMiddleware({ limit: 30, windowMs: 60_000 }));
-app.route('/api/auth', authRoutes);
-app.route('/api/v1', v1);
+apiRouter.use('/auth/*', rateLimitMiddleware({ limit: 30, windowMs: 60_000 }));
+apiRouter.route('/auth', authRoutes);
+
+// V1 Business Logic
+apiRouter.route('/v1', v1);
 
 if (process.env.NODE_ENV === 'test') {
-  app.route('/api/internal', internalRoutes);
+  apiRouter.route('/internal', internalRoutes);
 }
 
-// Debug routes have been removed
+// ── MOUNT ROUTES ──────────────────────────────────────────────────
+// Mount under /api to support Next.js rewrites and explicit calls
+app.route('/api', apiRouter);
 
+// ALSO mount under / to handle cases where the environment (like hono/vercel)
+// might be passing a path that already has /api stripped by Next.js routing.
+app.route('/', apiRouter);
 
-app.get('/', (c) => c.text('API is running'));
-app.get('/ping', (c) => c.text('pong'));
-
-app.get('/debug-sentry', () => {
-  throw new Error('My first Sentry error!');
+// ── ERROR HANDLING ────────────────────────────────────────────────
+// Catch-all 404 for API paths to return JSON instead of Next.js HTML
+app.notFound((c) => {
+  logger.warn({ event: 'API_404', path: c.req.path, method: c.req.method });
+  return c.json({ 
+    success: false,
+    error: { 
+      code: 'not_found', 
+      message: `Endpoint not found: ${c.req.method} ${c.req.path}` 
+    } 
+  }, 404);
 });
 
-// ── GLOBAL ERROR HANDLER ───────────────────────────────────────────
+// Standardize error responses
 app.onError((err, c) => {
   const correlationId = c.get('correlationId');
   const errorMessage = err.message || '';
@@ -163,18 +199,21 @@ app.onError((err, c) => {
 
   if (err instanceof AppError) {
     return c.json({
+      success: false,
       error: { code: err.code, message: err.message, details: err.details, correlationId }
     }, err.status as any);
   }
 
   if (isDuplicate) {
     return c.json({
+      success: false,
       error: { code: 'conflict_idempotency', message: 'Giao dịch này đã tồn tại.', correlationId }
     }, 409);
   }
 
   logError(err, c.req.path, c.req.method, correlationId);
   return c.json({
+    success: false,
     error: { 
       code: 'internal_server_error', 
       message: process.env.NODE_ENV !== 'production' ? err.message : 'Có lỗi xảy ra.',
