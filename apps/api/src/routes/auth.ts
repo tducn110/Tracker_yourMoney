@@ -105,12 +105,12 @@ export const authRoutes = new Hono()
           }).returning();
 
           user = createdUser;
-
-          // Seed default categories for new users
-          step = "seed_categories";
-          await seedDefaultCategories(String(user.id));
         }
       }
+
+      // Seed default categories if user doesn't have any yet
+      step = "seed_categories";
+      await seedDefaultCategories(String(user!.id));
 
       // 3. Tạo Firebase Session Cookie
       step = "create_session_cookie";
