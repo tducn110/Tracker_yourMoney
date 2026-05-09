@@ -3,11 +3,5 @@
   "buildCommand": "pnpm build",
   "installCommand": "pnpm install",
   "framework": "nextjs",
-  "outputDirectory": "apps/web/.next",
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "apps/api/src/server.ts"
-    }
-  ]
+  "outputDirectory": "apps/web/.next"
 }
