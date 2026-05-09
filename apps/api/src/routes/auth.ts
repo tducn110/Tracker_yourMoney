@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 import { zValidator } from "../lib/validator";
 import { socialLoginSchema } from "@finance/shared-schemas";
-import { db, users } from "@finance/db";
+import { db, users, categories } from "@finance/db";
 import { eq } from "@finance/db";
 import {
   verifyFirebaseIdToken,
@@ -22,6 +22,34 @@ const COOKIE_BASE = {
 };
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 ngày
+
+const DEFAULT_CATEGORIES = [
+  { name: "Thu Nhập", icon: "💰", color: "#10B981", type: "income" as const, sortOrder: 1 },
+  { name: "Ăn Uống", icon: "🍜", color: "#F59E0B", type: "expense" as const, sortOrder: 2 },
+  { name: "Di Chuyển", icon: "🚗", color: "#EAB308", type: "expense" as const, sortOrder: 3 },
+  { name: "Mua Sắm", icon: "🛍️", color: "#EC4899", type: "expense" as const, sortOrder: 4 },
+  { name: "Nhà Ở", icon: "🏠", color: "#8B5CF6", type: "expense" as const, sortOrder: 5 },
+  { name: "Hóa Đơn", icon: "📄", color: "#6B7280", type: "expense" as const, sortOrder: 6 },
+  { name: "Giải Trí", icon: "🎬", color: "#EF4444", type: "expense" as const, sortOrder: 7 },
+  { name: "Sức Khỏe", icon: "💊", color: "#10B981", type: "expense" as const, sortOrder: 8 },
+  { name: "Giáo Dục", icon: "📚", color: "#6366F1", type: "expense" as const, sortOrder: 9 },
+  { name: "Tiết Kiệm", icon: "🏦", color: "#14B8A6", type: "both" as const, sortOrder: 10 },
+  { name: "Khác", icon: "📦", color: "#6B7280", type: "expense" as const, sortOrder: 99 },
+];
+
+async function seedDefaultCategories(userId: string) {
+  const existing = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(eq(categories.userId, userId))
+    .limit(1);
+  
+  if (existing.length > 0) return; // Already has categories
+  
+  await db.insert(categories).values(
+    DEFAULT_CATEGORIES.map((cat) => ({ userId, ...cat }))
+  );
+}
 
 export const authRoutes = new Hono()
   // POST /api/auth/social
@@ -77,6 +105,10 @@ export const authRoutes = new Hono()
           }).returning();
 
           user = createdUser;
+
+          // Seed default categories for new users
+          step = "seed_categories";
+          await seedDefaultCategories(String(user.id));
         }
       }
 
