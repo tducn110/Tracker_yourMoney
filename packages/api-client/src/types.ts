@@ -63,6 +63,8 @@ export interface Bill {
   status: 'active' | 'inactive';
   autoPay: boolean;
   nextDueDate: string;
+  paymentStatus?: 'paid' | 'partial' | 'pending';
+  totalPaid?: string;
 }
 
 export interface Budget {

@@ -7,7 +7,7 @@ import {
   signOut as firebaseSignOut, 
   AuthProvider as FirebaseAuthProvider
 } from "firebase/auth";
-import { auth, googleProvider, facebookProvider, githubProvider, appleProvider } from "../../_lib/firebase";
+import { auth, googleProvider } from "../../_lib/firebase";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -23,9 +23,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   loginWithGoogle: () => Promise<void>;
-  loginWithFacebook: () => Promise<void>;
-  loginWithGithub: () => Promise<void>;
-  loginWithApple: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -95,16 +92,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        let errorMessage = "Xác thực với backend thất bại";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error?.message || errorMessage;
-          if (errorData.error?.step) {
-            errorMessage += ` (Lỗi tại bước: ${errorData.error.step})`;
-          }
-        } catch {
-          // ignore parse error, use default
+        let errorData: any;
+        const contentType = response.headers.get("content-type");
+        
+        if (contentType && contentType.includes("application/json")) {
+          errorData = await response.json();
+        } else {
+          const text = await response.text();
+          console.error("Non-JSON error response:", text);
+          errorData = { error: { message: `Server error (${response.status}): ${text.substring(0, 100)}` } };
         }
+        
+        const errorMessage = errorData?.error?.message || `Lỗi kết nối backend (${response.status})`;
         throw new Error(errorMessage);
       }
 
@@ -125,9 +124,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loginWithGoogle = () => loginWithSocial(googleProvider);
-  const loginWithFacebook = () => loginWithSocial(facebookProvider);
-  const loginWithGithub = () => loginWithSocial(githubProvider);
-  const loginWithApple = () => loginWithSocial(appleProvider);
 
   const logout = async () => {
     try {
@@ -147,9 +143,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user, 
       loading, 
       loginWithGoogle, 
-      loginWithFacebook,
-      loginWithGithub,
-      loginWithApple,
       logout 
     }}>
       {children}

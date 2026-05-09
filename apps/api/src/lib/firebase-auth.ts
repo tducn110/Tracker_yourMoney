@@ -16,10 +16,10 @@ function getAuth() {
 
     const app = admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: projectId,
-        clientEmail: clientEmail,
-        privateKey: privateKey,
-      }),
+        project_id: projectId,
+        client_email: clientEmail,
+        private_key: privateKey,
+      } as any),
     });
 
     logger.info({ event: 'FIREBASE_INIT', message: `Firebase Admin SDK initialized for project: ${app.options.projectId || projectId}`, projectId: app.options.projectId || projectId });

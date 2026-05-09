@@ -99,8 +99,7 @@ export default function BudgetsPage() {
   const finishedBudgets = budgets.filter((b) => b.status === 'completed');
 
   const handleCreate = (data: BudgetFormData) => {
-    const apiData = { ...data, targetAmount: String(data.targetAmount) };
-    createBudget.mutate(apiData as any, {
+    createBudget.mutate(data as any, {
       onSuccess: () => {
         toast.success(`Đã tạo ngân sách "${data.name}" 🎉`);
         setIsFormOpen(false);
@@ -113,8 +112,7 @@ export default function BudgetsPage() {
 
   const handleEdit = (data: BudgetFormData) => {
     if (!editingBudget) return;
-    const apiData = { ...data, targetAmount: String(data.targetAmount) };
-    updateBudget.mutate({ id: editingBudget.id, data: apiData as any }, {
+    updateBudget.mutate({ id: editingBudget.id, data: data as any }, {
       onSuccess: () => {
         toast.success('Đã cập nhật ngân sách');
         setEditingBudget(null);

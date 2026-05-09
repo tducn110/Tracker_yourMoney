@@ -81,7 +81,8 @@ export function useCategories() {
     queryFn: async () => {
       return categoriesAPI.list();
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 }
 
