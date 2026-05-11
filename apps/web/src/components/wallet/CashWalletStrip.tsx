@@ -168,11 +168,11 @@ export function CashWalletStrip({
                           </p>
                         </div>
                       </div>
-                    ) : diff < 0 ? (
+                    ) : diff.lt(0) ? (
                       <div className="flex items-start gap-2">
                         <RefreshCw className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
                         <div className="text-sm text-green-900">
-                          <p className="font-semibold">Số dư tăng {formatVND(Math.abs(diff))}</p>
+                          <p className="font-semibold">Số dư tăng {formatVND(diff.abs())}</p>
                           <p className="text-xs text-green-700 mt-1">Không tạo giao dịch</p>
                         </div>
                       </div>
@@ -196,7 +196,7 @@ export function CashWalletStrip({
                   </Button>
                   <Button
                     onClick={handleSync}
-                    disabled={!inputVal || isNaN(rawInput) || rawInput === balance}
+                    disabled={!inputVal || rawInput.isNaN() || rawInput.eq(new Decimal(balance))}
                     className="flex-1 bg-amber-600 hover:bg-amber-700"
                   >
                     <Check className="w-4 h-4 mr-1" />

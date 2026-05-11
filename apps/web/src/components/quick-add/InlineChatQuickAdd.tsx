@@ -221,7 +221,7 @@ export function InlineChatQuickAdd() {
       const confirmMsg: Message = {
         id: `confirm-${Date.now()}`,
         role: 'bot',
-        content: `✅ Đã lưu: **${result.note || msg.data.note}** — **${formatCurrency(Number(result.amount))}** vào danh sách giao dịch!`,
+        content: `✅ Đã lưu: **${result.note || msg.data.note}** — **${formatVND(Number(result.amount))}** vào danh sách giao dịch!`,
         timestamp: new Date(),
         confirmed: true,
       };

@@ -40,6 +40,16 @@ const WALLET_EMOJIS = ['🏦', '💳', '💵', '📱', '💰', '🏧', '💎', '
 
 // ─── Add/Edit Modal ───────────────────────────────────────────────────────────
 
+export type NewWalletInput = {
+  name: string;
+  type: WalletType;
+  balance: string;
+  icon: string;
+  color: string;
+  isDefault?: boolean;
+  accountNumber?: string;
+};
+
 interface WalletFormData {
   name: string;
   type: WalletType;
@@ -550,7 +560,7 @@ function WalletItemCard({ wallet, onEdit, onDelete, onSetDefault }: WalletItemCa
       {/* Last synced */}
       <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-1 text-gray-400">
         <RefreshCw size={9} />
-        <span className="text-[10px] font-bold">Cập nhật: {wallet.lastSynced}</span>
+        <span className="text-[10px] font-bold">Cập nhật: {wallet.lastSyncedAt}</span>
       </div>
     </div>
   );
@@ -571,7 +581,7 @@ export default function WalletsPage() {
     name: string; type: WalletType; balance: string; icon: string;
     color: string; accountNumber: string; isDefault: boolean;
   }) => {
-    const bal = parseFloat(data.balance.replace(/\./g, '').replace(/,/g, '')) || 0;
+    const bal = data.balance.replace(/\./g, '').replace(/,/g, '');
     setIsMutating(true);
     try {
       if (editWallet) {
@@ -591,7 +601,7 @@ export default function WalletsPage() {
         await addWallet({
           name: data.name,
           type: data.type,
-          balance: bal,
+          balance: String(bal),
           icon: data.icon,
           color: data.color,
           accountNumber: data.accountNumber || undefined,

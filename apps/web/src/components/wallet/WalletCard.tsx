@@ -58,7 +58,7 @@ export function WalletCard({ wallet, isActive, onClick, onSyncClick }: WalletCar
             {wallet.name}
           </p>
           <p className="text-[10px] font-bold text-gray-400 leading-tight">
-            {walletTypeLabel[wallet.type as any] || wallet.type}
+            {walletTypeLabel[wallet.type] || wallet.type}
           </p>
         </div>
       </div>
