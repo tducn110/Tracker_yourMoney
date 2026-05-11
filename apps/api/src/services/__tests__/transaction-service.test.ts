@@ -8,6 +8,7 @@ describe('TransactionService (DI Skeleton Test)', () => {
   let mockCategoryRepo: any;
   let mockNLPAdapter: any;
   let mockCache: ICache;
+  let mockAiService: any;
 
   beforeEach(() => {
     // 1. Create Mocks for all dependencies
@@ -22,6 +23,10 @@ describe('TransactionService (DI Skeleton Test)', () => {
     mockNLPAdapter = {
       parse: vi.fn(),
     };
+    mockAiService = {
+      resolveOrCreateCategory: vi.fn().mockResolvedValue(1),
+      resolveOrCreateWallet: vi.fn().mockResolvedValue("1"),
+    };
     
     // 2. Mock the new ICache dependency (Null Object Pattern)
     mockCache = {
@@ -35,7 +40,8 @@ describe('TransactionService (DI Skeleton Test)', () => {
       mockTransactionRepo,
       mockCategoryRepo,
       mockNLPAdapter,
-      mockCache
+      mockCache,
+      mockAiService
     );
   });
 

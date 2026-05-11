@@ -41,7 +41,10 @@ export function formatCurrency(
   amount: string | number | bigint | Decimal,
   locale: Locale = 'vi-VN'
 ): string {
-  const value = toDecimal(amount).toNumber();
+  const d = toDecimal(amount);
+  // Intl.NumberFormat works best with number or bigint. 
+  // For currency display, number is usually sufficient but we ensure it's a Decimal first.
+  const value = d.toNumber();
   
   return new Intl.NumberFormat(locale, {
     style: 'currency',

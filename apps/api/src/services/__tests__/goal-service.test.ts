@@ -39,6 +39,20 @@ vi.mock('@finance/db', () => {
     and: vi.fn(),
     eq: vi.fn(),
     sql: vi.fn(),
+    SYSTEM_CATEGORY_NAMES: {
+      SAVINGS: "Tiết Kiệm",
+      INCOME: "Thu Nhập",
+      FOOD: "Ăn Uống",
+      BILLS: "Hóa Đơn",
+    },
+    SAVINGS_CATEGORY_DEFAULTS: {
+      name: "Tiết Kiệm",
+      type: "both",
+      icon: "🎯",
+      color: "#10B981",
+      isDefault: false,
+      sortOrder: 99,
+    },
   };
 });
 

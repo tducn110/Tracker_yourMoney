@@ -9,7 +9,7 @@
 import { TrendingUp, TrendingDown, ArrowRight, PiggyBank, Loader2, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useBudgetSummary } from '@/_lib/hooks/use-budgets';
-import { formatCurrency, BudgetSummary } from '@finance/api-client';
+import { formatVND, BudgetSummary } from '@finance/api-client';
 import { motion, AnimatePresence } from 'motion/react';
 import Decimal from 'decimal.js';
 
@@ -109,7 +109,7 @@ export function BudgetOverviewCard({ data: propData }: BudgetOverviewCardProps) 
                 }`}
                 style={{ textShadow: isOverBudget ? '0 0 20px rgba(239,68,68,0.2)' : '0 0 20px rgba(52,211,153,0.2)' }}
               >
-                {left < 0 ? '-' : ''}{formatCurrency(Math.abs(left))}
+                {left < 0 ? '-' : ''}{formatVND(Math.abs(left))}
               </motion.h2>
               <span className="text-[14px] font-bold text-zinc-500 lowercase">còn lại</span>
             </div>
@@ -118,8 +118,8 @@ export function BudgetOverviewCard({ data: propData }: BudgetOverviewCardProps) 
 
             <div className="flex justify-between items-center mt-4">
               <div className="flex items-center gap-2 text-zinc-400">
-                <span className="text-[13px] font-black">{formatCurrency(totalSpent)}</span>
-                <span className="text-[11px] font-bold text-zinc-600">/ {formatCurrency(totalLimit)}</span>
+                <span className="text-[13px] font-black">{formatVND(totalSpent)}</span>
+                <span className="text-[11px] font-bold text-zinc-600">/ {formatVND(totalLimit)}</span>
               </div>
               <motion.div
                 initial={{ opacity: 0 }}

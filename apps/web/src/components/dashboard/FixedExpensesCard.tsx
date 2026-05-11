@@ -2,7 +2,7 @@
 
 import { CalendarDays, Loader2 } from 'lucide-react';
 import { useBills } from '@/_lib/hooks/finance';
-import { formatCurrency, Bill } from '@finance/api-client';
+import { formatVND, Bill } from '@finance/api-client';
 import Decimal from 'decimal.js';
 import { useTranslations } from '@/locales';
 
@@ -35,7 +35,7 @@ export function FixedExpensesCard() {
           <h3 className="text-[13px] font-black text-gray-900">{t('dashboard.fixedExpenses.title')}</h3>
         </div>
         <span className="text-[12px] font-black text-gray-700">
-          {formatCurrency(totalMonthly.toNumber())}
+          {formatVND(totalMonthly.toNumber())}
         </span>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-0 divide-y divide-x divide-gray-50">

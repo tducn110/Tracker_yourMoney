@@ -42,21 +42,25 @@ export class GoalService {
       });
     }
 
-    // Handle initial contribution
-    const walletId = input.walletId!;
-    const [wallet] = await db
-      .select()
-      .from(wallets)
-      .where(and(eq(wallets.id, walletId as any), eq(wallets.userId, userId as any)))
-      .limit(1);
-
-    if (!wallet) throw new NotFoundError("Không tìm thấy ví cho khoản đóng góp đầu tiên");
-
-    const balanceBefore = new Decimal(wallet.balance);
-    const balanceAfter = balanceBefore.minus(monthlyContribution);
-
     return await db.transaction(async (tx) => {
-      // 1. Create Goal
+      // 1. Fetch wallet for balance update + OCC inside transaction
+      const walletId = input.walletId!;
+      const [wallet] = await tx
+        .select()
+        .from(wallets)
+        .where(and(eq(wallets.id, walletId as any), eq(wallets.userId, userId as any)))
+        .limit(1);
+
+      if (!wallet) throw new NotFoundError("Không tìm thấy ví cho khoản đóng góp đầu tiên");
+
+      const balanceBefore = new Decimal(wallet.balance);
+      const balanceAfter = balanceBefore.minus(monthlyContribution);
+
+      if (balanceAfter.isNegative()) {
+        throw new BadRequestError("Số dư ví không đủ cho khoản đóng góp đầu tiên");
+      }
+
+      // 2. Create Goal
       const goal = await this.repository.create({
         userId: userId as any,
         name: input.name,
@@ -71,7 +75,7 @@ export class GoalService {
         idempotencyKey: input.idempotencyKey,
       }, tx);
 
-      // 2. Update wallet balance (OCC)
+      // 3. Update wallet balance (OCC)
       const updateResult = await tx.update(wallets).set({
         balance: balanceAfter.toFixed(2),
         version: sql`version + 1`,
@@ -86,8 +90,7 @@ export class GoalService {
         throw new ConflictError("Xung đột cập nhật ví — vui lòng thử lại");
       }
 
-      // 3. Find Savings Category (auto-create if not found for this user)
-      //    type "both" → neutral to net worth: contribution moves money, not destroys it
+      // 4. Find/Create Savings Category
       let savingsCategory = await this.categoryRepository.findByName(SYSTEM_CATEGORY_NAMES.SAVINGS, userId, tx);
       if (!savingsCategory) {
         savingsCategory = await this.categoryRepository.create({
@@ -96,20 +99,19 @@ export class GoalService {
         }, tx);
       }
 
-      // 4. Create Transaction
+      // 5. Create Transaction
       const createdTx = await this.transactionRepository.create({
         userId: userId as any,
         walletId: walletId as any,
         categoryId: savingsCategory.id,
         goalId: goal.id as any,
         amount: input.monthlyContribution,
-        type: "transfer",
+        type: "expense", // From wallet's perspective
         note: `Tiết kiệm đầu kỳ cho mục tiêu: ${goal.name}`,
         displayDate: new Date().toISOString().split('T')[0],
-        source: "goal_contribution",
       }, tx);
 
-      // 5. Audit log
+      // 6. Audit log
       await tx.insert(walletLogs).values({
         walletId: walletId as any,
         userId: userId as any,
@@ -137,21 +139,25 @@ export class GoalService {
       throw new BadRequestError(`Không thể thêm tiền vào mục tiêu đã ${goal.status === "completed" ? "hoàn thành" : "hủy"}`, "GOAL_INACTIVE");
     }
 
-    // Fetch wallet for balance update + OCC
-    const [wallet] = await db
-      .select()
-      .from(wallets)
-      .where(and(eq(wallets.id, input.walletId as any), eq(wallets.userId, userId as any)))
-      .limit(1);
-
-    if (!wallet) throw new NotFoundError("Không tìm thấy ví");
-
-    const amount = new Decimal(input.amount);
-    const balanceBefore = new Decimal(wallet.balance);
-    const balanceAfter = balanceBefore.minus(amount);
-
     return await db.transaction(async (tx) => {
-      // 1. Update wallet balance (OCC)
+      // 1. Fetch wallet for balance update + OCC inside transaction
+      const [wallet] = await tx
+        .select()
+        .from(wallets)
+        .where(and(eq(wallets.id, input.walletId as any), eq(wallets.userId, userId as any)))
+        .limit(1);
+
+      if (!wallet) throw new NotFoundError("Không tìm thấy ví");
+
+      const amount = new Decimal(input.amount);
+      const balanceBefore = new Decimal(wallet.balance);
+      const balanceAfter = balanceBefore.minus(amount);
+
+      if (balanceAfter.isNegative()) {
+        throw new BadRequestError("Số dư ví không đủ");
+      }
+
+      // 2. Update wallet balance (OCC)
       const updateResult = await tx.update(wallets).set({
         balance: balanceAfter.toFixed(2),
         version: sql`version + 1`,
@@ -166,8 +172,9 @@ export class GoalService {
         throw new ConflictError("Xung đột cập nhật — vui lòng thử lại");
       }
 
-      // 2. Update Goal
-      const newSaved = amount.plus(new Decimal(goal.currentSaved));
+      // 3. Update Goal
+      const currentSaved = new Decimal(goal.currentSaved);
+      const newSaved = amount.plus(currentSaved);
       const target   = new Decimal(goal.targetAmount);
       const isComplete = newSaved.gte(target);
 
@@ -176,8 +183,7 @@ export class GoalService {
         ...(isComplete && { status: "completed", completedAt: new Date() }),
       }, tx);
 
-      // 3. Find Savings Category (auto-create if not found for this user)
-      //    type "both" → neutral to net worth: contribution moves money, not destroys it
+      // 4. Find/Create Savings Category
       let savingsCategory = await this.categoryRepository.findByName(SYSTEM_CATEGORY_NAMES.SAVINGS, userId, tx);
       if (!savingsCategory) {
         savingsCategory = await this.categoryRepository.create({
@@ -186,26 +192,24 @@ export class GoalService {
         }, tx);
       }
 
-      // 4. Create Transaction (Transfer from cash wallet)
-      const [contributionTx] = await tx.insert(transactions).values({
+      // 5. Create Transaction entry
+      const contributionTx = await this.transactionRepository.create({
         userId: userId as any,
         walletId: input.walletId as any,
         categoryId: savingsCategory.id,
         goalId: goalId as any,
         amount: input.amount,
-        type: "transfer",
+        type: "expense", // From wallet's perspective
         note: `Tiết kiệm cho mục tiêu: ${goal.name}`,
         displayDate: new Date().toISOString().split('T')[0],
-        source: "goal_contribution",
         idempotencyKey: input.idempotencyKey ?? null,
-      }).returning();
-      const createdTxId = contributionTx?.id ?? null;
+      }, tx);
 
-      // 5. Audit log
+      // 6. Log wallet change
       await tx.insert(walletLogs).values({
         walletId: input.walletId as any,
         userId: userId as any,
-        transactionId: createdTxId as any,
+        transactionId: contributionTx?.id as any,
         balanceBefore: balanceBefore.toFixed(2),
         balanceAfter: balanceAfter.toFixed(2),
         difference: amount.negated().toFixed(2),
@@ -213,12 +217,14 @@ export class GoalService {
         idempotencyKey: input.idempotencyKey ?? null,
       });
 
+      // 7. Notify if completed
       if (isComplete) {
         await tx.insert(notifications).values({
           userId: userId as any,
           type: "goal_completed",
           title: "🎉 Mục tiêu hoàn thành!",
-          body: `Chúc mừng! Bạn đã đạt mục tiêu "${goal.name}"`,
+          message: `Chúc mừng! Bạn đã hoàn thành mục tiêu: ${goal.name}`,
+          read: false,
         });
       }
 
@@ -247,4 +253,3 @@ export class GoalService {
     await this.repository.delete(goalId, userId);
   }
 }
-

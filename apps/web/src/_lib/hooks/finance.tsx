@@ -60,11 +60,22 @@ export function useQuickAdd() {
       const idempotencyKey = crypto.randomUUID();
       return transactionsAPI.quickAdd(text, { walletId, idempotencyKey });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.refetchQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
-      queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
+    onSuccess: (result: any) => {
+      if (result.type === 'transaction') {
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        queryClient.refetchQueries({ queryKey: ['transactions'] });
+        queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
+        queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
+      } else if (result.type === 'wallet') {
+        queryClient.invalidateQueries({ queryKey: ['wallets'] });
+        queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
+      } else if (result.type === 'category') {
+        queryClient.invalidateQueries({ queryKey: ['categories'] });
+      }
+      
+      if (result.message) {
+        toast.success(result.message);
+      }
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || err?.message || 'Không thể thêm giao dịch');

@@ -9,7 +9,7 @@
 import { ChevronRight, Layers, CalendarDays, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useBudgets, useBudgetSummary } from '@/_lib/hooks/use-budgets';
-import { formatCurrency, Budget } from '@finance/api-client';
+import { formatVND, Budget } from '@finance/api-client';
 import Decimal from 'decimal.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -82,7 +82,7 @@ function BudgetSummaryBanner() {
             Tổng quan ngân sách
           </p>
           <p className="text-[28px] font-black text-white leading-none">
-            {formatCurrency(numericLeft < 0 ? '0' : left)}{' '}
+            {formatVND(numericLeft < 0 ? '0' : left)}{' '}
             <span className="text-[12px] font-bold text-blue-300">còn lại</span>
           </p>
         </div>
@@ -98,7 +98,7 @@ function BudgetSummaryBanner() {
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="bg-white/10 rounded-xl px-4 py-3">
           <p className="text-[10px] font-bold text-blue-200 mb-1 uppercase tracking-wide">Hạn mức</p>
-          <p className="text-[20px] font-black text-white leading-none">{formatCurrency(totalLimit)}</p>
+          <p className="text-[20px] font-black text-white leading-none">{formatVND(totalLimit)}</p>
         </div>
         <div className="bg-white/10 rounded-xl px-4 py-3">
           <p className="text-[10px] font-bold text-blue-200 mb-1 uppercase tracking-wide">Đã chi</p>
@@ -106,7 +106,7 @@ function BudgetSummaryBanner() {
             className="text-[20px] font-black leading-none"
             style={{ color: isOver ? '#fca5a1' : isWarn ? '#fde68a' : '#6ee7b7' }}
           >
-            {formatCurrency(totalSpent)}
+            {formatVND(totalSpent)}
           </p>
         </div>
       </div>
@@ -205,13 +205,13 @@ function FeaturedBudgetCard({ budget }: { budget: Budget }) {
               className="text-[32px] font-black leading-none"
               style={{ color: amountColor }}
             >
-              {numericLeft < 0 ? '−' : ''}{formatCurrency(left.abs())}
+              {numericLeft < 0 ? '−' : ''}{formatVND(left.abs())}
             </span>
             <span className="text-[13px] font-bold text-gray-400">còn lại</span>
           </div>
           <p className="text-[12px] font-bold text-gray-500 mt-1">
-            <span style={{ color: progressColor }}>{formatCurrency(spent)}</span>
-            {' '}/ {formatCurrency(budget.targetAmount)} hạn mức
+            <span style={{ color: progressColor }}>{formatVND(spent)}</span>
+            {' '}/ {formatVND(budget.targetAmount)} hạn mức
           </p>
         </div>
 
