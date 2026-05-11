@@ -12,7 +12,7 @@ import {
   Home, Zap, Heart, Book, Phone, TrendingUp, TrendingDown, Plus,
   Briefcase, Gift, Laptop, Handshake, ShoppingCart,
 } from 'lucide-react';
-import { formatCurrency } from '@finance/api-client';
+import { formatVND } from '@finance/api-client';
 import { toast } from 'sonner';
 
 type TransactionType = 'expense' | 'income';
@@ -95,7 +95,7 @@ export function MoneyLoverQuickInput() {
       toast.success(
         `✅ Đã thêm ${typeLabel}: ${selectedCat.name}` +
           (note ? ` - ${note}` : '') +
-          ` — ${formatCurrency(numAmount)}`
+          ` — ${formatVND(numAmount)}`
       );
       setAmount('');
       setNote('');

@@ -25,7 +25,7 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { formatCurrency } from '@finance/api-client';
+import { formatVND } from '@finance/api-client';
 import { toast } from 'sonner';
 
 interface Message {
@@ -95,7 +95,7 @@ export function ChatQuickAdd({ isOpen, onClose, onSubmit }: ChatQuickAddProps) {
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'bot',
-        content: `Mình đã hiểu! Bạn muốn ghi nhận **${type === 'expense' ? 'chi tiêu' : 'thu nhập'}** cho "**${note}**" với số tiền **${formatCurrency(amount)}**. Mình lưu nhé?`,
+        content: `Mình đã hiểu! Bạn muốn ghi nhận **${type === 'expense' ? 'chi tiêu' : 'thu nhập'}** cho "**${note}**" với số tiền **${formatVND(amount)}**. Mình lưu nhé?`,
         timestamp: new Date(),
         data: { amount, note, type, category: 'other', date: new Date().toISOString().split('T')[0] }
       };

@@ -52,6 +52,23 @@ export interface Goal {
   updatedAt: string;
 }
 
+export interface Wallet {
+  id: string;
+  userId: string;
+  name: string;
+  type: 'cash' | 'bank' | 'credit' | 'e_wallet' | 'investment' | 'other';
+  balance: string;
+  initialBalance: string;
+  icon: string;
+  color: string;
+  isDefault: boolean;
+  version: number;
+  lastSyncedAt?: string;
+  accountNumber?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Bill {
   id: string;
   userId: string;

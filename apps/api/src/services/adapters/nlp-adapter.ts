@@ -1,10 +1,19 @@
 import Decimal from "decimal.js";
 
 export interface NLPParsedResult {
-  amount: string;
-  note: string;
-  type: "income" | "expense" | "transfer";
+  intent?: "transaction" | "create_wallet" | "create_category" | "command";
+  amount?: string;
+  note?: string;
+  type?: "income" | "expense" | "transfer";
   keyword?: string; // Hint for category matching
+  walletName?: string; // Hint for wallet matching
+  metadata?: {
+    icon?: string;
+    color?: string;
+    initialBalance?: string;
+    type?: string;
+    [key: string]: any;
+  };
 }
 
 /**
