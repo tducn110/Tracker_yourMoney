@@ -5,121 +5,138 @@
  * Uses TanStack Query hooks from @/_lib/hooks/finance for data fetching/mutations.
  */
 
-import { createContext, useContext, ReactNode, useMemo } from 'react';
+import { createContext, useContext, ReactNode, useMemo, useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWallets } from '@/_lib/hooks/finance';
-import { walletAPI } from '@finance/api-client';
+import { walletAPI, Wallet } from '@finance/api-client';
 import { toast } from 'sonner';
+import Decimal from 'decimal.js';
 
-export type WalletType = 'cash' | 'bank' | 'ewallet' | 'savings';
-
-export interface MockWallet {
-  id: string;
-  name: string;
-  icon: string;
-  balance: number;
-  type: WalletType;
-  colorHex: string;
-  accountNumber?: string;
-  isDefault: boolean;
-  lastSynced: string;
-}
+export type WalletType = Wallet['type'];
 
 export const walletTypeLabel: Record<WalletType, string> = {
   cash: 'Tiền mặt',
   bank: 'Ngân hàng',
-  ewallet: 'Ví điện tử',
-  savings: 'Tiết kiệm',
+  credit: 'Thẻ tín dụng',
+  e_wallet: 'Ví điện tử',
+  investment: 'Đầu tư',
+  other: 'Khác',
 };
 
-// Map API wallet type to frontend WalletType
-const mapApiType = (t: string): WalletType => {
-  if (t === 'e_wallet') return 'ewallet';
-  if (t === 'bank') return 'bank';
-  if (t === 'cash') return 'cash';
-  return 'savings';
+export type NewWalletInput = {
+  name: string;
+  type: Wallet['type'];
+  balance: string;
+  icon: string;
+  color: string;
+  isDefault?: boolean;
 };
-
-const mapApiWallet = (w: any): MockWallet => ({
-  id: String(w.id),
-  name: w.name,
-  icon: w.icon || '💵',
-  balance: parseFloat(w.balance) || 0,
-  type: mapApiType(w.type),
-  colorHex: w.color || '#4361ee',
-  accountNumber: w.accountNumber,
-  isDefault: w.isDefault === 1 || w.isDefault === true,
-  lastSynced: w.lastSyncedAt
-    ? new Date(w.lastSyncedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '')
-    : 'Chưa đồng bộ',
-});
-
-export const getTotalWalletBalance = (wallets: MockWallet[]): number =>
-  wallets.reduce((sum, w) => sum + w.balance, 0);
-
-export const getDefaultWallet = (wallets: MockWallet[]): MockWallet =>
-  wallets.find((w) => w.isDefault) ?? wallets[0];
-
-export type NewWalletInput = Omit<MockWallet, 'id' | 'lastSynced'>;
 
 interface WalletContextValue {
-  wallets: MockWallet[];
-  totalBalance: number;
-  defaultWallet: MockWallet | null;
+  wallets: Wallet[];
+  totalBalance: string;
+  defaultWallet: Wallet | null;
   isLoading: boolean;
-  addWallet: (data: NewWalletInput) => Promise<MockWallet>;
-  updateWallet: (id: string, updates: Partial<MockWallet>) => Promise<void>;
+  addWallet: (data: NewWalletInput) => Promise<Wallet>;
+  updateWallet: (id: string, updates: Partial<Wallet>) => Promise<void>;
   deleteWallet: (id: string) => Promise<void>;
   setDefaultWallet: (id: string) => Promise<void>;
+  refreshWallets: () => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextValue | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const { data: apiWallets = [], isLoading, refetch } = useWallets();
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
 
-  const wallets: MockWallet[] = useMemo(() => apiWallets.map(mapApiWallet), [apiWallets]);
-  const totalBalance = useMemo(() => getTotalWalletBalance(wallets), [wallets]);
-  const defaultWallet = useMemo(() => getDefaultWallet(wallets), [wallets]);
+  const refreshWallets = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await walletAPI.list();
+      setWallets(data);
+    } catch (error) {
+      console.error('Error fetching wallets:', error);
+      toast.error('Không thể tải danh sách ví');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  const addWallet = async (data: NewWalletInput): Promise<MockWallet> => {
-    const typeMap: Record<string, string> = { ewallet: 'e_wallet', bank: 'bank', cash: 'cash', savings: 'other' };
-    const newWallet = await walletAPI.create({
-      name: data.name,
-      type: typeMap[data.type] || 'other',
-      initialBalance: String(data.balance),
-      icon: data.icon,
-      color: data.colorHex,
-      isDefault: data.isDefault,
-    });
-    queryClient.invalidateQueries({ queryKey: ['wallets'] });
-    return mapApiWallet(newWallet);
+  useEffect(() => {
+    refreshWallets();
+  }, [refreshWallets]);
+
+  const totalBalance = useMemo(() => {
+    return wallets.reduce((sum, wallet) => {
+      return sum.plus(new Decimal(wallet.balance || '0'));
+    }, new Decimal(0)).toFixed(2);
+  }, [wallets]);
+
+  const defaultWallet = useMemo(() => wallets.find((w) => w.isDefault) ?? wallets[0] ?? null, [wallets]);
+
+  const addWallet = async (data: NewWalletInput): Promise<Wallet> => {
+    try {
+      const newWallet = await walletAPI.create({
+        name: data.name,
+        type: data.type,
+        initialBalance: data.balance,
+        icon: data.icon,
+        color: data.color,
+        isDefault: data.isDefault,
+      });
+      
+      await refreshWallets();
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      toast.success('Đã thêm ví mới');
+      return newWallet;
+    } catch (error) {
+      console.error('Error adding wallet:', error);
+      toast.error('Không thể thêm ví mới');
+      throw error;
+    }
   };
 
-  const updateWallet = async (id: string, updates: Partial<MockWallet>) => {
-    const payload: Record<string, unknown> = {};
-    if (updates.name !== undefined) payload.name = updates.name;
-    if (updates.icon !== undefined) payload.icon = updates.icon;
-    if (updates.colorHex !== undefined) payload.color = updates.colorHex;
-    if (updates.isDefault !== undefined) payload.isDefault = updates.isDefault;
-    await walletAPI.update(id, payload);
-    queryClient.invalidateQueries({ queryKey: ['wallets'] });
+  const updateWallet = async (id: string, updates: Partial<Wallet>) => {
+    try {
+      await walletAPI.update(id, updates);
+      await refreshWallets();
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      toast.success('Đã cập nhật ví');
+    } catch (error) {
+      console.error('Error updating wallet:', error);
+      toast.error('Không thể cập nhật ví');
+      throw error;
+    }
   };
 
   const deleteWallet = async (id: string) => {
-    await walletAPI.delete(id);
-    queryClient.invalidateQueries({ queryKey: ['wallets'] });
+    try {
+      await walletAPI.delete(id);
+      await refreshWallets();
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      toast.success('Đã xóa ví');
+    } catch (error) {
+      console.error('Error deleting wallet:', error);
+      toast.error('Không thể xóa ví');
+      throw error;
+    }
   };
 
   const setDefaultWallet = async (id: string) => {
-    const promises = apiWallets.map((w: any) => {
-      if (String(w.id) === id) return walletAPI.update(id, { isDefault: true });
-      if (w.isDefault) return walletAPI.update(String(w.id), { isDefault: false });
-      return Promise.resolve();
-    });
-    await Promise.all(promises);
-    queryClient.invalidateQueries({ queryKey: ['wallets'] });
+    try {
+      // API might handle clearing other defaults, or we do it sequentially
+      // For now, let's just update the target wallet and refresh
+      await walletAPI.update(id, { isDefault: true });
+      await refreshWallets();
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      toast.success('Đã đặt làm ví mặc định');
+    } catch (error) {
+      console.error('Error setting default wallet:', error);
+      toast.error('Không thể đặt ví mặc định');
+      throw error;
+    }
   };
 
   return (
@@ -133,6 +150,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         updateWallet,
         deleteWallet,
         setDefaultWallet,
+        refreshWallets,
       }}
     >
       {children}

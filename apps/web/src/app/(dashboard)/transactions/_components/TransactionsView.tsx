@@ -9,12 +9,13 @@ import {
   Download,
   Upload,
   ReceiptText,
+  ArrowUpIcon,
+  ArrowDownIcon,
 } from 'lucide-react';
-import { formatCurrency, Transaction } from '@finance/api-client';
-import { toast } from 'sonner';
+import { formatVND, Transaction } from '@finance/api-client';
+import Decimal from 'decimal.js';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/EmptyState';
-import Decimal from 'decimal.js';
 
 export type FilterType = 'all' | 'income' | 'expense';
 export type SortOrder = 'newest' | 'oldest' | 'amount_desc' | 'amount_asc';
@@ -38,41 +39,34 @@ function SummaryBar({ txs }: { txs: Transaction[] }) {
 
   return (
     <div className="grid grid-cols-3 gap-3">
-      {/* Thu nhập */}
-      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-3">
-        <div className="flex items-center gap-1.5 mb-1">
-          <TrendingUp size={12} className="text-emerald-600" />
-          <p className="text-[10px] font-black text-emerald-700 uppercase tracking-wide">
+      <div className="bg-white/40 backdrop-blur-md border border-white/50 p-4 rounded-2xl flex flex-col justify-between hover:scale-[1.02] transition-transform shadow-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+            <ArrowUpIcon className="w-4 h-4" />
+          </div>
+          <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wider">
             Thu nhập
           </p>
         </div>
         <p className="text-[18px] font-black text-emerald-700 leading-none">
-          {formatCurrency(income.toNumber(), "vi-VN")}
+          {formatVND(income)}
         </p>
       </div>
 
-      {/* Chi tiêu */}
-      <div className="bg-red-50 border border-red-100 rounded-2xl px-4 py-3">
-        <div className="flex items-center gap-1.5 mb-1">
-          <TrendingDown size={12} className="text-red-500" />
-          <p className="text-[10px] font-black text-red-600 uppercase tracking-wide">
+      <div className="bg-white/40 backdrop-blur-md border border-white/50 p-4 rounded-2xl flex flex-col justify-between hover:scale-[1.02] transition-transform shadow-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+            <ArrowDownIcon className="w-4 h-4" />
+          </div>
+          <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wider">
             Chi tiêu
           </p>
         </div>
         <p className="text-[18px] font-black text-red-600 leading-none">
-          {formatCurrency(expense.toNumber(), "vi-VN")}
+          {formatVND(expense)}
         </p>
       </div>
-
-      {/* Chênh lệch */}
-      <div
-        className="rounded-2xl px-4 py-3 border"
-        style={
-          isNetPositive
-            ? { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }
-            : { backgroundColor: '#fef2f2', borderColor: '#fecaca' }
-        }
-      >
+      <div className="bg-white/40 backdrop-blur-md border border-white/50 p-4 rounded-2xl flex flex-col justify-between hover:scale-[1.02] transition-transform shadow-sm">
         <p
           className="text-[10px] font-black uppercase tracking-wide mb-1"
           style={{ color: isNetPositive ? '#2563eb' : '#dc2626' }}
@@ -84,7 +78,7 @@ function SummaryBar({ txs }: { txs: Transaction[] }) {
           style={{ color: isNetPositive ? '#2563eb' : '#dc2626' }}
         >
           {isNetPositive ? '+' : '−'}
-          {formatCurrency(net.abs().toNumber(), "vi-VN")}
+          {formatVND(net.abs())}
         </p>
       </div>
     </div>
@@ -109,7 +103,6 @@ function CategoryBadge({ type }: { type: 'income' | 'expense' }) {
 
 function TransactionRow({ tx }: { tx: Transaction }) {
   const isIncome = tx.type === 'income';
-  const amountNum = new Decimal(tx.amount).abs().toNumber();
   const displayIcon = '💸';
   return (
     <div className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50/80 cursor-pointer transition-colors group border-b border-gray-50 last:border-0">
@@ -139,13 +132,9 @@ function TransactionRow({ tx }: { tx: Transaction }) {
       </div>
 
       <div className="shrink-0 text-right">
-        <p
-          className="text-[14px] font-black"
-          style={{ color: isIncome ? '#059669' : '#dc2626' }}
-        >
-          {isIncome ? '+' : '−'}
-          {formatCurrency(amountNum, "vi-VN")}
-        </p>
+        <div className={`text-sm font-bold ${tx.type === "income" ? "text-green-600" : "text-red-600"}`}>
+          {tx.type === "income" ? "+" : "-"} {formatVND(new Decimal(tx.amount))}
+        </div>
       </div>
     </div>
   );
@@ -173,13 +162,13 @@ function DateGroupRow({ date, txs }: { date: string; txs: Transaction[] }) {
           {income.gt(0) && (
             <span className="flex items-center gap-0.5 text-[10px] font-black text-emerald-600">
               <TrendingUp size={9} />+
-              {formatCurrency(income.toNumber(), "vi-VN")}
+              {formatVND(income)}
             </span>
           )}
           {expense.gt(0) && (
             <span className="flex items-center gap-0.5 text-[10px] font-black text-red-500">
               <TrendingDown size={9} />−
-              {formatCurrency(expense.toNumber(), "vi-VN")}
+              {formatVND(expense)}
             </span>
           )}
         </div>

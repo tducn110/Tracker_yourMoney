@@ -7,22 +7,23 @@
 
 import { useState } from 'react';
 import { X, Check, AlertCircle, TrendingUp } from 'lucide-react';
-import { MockWallet } from '@/app/context/WalletContext';
-import { formatCurrency } from '@finance/api-client';
+import { formatVND, toDecimal } from '@finance/api-client';
+import { Wallet } from '@finance/api-client/types';
+import Decimal from 'decimal.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface WalletSyncModalProps {
-  wallet: MockWallet;
+  wallet: Wallet;
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (walletId: string, newBalance: number) => void;
+  onConfirm: (walletId: string, newBalance: string) => void;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function DiffHint({ diff, walletColor }: { diff: number; walletColor: string }) {
-  const isDecrease = diff > 0;
+function DiffHint({ diff, walletColor }: { diff: Decimal; walletColor: string }) {
+  const isDecrease = diff.gt(0);
   return (
     <div
       className="p-3 rounded-xl border"
@@ -40,8 +41,8 @@ function DiffHint({ diff, walletColor }: { diff: number; walletColor: string }) 
         <div>
           <p className="text-[12px] font-bold text-gray-800">
             {isDecrease
-              ? `Chi tiêu không ghi nhận: ${formatCurrency(String(diff), "vi-VN")}`
-              : `Số dư tăng thêm: ${formatCurrency(String(Math.abs(diff)), "vi-VN")}`}
+              ? `Chi tiêu không ghi nhận: ${formatVND(diff)}`
+              : `Số dư tăng thêm: ${formatVND(diff.abs())}`}
           </p>
           <p className="text-[10px] font-medium text-gray-500 mt-0.5">
             {isDecrease
@@ -54,7 +55,7 @@ function DiffHint({ diff, walletColor }: { diff: number; walletColor: string }) 
   );
 }
 
-function SuccessState({ walletName, newBalance }: { walletName: string; newBalance: number }) {
+function SuccessState({ walletName, newBalance }: { walletName: string; newBalance: Decimal }) {
   return (
     <div className="flex flex-col items-center justify-center py-10 px-6 gap-4">
       <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -63,7 +64,7 @@ function SuccessState({ walletName, newBalance }: { walletName: string; newBalan
       <div className="text-center">
         <p className="text-[16px] font-black text-gray-900">Đồng bộ thành công!</p>
         <p className="text-[13px] font-bold text-gray-400 mt-1">
-          {walletName}: {formatCurrency(String(newBalance), "vi-VN")}
+          {walletName}: {formatVND(newBalance)}
         </p>
       </div>
     </div>
@@ -82,16 +83,17 @@ export function WalletSyncModal({ wallet, isOpen, onClose, onConfirm }: WalletSy
   const formatInput = (v: string) =>
     v.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-  const rawInput = parseInt(inputVal.replace(/,/g, '') || '0', 10);
-  const diff = wallet.balance - rawInput;
-  const isValid = inputVal.length > 0 && !isNaN(rawInput) && rawInput !== wallet.balance;
+  const rawInput = toDecimal(inputVal);
+  const walletBalance = toDecimal(wallet.balance);
+  const diff = walletBalance.minus(rawInput);
+  const isValid = inputVal.length > 0 && !rawInput.equals(walletBalance);
 
   // ── Handlers ──
   const handleConfirm = () => {
     if (!isValid) return;
     setIsSuccess(true);
     setTimeout(() => {
-      onConfirm(wallet.id, rawInput);
+      onConfirm(wallet.id, rawInput.toString());
       setIsSuccess(false);
       setInputVal('');
       onClose();
@@ -117,12 +119,12 @@ export function WalletSyncModal({ wallet, isOpen, onClose, onConfirm }: WalletSy
         {/* Header */}
         <div
           className="flex items-center justify-between px-6 py-4 border-b border-gray-100"
-          style={{ borderBottom: `2px solid ${wallet.colorHex}22` }}
+          style={{ borderBottom: `2px solid ${wallet.color}22` }}
         >
           <div className="flex items-center gap-3">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
-              style={{ backgroundColor: `${wallet.colorHex}20` }}
+              style={{ backgroundColor: `${wallet.color}20` }}
             >
               {wallet.icon}
             </div>
@@ -151,9 +153,9 @@ export function WalletSyncModal({ wallet, isOpen, onClose, onConfirm }: WalletSy
               <span className="text-[12px] font-bold text-gray-500">Số dư hiện tại</span>
               <span
                 className="text-[15px] font-black"
-                style={{ color: wallet.colorHex }}
+                style={{ color: wallet.color }}
               >
-                {formatCurrency(String(wallet.balance), "vi-VN")}
+                {formatVND(wallet.balance)}
               </span>
             </div>
 
@@ -171,13 +173,13 @@ export function WalletSyncModal({ wallet, isOpen, onClose, onConfirm }: WalletSy
                 autoFocus
                 className="w-full px-4 py-3 text-[18px] font-black text-gray-900 rounded-xl border-2 outline-none transition-colors"
                 style={{
-                  borderColor: inputVal ? wallet.colorHex : '#e5e7eb',
+                  borderColor: inputVal ? wallet.color : '#e5e7eb',
                 }}
               />
             </div>
 
             {/* Difference hint */}
-            {isValid && <DiffHint diff={diff} walletColor={wallet.colorHex} />}
+            {isValid && <DiffHint diff={diff} walletColor={wallet.color} />}
 
             {/* Action buttons */}
             <div className="flex gap-2 pt-2">
@@ -191,7 +193,7 @@ export function WalletSyncModal({ wallet, isOpen, onClose, onConfirm }: WalletSy
                 onClick={handleConfirm}
                 disabled={!isValid}
                 className="flex-1 h-10 rounded-xl text-[13px] font-black text-white flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
-                style={{ backgroundColor: wallet.colorHex }}
+                style={{ backgroundColor: wallet.color }}
               >
                 <Check size={14} />
                 Xác nhận
