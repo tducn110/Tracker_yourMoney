@@ -24,7 +24,7 @@ const querySchema = z.object({
 
 const quickAddSchema = z.object({
   text: z.string().min(1),
-  walletId: z.string(),
+  walletId: z.string().optional(),
   categoryId: z.coerce.number().optional(),
 });
 
@@ -64,20 +64,31 @@ export const transactionRoutes = new Hono<{ Variables: { userId: string, correla
     }
 
     try {
-      const tx = await transactionService.quickAdd(userId, text, {
+      const result = await transactionService.quickAdd(userId, text, {
         walletId,
         categoryId,
         idempotencyKey
       });
+
+      let message = 'Giao dịch đã được lưu!';
+      if (result.type === 'wallet') {
+        message = `Ví "${result.data.name}" đã được tạo thành công!`;
+      } else if (result.type === 'category') {
+        message = `Danh mục "${result.data.name}" đã được tạo thành công!`;
+      }
+
       return created(c, {
         success: true,
-        message: 'Giao dịch đã được lưu!',
-        transaction: tx
+        message,
+        type: result.type,
+        data: result.data,
+        // Keep transaction for backward compatibility if needed by some clients
+        transaction: result.type === 'transaction' ? result.data : undefined
       });
     } catch (e: any) {
       if (e instanceof UnparseableInputError) {
         logger.warn({ event: 'QUICK_ADD_PARSE_FAILED', correlationId, input: e.input });
-        return err(c, 422, "unprocessable_input", "Không thể nhận diện được thông tin giao dịch. Vui lòng thử lại.");
+        return err(c, 422, "unprocessable_input", "Không thể nhận diện được thông tin. Vui lòng thử lại với nội dung rõ ràng hơn (VD: 'ăn sáng 50k', 'tạo ví Tiết kiệm', 'tạo danh mục Ăn uống').");
       }
       throw e;
     }

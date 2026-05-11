@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { ArrowRight, Receipt } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useBills } from '@/_lib/hooks/finance';
-import { formatCurrency, Bill } from '@finance/api-client';
+import { formatVND, Bill } from '@finance/api-client';
 import { useTranslations } from '@/locales';
 
 export function UpcomingBillsCard() {
@@ -63,7 +63,7 @@ export function UpcomingBillsCard() {
                   </p>
                 </div>
                 <p className="text-[12px] font-black text-gray-800 shrink-0">
-                  {formatCurrency(bill.amount)}
+                  {formatVND(bill.amount)}
                 </p>
               </div>
             );

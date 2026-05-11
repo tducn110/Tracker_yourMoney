@@ -2,7 +2,7 @@
 
 import { TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import { useBudgetSummary } from '@/_lib/hooks/use-budgets';
-import { formatCurrency } from '@finance/api-client';
+import { formatVND } from '@finance/api-client';
 import Decimal from 'decimal.js';
 import { useTranslations } from '@/locales';
 
@@ -34,7 +34,7 @@ export function QuickStatsCard() {
           <TrendingUp size={13} className="text-emerald-600" />
           <p className="text-[10px] font-black text-emerald-700 uppercase tracking-wide">{t('dashboard.overview.income')}</p>
         </div>
-        <p className="text-[16px] font-black text-emerald-700">{formatCurrency(income)}</p>
+        <p className="text-[16px] font-black text-emerald-700">{formatVND(income)}</p>
         <p className="text-[10px] font-bold text-emerald-500 mt-0.5">{t('dashboard.overview.thisMonth')}</p>
       </div>
 
@@ -44,7 +44,7 @@ export function QuickStatsCard() {
           <TrendingDown size={13} className="text-red-500" />
           <p className="text-[10px] font-black text-red-700 uppercase tracking-wide">{t('dashboard.overview.expense')}</p>
         </div>
-        <p className="text-[16px] font-black text-red-600">{formatCurrency(expense)}</p>
+        <p className="text-[16px] font-black text-red-600">{formatVND(expense)}</p>
         <p className="text-[10px] font-bold text-red-400 mt-0.5">{t('dashboard.overview.thisMonth')}</p>
       </div>
     </div>

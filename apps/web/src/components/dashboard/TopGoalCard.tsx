@@ -9,7 +9,7 @@
 import { ChevronRight, Target, TrendingUp, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useGoals } from '@/_lib/hooks/finance';
-import { formatCurrency, Goal } from '@finance/api-client';
+import { formatVND, Goal } from '@finance/api-client';
 import Decimal from 'decimal.js';
 import { useTranslations } from '@/locales';
 
@@ -91,7 +91,7 @@ export function TopGoalCard() {
               <div className="flex items-center gap-1.5 mt-1.5">
                 <TrendingUp size={11} className="text-purple-500" />
                 <span className="text-[11px] font-bold text-purple-600">
-                  +{formatCurrency(monthlyContribution)}{t('dashboard.goals.perMonth')}
+                  +{formatVND(monthlyContribution)}{t('dashboard.goals.perMonth')}
                 </span>
               </div>
             )}
@@ -119,21 +119,21 @@ export function TopGoalCard() {
           <div>
             <p className="text-[11px] font-bold text-gray-400 mb-0.5">{t('dashboard.goals.saved')}</p>
             <p className="text-[18px] font-black text-gray-900 leading-none">
-              {formatCurrency(currentSaved)}
+              {formatVND(currentSaved)}
             </p>
           </div>
           <div className="w-px h-8 bg-gray-100 shrink-0" />
           <div className="text-center">
             <p className="text-[11px] font-bold text-gray-400 mb-0.5">{t('dashboard.goals.target')}</p>
             <p className="text-[18px] font-black text-gray-700 leading-none">
-              {formatCurrency(targetAmount)}
+              {formatVND(targetAmount)}
             </p>
           </div>
           <div className="w-px h-8 bg-gray-100 shrink-0" />
           <div className="text-right">
             <p className="text-[11px] font-bold text-gray-400 mb-0.5">{t('dashboard.goals.remaining')}</p>
             <p className="text-[18px] font-black text-purple-600 leading-none">
-              {formatCurrency(remaining)}
+              {formatVND(remaining)}
             </p>
           </div>
         </div>

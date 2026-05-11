@@ -11,7 +11,7 @@ import { useState, useMemo } from 'react';
 import { ArrowRight, BarChart3, TrendingUp, TrendingDown, RefreshCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTransactions } from '@/_lib/hooks/finance';
-import { formatCurrency, Transaction } from '@finance/api-client';
+import { formatVND, Transaction } from '@finance/api-client';
 import Decimal from 'decimal.js';
 
 import { useTranslations } from '@/locales';
@@ -92,7 +92,7 @@ function TransactionRow({ tx, t }: { tx: Transaction; t: TFunction }) {
         style={{ color: isIncome ? '#059669' : '#dc2626' }}
       >
         {isIncome ? '+' : '−'}
-        {formatCurrency(String(tx.amount), "vi-VN")}
+        {formatVND(tx.amount)}
       </p>
     </div>
   );
@@ -111,13 +111,13 @@ function DateGroupHeader({ date, txs }: { date: string; txs: Transaction[] }) {
         {income.gt(0) && (
           <span className="flex items-center gap-0.5 text-[10px] font-black text-emerald-600">
             <TrendingUp size={9} />
-            +{formatCurrency(String(income), "vi-VN")}
+            +{formatVND(income)}
           </span>
         )}
         {expense.gt(0) && (
           <span className="flex items-center gap-0.5 text-[10px] font-black text-red-500">
             <TrendingDown size={9} />
-            −{formatCurrency(String(expense), "vi-VN")}
+            −{formatVND(expense)}
           </span>
         )}
       </div>
@@ -193,8 +193,8 @@ export function RecentTransactionsCard() {
         {/* Mini summary */}
         {filter === 'all' && (
           <div className="flex items-center gap-3 text-[10px] font-bold">
-            <span className="text-emerald-600">+{formatCurrency(String(totalIncome), "vi-VN")}</span>
-            <span className="text-red-500">−{formatCurrency(String(totalExpense), "vi-VN")}</span>
+            <span className="text-emerald-600">+{formatVND(totalIncome)}</span>
+            <span className="text-red-500">−{formatVND(totalExpense)}</span>
           </div>
         )}
       </div>

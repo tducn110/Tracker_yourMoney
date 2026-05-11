@@ -9,7 +9,7 @@
 import { useMemo } from 'react';
 import { TrendingUp, TrendingDown, Wallet, ChevronRight } from 'lucide-react';
 import { useBudgetSummary } from '@/_lib/hooks/use-budgets';
-import { formatCurrency } from '@finance/api-client';
+import { formatVND } from '@finance/api-client';
 import { useWallet } from '@/app/context/WalletContext';
 import Link from 'next/link';
 import { useTranslations } from '@/locales';
@@ -84,7 +84,7 @@ export function OverviewSummaryCard() {
     {
       icon: <TrendingUp size={13} className="text-emerald-600" />,
       label: t('dashboard.overview.income'),
-      value: formatCurrency(String(total_income), "vi-VN"),
+      value: formatVND(total_income),
       sublabel: t('dashboard.overview.thisMonth'),
       colorText: '#059669',
       colorBg: '#ecfdf5',
@@ -94,7 +94,7 @@ export function OverviewSummaryCard() {
     {
       icon: <TrendingDown size={13} className="text-red-500" />,
       label: t('dashboard.overview.expense'),
-      value: formatCurrency(String(total_expense), "vi-VN"),
+      value: formatVND(total_expense),
       sublabel: t('dashboard.overview.thisMonth'),
       colorText: '#dc2626',
       colorBg: '#fef2f2',
@@ -103,7 +103,7 @@ export function OverviewSummaryCard() {
     {
       icon: <Wallet size={13} className="text-blue-600" />,
       label: t('dashboard.overview.myWallet'),
-      value: formatCurrency(String(totalBalance), "vi-VN"),
+      value: formatVND(totalBalance),
       sublabel: `${walletCount} ${t('dashboard.overview.accounts')} · ${t('dashboard.overview.tapToView')}`,
       colorText: '#2563eb',
       colorBg: '#eff6ff',

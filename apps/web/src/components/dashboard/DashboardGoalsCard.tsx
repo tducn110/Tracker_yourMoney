@@ -9,7 +9,7 @@
 import { ChevronRight, Target, Plus, CheckCircle2, PauseCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useGoals } from '@/_lib/hooks/finance';
-import { formatCurrency, Goal } from '@finance/api-client';
+import { formatVND, Goal } from '@finance/api-client';
 import Decimal from 'decimal.js';
 import { useTranslations } from '@/locales';
 
@@ -86,7 +86,7 @@ function GoalRow({ goal }: { goal: Goal }) {
         </div>
 
         <p className="text-[10px] font-bold text-gray-400 mb-1.5">
-          {formatCurrency(goal.currentSaved)} / {formatCurrency(goal.targetAmount)}
+          {formatVND(goal.currentSaved)} / {formatVND(goal.targetAmount)}
           {goal.deadline && (
             <span className="ml-1.5 text-gray-300">· {new Date(goal.deadline).toLocaleDateString('vi-VN')}</span>
           )}

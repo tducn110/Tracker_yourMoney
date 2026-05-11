@@ -8,7 +8,7 @@
 import { MoreHorizontal, Pencil, Trash2, CalendarDays, GripVertical } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Budget, formatCurrency } from '@finance/api-client';
+import { Budget, formatVND } from '@finance/api-client';
 import Decimal from 'decimal.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -180,13 +180,13 @@ export function BudgetCard({
             className="text-[24px] font-black leading-none"
             style={{ color: amountColor }}
           >
-            {left < 0 ? '−' : ''}{formatCurrency(Math.abs(left))}
+            {left < 0 ? '−' : ''}{formatVND(Math.abs(left))}
           </span>
           <span className="text-[12px] font-bold text-gray-400">còn lại</span>
         </div>
         <p className="text-[12px] font-bold text-gray-500">
-          <span style={{ color: progressColor }}>{formatCurrency(spent)}</span>
-          {' '}/ {formatCurrency(targetAmount)}
+          <span style={{ color: progressColor }}>{formatVND(spent)}</span>
+          {' '}/ {formatVND(targetAmount)}
         </p>
       </div>
 

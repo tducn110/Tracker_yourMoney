@@ -11,7 +11,7 @@ import { BudgetCard } from '@/components/budgets/BudgetCard';
 import { BudgetFormModal, type BudgetFormData } from '@/components/budgets/BudgetFormModal';
 import { toast } from 'sonner';
 import { useBudgets, useBudgetSummary, useCreateBudget, useUpdateBudget, useDeleteBudget } from '@/_lib/hooks/use-budgets';
-import { formatCurrency, Budget } from '@finance/api-client';
+import { formatVND, Budget } from '@finance/api-client';
 import Decimal from 'decimal.js';
 
 // ─── Summary Strip ────────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ function SummaryStrip() {
           </div>
           <p className="text-[12px] font-bold text-gray-500">Tổng hạn mức</p>
         </div>
-        <p className="text-[20px] font-black text-gray-900">{formatCurrency(totalLimit)}</p>
+        <p className="text-[20px] font-black text-gray-900">{formatVND(totalLimit)}</p>
       </div>
 
       <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
@@ -62,7 +62,7 @@ function SummaryStrip() {
           </div>
           <p className="text-[12px] font-bold text-gray-500">Đã chi tiêu</p>
         </div>
-        <p className="text-[20px] font-black text-gray-900">{formatCurrency(totalSpent)}</p>
+        <p className="text-[20px] font-black text-gray-900">{formatVND(totalSpent)}</p>
         <p className="text-[11px] font-semibold text-gray-400 mt-0.5">{percent}% hạn mức</p>
       </div>
 
@@ -74,7 +74,7 @@ function SummaryStrip() {
           <p className="text-[12px] font-bold text-gray-500">Còn lại</p>
         </div>
         <p className={`text-[20px] font-black ${isOver ? 'text-red-600' : 'text-emerald-600'}`}>
-          {isOver ? '-' : ''}{formatCurrency(left.absoluteValue())}
+          {isOver ? '-' : ''}{formatVND(left.absoluteValue())}
         </p>
         <p className="text-[11px] font-semibold text-gray-400 mt-0.5">
           {isOver ? 'Đã vượt ngân sách' : 'Tháng 4/2026'}
