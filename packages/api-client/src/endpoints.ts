@@ -12,7 +12,8 @@ import type {
   MonthlyTrend,
   LoginCredentials,
   RegisterData,
-  AuthResponse
+  AuthResponse,
+  Wallet
 } from './types';
 
 /**
@@ -57,10 +58,10 @@ export const transactionsAPI = {
       headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
     }) as unknown as Promise<Transaction>,
   quickAdd: (text: string, options?: { walletId: string; categoryId?: number; idempotencyKey?: string }) =>
-    apiClient.post<Transaction>('/api/v1/transactions/quick',
+    apiClient.post<any>('/api/v1/transactions/quick',
       { text, walletId: options?.walletId, categoryId: options?.categoryId },
       { headers: options?.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {} }
-    ) as unknown as Promise<Transaction>,
+    ) as unknown as Promise<any>,
   update: (id: string, data: Partial<Transaction>) =>
     apiClient.put<Transaction>(`/api/v1/transactions/${id}`, data) as unknown as Promise<Transaction>,
   importCSV: (formData: FormData, idempotencyKey?: string) =>
@@ -108,22 +109,22 @@ export const analyticsAPI = {
 };
 
 export const walletAPI = {
-  list: () => apiClient.get<any[]>('/api/v1/wallet') as unknown as Promise<any[]>,
-  getCash: () => apiClient.get<any>('/api/v1/wallet/cash') as unknown as Promise<any>,
+  list: () => apiClient.get<Wallet[]>('/api/v1/wallet') as unknown as Promise<Wallet[]>,
+  getCash: () => apiClient.get<Wallet>('/api/v1/wallet/cash') as unknown as Promise<Wallet>,
   updateCash: (newBalance: string, note?: string, idempotencyKey?: string) =>
-    apiClient.put('/api/v1/wallet/cash', { newBalance, note }, {
+    apiClient.put<Wallet>('/api/v1/wallet/cash', { newBalance, note }, {
       headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
-    }) as unknown as Promise<any>,
-  create: (data: Record<string, unknown>) =>
-    apiClient.post('/api/v1/wallet', data) as unknown as Promise<any>,
-  update: (id: string, data: Record<string, unknown>) =>
-    apiClient.put(`/api/v1/wallet/${id}`, data) as unknown as Promise<any>,
+    }) as unknown as Promise<Wallet>,
+  create: (data: Partial<Wallet>) =>
+    apiClient.post<Wallet>('/api/v1/wallet', data) as unknown as Promise<Wallet>,
+  update: (id: string, data: Partial<Wallet>) =>
+    apiClient.put<Wallet>(`/api/v1/wallet/${id}`, data) as unknown as Promise<Wallet>,
   delete: (id: string) =>
     apiClient.delete(`/api/v1/wallet/${id}`) as unknown as Promise<void>,
   transfer: (data: { fromWalletId: string; toWalletId: string; amount: string; note?: string }, idempotencyKey?: string) =>
-    apiClient.post('/api/v1/wallet/transfer', data, {
+    apiClient.post<{ source: Wallet; target: Wallet }>('/api/v1/wallet/transfer', data, {
       headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
-    }) as unknown as Promise<{ source: any; target: any }>,
+    }) as unknown as Promise<{ source: Wallet; target: Wallet }>,
 };
 
 export const notificationAPI = {

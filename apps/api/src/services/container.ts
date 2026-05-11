@@ -10,6 +10,7 @@ import { getCache, type ICache } from "@finance/cache";
 import { CategoryService } from "./category-service";
 import { TransactionService } from "./transaction-service";
 import { RegexNLPAdapter } from "./adapters/nlp-adapter";
+import { GeminiNLPAdapter } from "./adapters/gemini-nlp-adapter";
 import { BudgetService } from "./budget-service";
 import { AIService } from "./ai-service";
 import { WalletService } from "./wallet-service";
@@ -30,6 +31,7 @@ export class Container {
   private _goalRepo!: GoalRepository;
   private _cache!: ICache;
   private _nlpAdapter!: RegexNLPAdapter;
+  private _geminiAdapter!: GeminiNLPAdapter;
   private _categoryService!: CategoryService;
   private _transactionService!: TransactionService;
   private _budgetService!: BudgetService;
@@ -51,17 +53,20 @@ export class Container {
     this._goalRepo = new GoalRepository(dbInstance);
     this._cache = getCache();
     this._nlpAdapter = new RegexNLPAdapter();
+    this._geminiAdapter = new GeminiNLPAdapter();
 
     this._categoryService = new CategoryService(this._categoryRepo);
+    this._budgetService = new BudgetService();
+    this._walletService = new WalletService(this._categoryRepo);
+    this._aiService = new AIService(this._categoryRepo, this._walletService);
     this._transactionService = new TransactionService(
       this._transactionRepo,
       this._categoryRepo,
-      this._nlpAdapter,
-      this._cache
+      this._geminiAdapter,    // Primary: Gemini AI
+      this._cache,
+      this._aiService,
+      this._nlpAdapter         // Fallback: Regex
     );
-    this._budgetService = new BudgetService();
-    this._aiService = new AIService(this._nlpAdapter);
-    this._walletService = new WalletService(this._categoryRepo);
     this._analyticsService = new AnalyticsService();
     this._billService = new BillService(this._billRepo, this._transactionRepo);
     this._goalService = new GoalService(this._goalRepo, this._transactionRepo, this._categoryRepo);

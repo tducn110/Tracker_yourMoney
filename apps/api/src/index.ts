@@ -37,6 +37,7 @@ import { goalRoutes } from './routes/goals';
 import { budgetRoutes } from './routes/budgets';
 import { userRoutes } from './routes/user';
 import { notificationRoutes } from './routes/notifications';
+import { aiRoutes } from './routes/ai';
 
 // ── TYPE DEFINITIONS ───────────────────────────────────────────────
 type Variables = {
@@ -136,6 +137,7 @@ v1.route('/goals', goalRoutes);
 v1.route('/budgets', budgetRoutes);
 v1.route('/user', userRoutes);
 v1.route('/notifications', notificationRoutes);
+v1.route('/ai', aiRoutes);
 
 v1.get('/health', (c) => {
   return c.json({

@@ -123,7 +123,7 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden border-none shadow-2xl">
+      <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden border-none shadow-2xl bg-white text-gray-900">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="text-[20px] font-bold text-gray-900 flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
@@ -131,7 +131,7 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
             </div>
             Thêm Giao Dịch Nhanh
           </DialogTitle>
-          <DialogDescription className="text-[12px] mt-1">
+          <DialogDescription className="text-[12px] mt-1 text-gray-500">
             Ghi lại thu nhập hoặc chi tiêu ngay lập tức.
           </DialogDescription>
         </DialogHeader>
@@ -242,7 +242,7 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
               id="note"
               {...register('note')}
               placeholder="VD: Ăn sáng phở bò..."
-              className="rounded-xl border-gray-100 focus:border-blue-200 focus:ring-4 focus:ring-blue-50/50 text-[14px]"
+              className="rounded-xl border-gray-100 focus:border-blue-200 focus:ring-4 focus:ring-blue-50/50 text-[14px] bg-white text-gray-900"
             />
           </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Send,
@@ -11,24 +12,29 @@ import {
   Trash2,
   Zap,
   TrendingUp,
-  TrendingDown,
   ShoppingCart,
   Coffee,
   Car,
   Home,
+  AlertCircle,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { formatCurrency } from '@finance/api-client';
+import { formatVND } from '@finance/api-client';
+import { transactionsAPI } from '@finance/api-client';
+import { useWallet } from '@/app/context/WalletContext';
 import { toast } from 'sonner';
+
+// ── Types ─────────────────────────────────────────────────────────────
 
 interface Message {
   id: string;
   role: 'user' | 'bot';
   content: string;
   timestamp: Date;
-  data?: ParsedTransaction;
+  data?: ParsedTransaction | null;
+  originalInput?: string;  // raw user text that triggered this bot message
   confirmed?: boolean;
+  error?: boolean;
 }
 
 interface ParsedTransaction {
@@ -40,6 +46,8 @@ interface ParsedTransaction {
   emoji: string;
 }
 
+// ── Quick Chips ────────────────────────────────────────────────────────
+
 const QUICK_CHIPS = [
   { label: 'ăn sáng 35k', icon: Coffee },
   { label: 'đổ xăng 50k', icon: Car },
@@ -49,16 +57,23 @@ const QUICK_CHIPS = [
   { label: 'freelance 2tr', icon: Zap },
 ];
 
+// ── Category Emoji Map ─────────────────────────────────────────────────
+
 const CATEGORY_MAP: Record<string, { emoji: string; label: string }> = {
   food: { emoji: '🍜', label: 'Ăn uống' },
   transport: { emoji: '🚗', label: 'Di chuyển' },
   shopping: { emoji: '🛒', label: 'Mua sắm' },
   income: { emoji: '💰', label: 'Thu nhập' },
   bills: { emoji: '🏠', label: 'Hóa đơn' },
+  health: { emoji: '💊', label: 'Sức khỏe' },
+  entertainment: { emoji: '🎬', label: 'Giải trí' },
+  education: { emoji: '📚', label: 'Giáo dục' },
   other: { emoji: '💳', label: 'Khác' },
 };
 
-function parseMockTransaction(input: string): ParsedTransaction {
+// ── Local mock parser (instant preview, backend re-parses on confirm) ──
+
+function parsePreview(input: string): ParsedTransaction {
   const lower = input.toLowerCase();
 
   // Detect amount
@@ -86,6 +101,9 @@ function parseMockTransaction(input: string): ParsedTransaction {
   else if (/mua|chợ|shopping|quần|áo|giày|sách|điện thoại/.test(lower)) category = 'shopping';
   else if (/lương|freelance|thưởng|nhận/.test(lower)) category = 'income';
   else if (/thuê|nhà|điện|nước|internet|bill/.test(lower)) category = 'bills';
+  else if (/thuốc|bệnh|khám|sức khỏe/.test(lower)) category = 'health';
+  else if (/phim|game|nhạc|giải trí/.test(lower)) category = 'entertainment';
+  else if (/học|sách|khóa|giáo dục/.test(lower)) category = 'education';
 
   const catInfo = CATEGORY_MAP[category] || CATEGORY_MAP['other'];
 
@@ -107,11 +125,11 @@ function parseMockTransaction(input: string): ParsedTransaction {
   };
 }
 
-interface InlineChatQuickAddProps {
-  onSubmit?: (data: ParsedTransaction) => Promise<void>;
-}
+// ── Component ──────────────────────────────────────────────────────────
 
-export function InlineChatQuickAdd({ onSubmit }: InlineChatQuickAddProps) {
+export function InlineChatQuickAdd() {
+  const queryClient = useQueryClient();
+  const { wallets, defaultWallet } = useWallet();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -122,8 +140,10 @@ export function InlineChatQuickAdd({ onSubmit }: InlineChatQuickAddProps) {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [mode, setMode] = useState<'chat' | 'suggest'>('chat');
+  const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -131,6 +151,7 @@ export function InlineChatQuickAdd({ onSubmit }: InlineChatQuickAddProps) {
     }
   }, [messages, isTyping]);
 
+  // ── Send: parse locally for instant preview ──
   const handleSend = async (text?: string) => {
     const rawInput = (text ?? inputValue).trim();
     if (!rawInput) return;
@@ -145,42 +166,95 @@ export function InlineChatQuickAdd({ onSubmit }: InlineChatQuickAddProps) {
     setInputValue('');
     setIsTyping(true);
 
-    await new Promise(r => setTimeout(r, 800 + Math.random() * 400));
+    // Simulate AI thinking time (300-800ms)
+    await new Promise(r => setTimeout(r, 400 + Math.random() * 400));
 
-    const parsed = parseMockTransaction(rawInput);
+    const parsed = parsePreview(rawInput);
+
+    if (!parsed.amount) {
+      const errMsg: Message = {
+        id: `err-${Date.now()}`,
+        role: 'bot',
+        content: `Mình chưa nhận diện được số tiền. Bạn thử lại với định dạng: **"ăn sáng 50k"** hoặc **"mua sách 200k"** nhé!`,
+        timestamp: new Date(),
+        error: true,
+      };
+      setMessages(prev => [...prev, errMsg]);
+      setIsTyping(false);
+      return;
+    }
+
     const typeLabel = parsed.type === 'expense' ? 'chi tiêu' : 'thu nhập';
     const catInfo = CATEGORY_MAP[parsed.category] || CATEGORY_MAP['other'];
 
     const botMsg: Message = {
       id: `bot-${Date.now()}`,
       role: 'bot',
-      content: `Mình đã hiểu! Đây là **${typeLabel}** ${parsed.emoji}\n\n**${parsed.note}** — **${formatCurrency(parsed.amount)}**\nDanh mục: ${catInfo.emoji} ${catInfo.label}`,
+      content: `Mình hiểu rồi! Đây là **${typeLabel}** ${parsed.emoji}\n\n**${parsed.note}** — **${formatVND(parsed.amount)}**\nDanh mục: ${catInfo.emoji} ${catInfo.label}\n\n_Click "Lưu ngay" để xác nhận, backend sẽ dùng AI kiểm tra lại._`,
       timestamp: new Date(),
       data: parsed,
+      originalInput: rawInput,
     };
     setMessages(prev => [...prev, botMsg]);
     setIsTyping(false);
   };
 
+  // ── Confirm: call real API (backend re-parses with Gemini + saves) ──
   const handleConfirm = async (msg: Message) => {
     if (!msg.data) return;
+    const walletId = defaultWallet?.id ?? wallets[0]?.id;
+    if (!walletId) {
+      toast.error('Vui lòng tạo ví trước khi thêm giao dịch');
+      return;
+    }
+
+    // Optimistic UI: mark as confirmed immediately
+    setMessages(prev =>
+      prev.map(m => m.id === msg.id ? { ...m, confirmed: true } : m)
+    );
+
     try {
-      await (onSubmit?.(msg.data) ?? Promise.resolve());
-      setMessages(prev =>
-        prev.map(m => m.id === msg.id ? { ...m, confirmed: true } : m)
-      );
+      // Send raw text to backend — AI re-parses and saves
+      const userInput = msg.originalInput || msg.data!.note;
+      const result = await transactionsAPI.quickAdd(userInput, { walletId });
+
       const confirmMsg: Message = {
         id: `confirm-${Date.now()}`,
         role: 'bot',
-        content: `✅ Đã lưu **${msg.data!.note}** — **${formatCurrency(msg.data!.amount)}** vào danh sách giao dịch!`,
+        content: `✅ Đã lưu: **${result.note || msg.data.note}** — **${formatCurrency(Number(result.amount))}** vào danh sách giao dịch!`,
         timestamp: new Date(),
+        confirmed: true,
       };
       setMessages(prev => [...prev, confirmMsg]);
-      toast.success(`Đã ghi nhận: ${msg.data!.note}`, {
+      toast.success(`Đã ghi nhận: ${result.note || msg.data.note}`, {
         icon: <Sparkles className="text-blue-500" />,
       });
-    } catch {
-      toast.error('Có lỗi xảy ra khi lưu giao dịch.');
+
+      // Invalidate queries to refresh budget summary and transactions
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+    } catch (err: any) {
+      // Rollback optimistic UI
+      setMessages(prev =>
+        prev.map(m => m.id === msg.id ? { ...m, confirmed: false } : m)
+      );
+
+      const apiError = err?.response?.data?.error?.message || err?.message || '';
+      const userMsg = apiError.includes('Không thể nhận diện')
+        ? 'Mình không hiểu được giao dịch này. Bạn thử nhập lại với định dạng rõ ràng hơn nhé!'
+        : 'Có lỗi khi lưu giao dịch. Vui lòng thử lại sau.';
+
+      const errMsg: Message = {
+        id: `err-${Date.now()}`,
+        role: 'bot',
+        content: `❌ ${userMsg}`,
+        timestamp: new Date(),
+        error: true,
+      };
+      setMessages(prev => [...prev, errMsg]);
+      toast.error(apiError || 'Có lỗi xảy ra khi lưu giao dịch.');
     }
   };
 
@@ -209,7 +283,7 @@ export function InlineChatQuickAdd({ onSubmit }: InlineChatQuickAddProps) {
         </div>
         <div>
           <h3 className="text-[15px] font-black text-white">Finny AI</h3>
-          <p className="text-[11px] font-bold text-blue-200">Nhập liệu tự nhiên • Online</p>
+          <p className="text-[11px] font-bold text-blue-200">OpenRouter AI • Online</p>
         </div>
         <div className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-white/10 rounded-full">
           <Sparkles size={12} className="text-yellow-300" />
@@ -220,8 +294,8 @@ export function InlineChatQuickAdd({ onSubmit }: InlineChatQuickAddProps) {
       {/* ── Messages ── */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 py-5 space-y-4 bg-gray-50/40"
-        style={{ minHeight: 0 }}
+        className="flex-1 overflow-y-auto px-4 py-5 space-y-4 bg-white"
+        style={{ minHeight: 0, maxHeight: 360 }}
       >
         <AnimatePresence initial={false}>
           {messages.map((msg) => (
@@ -237,9 +311,11 @@ export function InlineChatQuickAdd({ onSubmit }: InlineChatQuickAddProps) {
                 w-7 h-7 rounded-xl shrink-0 flex items-center justify-center mt-0.5
                 ${msg.role === 'user'
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                  : 'bg-white border border-blue-100 text-blue-500 shadow-sm'}
+                  : msg.error
+                    ? 'bg-red-100 border border-red-200 text-red-500 shadow-sm'
+                    : 'bg-white border border-blue-100 text-blue-500 shadow-sm'}
               `}>
-                {msg.role === 'user' ? <User size={13} /> : <Bot size={13} />}
+                {msg.role === 'user' ? <User size={13} /> : msg.error ? <AlertCircle size={13} /> : <Bot size={13} />}
               </div>
 
               {/* Bubble + actions */}
@@ -248,7 +324,9 @@ export function InlineChatQuickAdd({ onSubmit }: InlineChatQuickAddProps) {
                   px-4 py-3 rounded-2xl text-[13.5px] leading-relaxed shadow-sm
                   ${msg.role === 'user'
                     ? 'bg-blue-600 text-white rounded-tr-sm font-medium'
-                    : 'bg-white text-gray-700 rounded-tl-sm border border-gray-100/80 font-medium'}
+                    : msg.error
+                      ? 'bg-red-50 text-red-700 rounded-tl-sm border border-red-100 font-medium'
+                      : 'bg-white text-gray-700 rounded-tl-sm border border-gray-100/80 font-medium'}
                 `}>
                   {msg.role === 'user'
                     ? <span>{msg.content}</span>
@@ -256,7 +334,7 @@ export function InlineChatQuickAdd({ onSubmit }: InlineChatQuickAddProps) {
                   }
                 </div>
 
-                {/* Confirm/Discard actions for parsed transactions */}
+                {/* Confirm/Discard actions */}
                 {msg.data && !msg.confirmed && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -322,7 +400,7 @@ export function InlineChatQuickAdd({ onSubmit }: InlineChatQuickAddProps) {
       </div>
 
       {/* ── Quick Chips ── */}
-      <div className="px-4 pt-3 pb-1 bg-white border-t border-gray-50">
+      <div className="px-4 py-2 flex flex-wrap gap-2 bg-white border-t border-gray-100">
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {QUICK_CHIPS.map(({ label, icon: Icon }) => (
             <button
@@ -340,15 +418,19 @@ export function InlineChatQuickAdd({ onSubmit }: InlineChatQuickAddProps) {
 
       {/* ── Input ── */}
       <div className="px-4 pb-4 pt-2 bg-white">
-        <div className={`
-          flex items-center gap-2 px-4 py-2 rounded-[16px] border-2 transition-all duration-200 bg-gray-50
-          focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-lg focus-within:shadow-blue-500/10
-          border-gray-100
-        `}>
+        <div 
+          className="flex items-center gap-2 px-4 py-2 rounded-[16px] border-2 transition-all duration-200 bg-white"
+          style={{ 
+            borderColor: isFocused ? '#3b82f6' : '#f3f4f6',
+            boxShadow: isFocused ? '0 0 0 4px rgba(59, 130, 246, 0.1)' : 'none'
+          }}
+        >
           <input
             ref={inputRef}
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             onKeyDown={e => { if (e.key === 'Enter' && !isTyping) handleSend(); }}
             placeholder="Nhập giao dịch... vd: cafe 35k"
             disabled={isTyping}

@@ -15,7 +15,7 @@ import {
   Wallet as WalletIcon, Briefcase, TrendingUp as InvestIcon, Gift, Laptop,
   Handshake, ShoppingCart, Home, Book, Zap,
 } from 'lucide-react';
-import { formatCurrency } from '@finance/api-client';
+import { formatVND } from '@finance/api-client';
 import { useWallet } from '@/app/context/WalletContext';
 import { useCreateTransaction, useCategories } from '@/_lib/hooks/finance';
 import { resolveCategoryId } from '@/_lib/category-map';
@@ -106,8 +106,9 @@ function TypeToggle({ active, onChange }: TypeToggleProps) {
             onClick={() => onChange(type)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-black transition-all active:scale-95"
             style={{
-              backgroundColor: isActive ? colorActive : colorBg,
+              backgroundColor: isActive ? colorActive : '#ffffff',
               color: isActive ? '#ffffff' : colorText,
+              border: isActive ? `1px solid ${colorActive}` : '1px solid #e5e7eb',
               boxShadow: isActive ? `0 4px 12px ${colorActive}40` : 'none',
             }}
           >
@@ -128,7 +129,7 @@ interface WalletSelectorProps {
 function WalletSelector({ selectedId, onChange }: WalletSelectorProps) {
   const { wallets } = useWallet();
   return (
-    <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-100 bg-gray-50/50">
+    <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-100 bg-white">
       <WalletIcon size={13} className="text-gray-400 shrink-0" />
       <div className="flex items-center gap-2 overflow-x-auto">
         {wallets.map((w) => {
@@ -139,8 +140,9 @@ function WalletSelector({ selectedId, onChange }: WalletSelectorProps) {
               onClick={() => onChange(w.id)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold shrink-0 transition-all active:scale-95"
               style={{
-                backgroundColor: isActive ? w.colorHex : '#f3f4f6',
+                backgroundColor: isActive ? w.colorHex : '#ffffff',
                 color: isActive ? '#ffffff' : '#6b7280',
+                border: isActive ? `1px solid ${w.colorHex}` : '1px solid #e5e7eb',
                 boxShadow: isActive ? `0 2px 8px ${w.colorHex}40` : 'none',
               }}
             >
@@ -173,8 +175,8 @@ function CategoryPills({ selected, onSelect, type }: CategoryPillsProps) {
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-bold transition-all active:scale-95"
             style={
               isSelected
-                ? { backgroundColor: cat.color + '20', color: cat.color, border: `2px solid ${cat.color}60` }
-                : { backgroundColor: '#f9fafb', color: '#6b7280', border: '1px solid #e5e7eb' }
+                ? { backgroundColor: cat.color + '15', color: cat.color, border: `1.5px solid ${cat.color}80` }
+                : { backgroundColor: '#ffffff', color: '#6b7280', border: '1px solid #e5e7eb' }
             }
           >
             <span className="text-sm">{cat.emoji}</span>
@@ -294,7 +296,7 @@ export function SimpleQuickInput() {
       toast.success(
         `✅ ${activeType.label}: ${activeCategory.emoji} ${activeCategory.name}` +
           (note ? ` — ${note}` : '') +
-          ` · ${formatCurrency(num)} · ${activeWallet?.icon ?? ''} ${activeWallet?.name ?? ''}`
+          ` · ${formatVND(num)} · ${activeWallet?.icon ?? ''} ${activeWallet?.name ?? ''}`
       );
       setAmount('');
       setNote('');
@@ -330,7 +332,7 @@ export function SimpleQuickInput() {
             value={amount}
             onChange={(e) => setAmount(formatAmount(e.target.value))}
             placeholder="Số tiền..."
-            className="w-full h-10 pl-4 pr-8 bg-gray-50 border border-gray-200 rounded-xl text-[13px] font-black text-gray-800 placeholder:text-gray-400 outline-none focus:border-blue-400 focus:bg-white transition-all"
+            className="w-full h-10 pl-4 pr-8 bg-white border border-gray-200 rounded-xl text-[13px] font-black text-gray-800 placeholder:text-gray-400 outline-none focus:border-blue-400 transition-all"
           />
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-bold text-gray-400">
             ₫
@@ -342,15 +344,16 @@ export function SimpleQuickInput() {
           onChange={(e) => setNote(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           placeholder="Ghi chú (tùy chọn)..."
-          className="flex-1 h-10 px-4 bg-gray-50 border border-gray-200 rounded-xl text-[13px] font-bold text-gray-800 placeholder:text-gray-400 outline-none focus:border-blue-400 focus:bg-white transition-all"
+          className="flex-1 h-10 px-4 bg-white border border-gray-200 rounded-xl text-[13px] font-bold text-gray-800 placeholder:text-gray-400 outline-none focus:border-blue-400 transition-all"
         />
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !amount}
           className="h-10 px-6 rounded-xl font-black text-[13px] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 active:scale-95"
           style={{
-            backgroundColor: amount ? activeType.colorActive : '#e5e7eb',
-            color: amount ? '#ffffff' : '#6b7280',
+            backgroundColor: amount ? activeType.colorActive : '#ffffff',
+            color: amount ? '#ffffff' : '#9ca3af',
+            border: amount ? `1px solid ${activeType.colorActive}` : '1px solid #e5e7eb',
             boxShadow: amount ? `0 4px 12px ${activeType.colorActive}40` : 'none',
           }}
         >
