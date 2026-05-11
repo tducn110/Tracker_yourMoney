@@ -11,7 +11,7 @@ import { useState, useRef } from 'react';
 import { Plus, Wallet as WalletIcon, GripVertical, ArrowUpDown } from 'lucide-react';
 import { useWallet } from '@/app/context/WalletContext';
 import { formatVND } from '@finance/api-client';
-import { Wallet } from '@finance/api-client/types';
+import { Wallet } from '@finance/api-client';
 import { WalletCard } from './WalletCard';
 import { WalletSyncModal } from './WalletSyncModal';
 

@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { X, Check, AlertCircle, TrendingUp } from 'lucide-react';
 import { formatVND, toDecimal } from '@finance/api-client';
-import { Wallet } from '@finance/api-client/types';
+import { Wallet } from '@finance/api-client';
 import Decimal from 'decimal.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────

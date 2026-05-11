@@ -223,8 +223,8 @@ export class GoalService {
           userId: userId as any,
           type: "goal_completed",
           title: "🎉 Mục tiêu hoàn thành!",
-          message: `Chúc mừng! Bạn đã hoàn thành mục tiêu: ${goal.name}`,
-          read: false,
+          body: `Chúc mừng! Bạn đã hoàn thành mục tiêu: ${goal.name}`,
+          isRead: false,
         });
       }
 

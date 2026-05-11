@@ -44,7 +44,7 @@ export function FixedExpensesCard() {
             <span className="text-[18px] shrink-0">{item.icon || '🧾'}</span>
             <div className="min-w-0">
               <p className="text-[11px] font-black text-gray-700 truncate">{item.name}</p>
-              <p className="text-[12px] font-black text-gray-900">{formatCurrency(new Decimal(item.amount || 0).toNumber())}</p>
+              <p className="text-[12px] font-black text-gray-900">{formatVND(item.amount || 0)}</p>
             </div>
           </div>
         ))}

@@ -29,6 +29,7 @@ export type NewWalletInput = {
   balance: string;
   icon: string;
   color: string;
+  accountNumber?: string;
   isDefault?: boolean;
 };
 
@@ -48,25 +49,14 @@ const WalletContext = createContext<WalletContextValue | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [wallets, setWallets] = useState<Wallet[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
-
-  const refreshWallets = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = await walletAPI.list();
-      setWallets(data);
-    } catch (error) {
-      console.error('Error fetching wallets:', error);
-      toast.error('Không thể tải danh sách ví');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { data: walletsData, isLoading, refetch: refreshWallets } = useWallets();
 
   useEffect(() => {
-    refreshWallets();
-  }, [refreshWallets]);
+    if (walletsData) {
+      setWallets(walletsData);
+    }
+  }, [walletsData]);
 
   const totalBalance = useMemo(() => {
     return wallets.reduce((sum, wallet) => {
@@ -84,6 +74,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         initialBalance: data.balance,
         icon: data.icon,
         color: data.color,
+        accountNumber: data.accountNumber,
         isDefault: data.isDefault,
       });
       
@@ -150,7 +141,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         updateWallet,
         deleteWallet,
         setDefaultWallet,
-        refreshWallets,
+        refreshWallets: async () => { await refreshWallets(); },
       }}
     >
       {children}

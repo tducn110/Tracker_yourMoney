@@ -184,7 +184,7 @@ export function MoneyLoverQuickInput() {
               className="h-10 backdrop-blur-sm rounded-xl text-white text-sm font-bold transition-all active:scale-95 hover:opacity-90"
               style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
             >
-              {formatCurrency(value).replace('₫', '')}
+              {formatVND(value).replace('₫', '')}
             </button>
           ))}
         </div>

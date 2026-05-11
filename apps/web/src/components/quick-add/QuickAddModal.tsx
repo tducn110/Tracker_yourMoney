@@ -192,7 +192,7 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
                       onClick={() => setWallet(w.id)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all"
                       style={{
-                        backgroundColor: isActive ? w.colorHex : '#f3f4f6',
+                        backgroundColor: isActive ? w.color : '#f3f4f6',
                         color: isActive ? '#fff' : '#6b7280',
                       }}
                     >

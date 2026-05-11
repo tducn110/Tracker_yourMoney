@@ -140,10 +140,10 @@ function WalletSelector({ selectedId, onChange }: WalletSelectorProps) {
               onClick={() => onChange(w.id)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold shrink-0 transition-all active:scale-95"
               style={{
-                backgroundColor: isActive ? w.colorHex : '#ffffff',
+                backgroundColor: isActive ? w.color : '#ffffff',
                 color: isActive ? '#ffffff' : '#6b7280',
-                border: isActive ? `1px solid ${w.colorHex}` : '1px solid #e5e7eb',
-                boxShadow: isActive ? `0 2px 8px ${w.colorHex}40` : 'none',
+                border: isActive ? `1px solid ${w.color}` : '1px solid #e5e7eb',
+                boxShadow: isActive ? `0 2px 8px ${w.color}40` : 'none',
               }}
             >
               <span>{w.icon}</span>
@@ -225,7 +225,7 @@ function TransactionPreview({ amount, typeConfig, category, walletName, walletIc
           className="text-[17px] font-black"
           style={{ color: typeConfig.colorActive }}
         >
-          {typeConfig.type === 'expense' ? '−' : '+'}{formatCurrency(numAmount)}
+          {typeConfig.type === 'expense' ? '−' : '+'}{formatVND(numAmount)}
         </p>
       </div>
     </div>
