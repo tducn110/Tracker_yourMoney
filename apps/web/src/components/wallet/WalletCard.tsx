@@ -6,13 +6,13 @@
  */
 
 import { RefreshCw, Star } from 'lucide-react';
-import { MockWallet, walletTypeLabel } from '@/app/context/WalletContext';
-import { formatCurrency } from '@finance/api-client';
+import { useWallet, walletTypeLabel } from '@/app/context/WalletContext';
+import { formatVND, Wallet } from '@finance/api-client';
 
 // ─── Props ───────────────────────────────────────────────────────────────────
 
 interface WalletCardProps {
-  wallet: MockWallet;
+  wallet: Wallet;
   isActive: boolean;
   onClick: () => void;
   onSyncClick: (e: React.MouseEvent) => void;
@@ -30,10 +30,10 @@ export function WalletCard({ wallet, isActive, onClick, onSyncClick }: WalletCar
       className="relative p-4 rounded-2xl cursor-pointer select-none transition-all duration-200 outline-none"
       style={{
         background: isActive
-          ? `linear-gradient(135deg, ${wallet.colorHex}22, ${wallet.colorHex}0d)`
+          ? `linear-gradient(135deg, ${wallet.color}22, ${wallet.color}0d)`
           : 'white',
         boxShadow: isActive
-          ? `0 0 0 2px ${wallet.colorHex}, 0 8px 24px ${wallet.colorHex}22`
+          ? `0 0 0 2px ${wallet.color}, 0 8px 24px ${wallet.color}22`
           : '0 0 0 1px #e5e7eb',
         transform: isActive ? 'scale(1.02)' : 'scale(1)',
       }}
@@ -49,7 +49,7 @@ export function WalletCard({ wallet, isActive, onClick, onSyncClick }: WalletCar
       <div className="flex items-center gap-2 mb-3">
         <div
           className="w-8 h-8 rounded-xl flex items-center justify-center text-base shrink-0"
-          style={{ backgroundColor: `${wallet.colorHex}20` }}
+          style={{ backgroundColor: `${wallet.color}20` }}
         >
           {wallet.icon}
         </div>
@@ -58,7 +58,7 @@ export function WalletCard({ wallet, isActive, onClick, onSyncClick }: WalletCar
             {wallet.name}
           </p>
           <p className="text-[10px] font-bold text-gray-400 leading-tight">
-            {walletTypeLabel[wallet.type]}
+            {walletTypeLabel[wallet.type as any] || wallet.type}
           </p>
         </div>
       </div>
@@ -66,20 +66,20 @@ export function WalletCard({ wallet, isActive, onClick, onSyncClick }: WalletCar
       {/* Balance */}
       <p
         className="text-[17px] font-black leading-none mb-1 truncate"
-        style={{ color: wallet.colorHex }}
+        style={{ color: wallet.color }}
       >
-        {formatCurrency(String(wallet.balance), "vi-VN")}
+        {formatVND(wallet.balance)}
       </p>
 
       {/* Account number (bank wallets only) */}
       <p className="text-[10px] font-bold text-gray-400 mb-3 h-4">
-        {wallet.accountNumber ?? ''}
+        {(wallet as any).accountNumber ?? ''}
       </p>
 
       {/* Footer: synced time + sync button */}
       <div className="flex items-center justify-between gap-2">
         <p className="text-[10px] font-medium text-gray-400 truncate flex-1">
-          {wallet.lastSynced}
+          {wallet.lastSyncedAt || 'Chưa đồng bộ'}
         </p>
         <button
           onClick={onSyncClick}

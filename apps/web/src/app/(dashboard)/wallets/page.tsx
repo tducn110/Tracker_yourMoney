@@ -12,12 +12,13 @@ import { useState } from 'react';
 import {
   Plus, Star, Trash2, Pencil, Wallet as WalletIcon,
   CreditCard, Banknote, PiggyBank, CheckCircle2, X, RefreshCw,
-  ArrowLeftRight,
+  ArrowLeftRight, Building2, TrendingUp, MoreHorizontal,
 } from 'lucide-react';
-import { useWallet, WalletType, walletTypeLabel, MockWallet } from '@/app/context/WalletContext';
+import { useWallet, WalletType, walletTypeLabel } from '@/app/context/WalletContext';
 import { useTransfer } from '@/_lib/hooks/finance';
-import { formatCurrency } from '@finance/api-client';
+import { formatCurrency, type Wallet } from '@finance/api-client';
 import { toast } from 'sonner';
+import { Decimal } from 'decimal.js';
 
 // ─── Colour palette for wallet cards ──────────────────────────────────────────
 
@@ -27,10 +28,12 @@ const PRESET_COLORS = [
 ];
 
 const WALLET_TYPE_ICONS: Record<WalletType, React.ElementType> = {
-  bank:    CreditCard,
-  cash:    Banknote,
-  ewallet: WalletIcon,
-  savings: PiggyBank,
+  bank:       Building2,
+  cash:       Banknote,
+  credit:     CreditCard,
+  e_wallet:   WalletIcon,
+  investment: TrendingUp,
+  other:      MoreHorizontal,
 };
 
 const WALLET_EMOJIS = ['🏦', '💳', '💵', '📱', '💰', '🏧', '💎', '🎯', '🌟', '⚡'];
@@ -42,7 +45,7 @@ interface WalletFormData {
   type: WalletType;
   balance: string;
   icon: string;
-  colorHex: string;
+  color: string;
   accountNumber: string;
   isDefault: boolean;
 }
@@ -52,14 +55,14 @@ const defaultForm: WalletFormData = {
   type: 'bank',
   balance: '',
   icon: '🏦',
-  colorHex: '#4361ee',
+  color: '#4361ee',
   accountNumber: '',
   isDefault: false,
 };
 
 interface AddWalletModalProps {
   isOpen: boolean;
-  editWallet?: MockWallet | null;
+  editWallet?: Wallet | null;
   onClose: () => void;
   onSave: (data: WalletFormData) => void;
 }
@@ -72,7 +75,7 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
           type: editWallet.type,
           balance: String(editWallet.balance),
           icon: editWallet.icon,
-          colorHex: editWallet.colorHex,
+          color: editWallet.color,
           accountNumber: editWallet.accountNumber ?? '',
           isDefault: editWallet.isDefault,
         }
@@ -118,7 +121,7 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
           <div className="flex items-center gap-3">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center text-xl"
-              style={{ backgroundColor: form.colorHex + '20' }}
+              style={{ backgroundColor: form.color + '20' }}
             >
               {form.icon}
             </div>
@@ -169,7 +172,7 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
                     className="flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all text-[10px] font-black"
                     style={
                       isActive
-                        ? { borderColor: form.colorHex, backgroundColor: form.colorHex + '15', color: form.colorHex }
+                        ? { borderColor: form.color, backgroundColor: form.color + '15', color: form.color }
                         : { borderColor: '#e5e7eb', backgroundColor: '#f9fafb', color: '#6b7280' }
                     }
                   >
@@ -227,7 +230,7 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
                   className="w-10 h-10 rounded-xl text-xl flex items-center justify-center border-2 transition-all"
                   style={
                     form.icon === emoji
-                      ? { borderColor: form.colorHex, backgroundColor: form.colorHex + '20' }
+                      ? { borderColor: form.color, backgroundColor: form.color + '20' }
                       : { borderColor: '#e5e7eb', backgroundColor: '#f9fafb' }
                   }
                 >
@@ -247,12 +250,12 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
                 <button
                   key={color}
                   type="button"
-                  onClick={() => setForm((f) => ({ ...f, colorHex: color }))}
+                  onClick={() => setForm((f) => ({ ...f, color: color }))}
                   className="w-9 h-9 rounded-xl border-[3px] transition-all"
                   style={{
                     backgroundColor: color,
-                    borderColor: form.colorHex === color ? '#fff' : color,
-                    boxShadow: form.colorHex === color ? `0 0 0 3px ${color}` : 'none',
+                    borderColor: form.color === color ? '#fff' : color,
+                    boxShadow: form.color === color ? `0 0 0 3px ${color}` : 'none',
                   }}
                 />
               ))}
@@ -295,7 +298,7 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
             <button
               type="submit"
               className="flex-1 h-11 rounded-xl text-[13px] font-black text-white transition-all active:scale-95"
-              style={{ backgroundColor: form.colorHex, boxShadow: `0 4px 14px ${form.colorHex}40` }}
+              style={{ backgroundColor: form.color, boxShadow: `0 4px 14px ${form.color}40` }}
             >
               {editWallet ? 'Cập nhật' : 'Thêm ví'}
             </button>
@@ -310,7 +313,7 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
 
 interface TransferModalProps {
   isOpen: boolean;
-  wallets: MockWallet[];
+  wallets: Wallet[];
   onClose: () => void;
   onTransfer: (fromId: string, toId: string, amount: string, note?: string) => void;
 }
@@ -468,7 +471,7 @@ function TransferModal({ isOpen, wallets, onClose, onTransfer }: TransferModalPr
 // ─── Wallet Card ──────────────────────────────────────────────────────────────
 
 interface WalletItemCardProps {
-  wallet: MockWallet;
+  wallet: Wallet;
   onEdit: () => void;
   onDelete: () => void;
   onSetDefault: () => void;
@@ -480,14 +483,14 @@ function WalletItemCard({ wallet, onEdit, onDelete, onSetDefault }: WalletItemCa
   return (
     <div
       className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-all duration-200"
-      style={{ borderLeftWidth: 4, borderLeftColor: wallet.colorHex }}
+      style={{ borderLeftWidth: 4, borderLeftColor: wallet.color }}
     >
       <div className="flex items-start justify-between gap-3">
         {/* Left: icon + info */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div
             className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0"
-            style={{ backgroundColor: wallet.colorHex + '18' }}
+            style={{ backgroundColor: wallet.color + '18' }}
           >
             {wallet.icon}
           </div>
@@ -515,7 +518,7 @@ function WalletItemCard({ wallet, onEdit, onDelete, onSetDefault }: WalletItemCa
         <div className="text-right shrink-0">
           <p
             className="text-[17px] font-black leading-none mb-1"
-            style={{ color: wallet.colorHex }}
+            style={{ color: wallet.color }}
           >
             {formatCurrency(String(wallet.balance), "vi-VN")}
           </p>
@@ -559,14 +562,14 @@ export default function WalletsPage() {
   const { wallets, totalBalance, addWallet, updateWallet, deleteWallet, setDefaultWallet, isLoading } = useWallet();
   const transferMutation = useTransfer();
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editWallet, setEditWallet] = useState<MockWallet | null>(null);
+  const [editWallet, setEditWallet] = useState<Wallet | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isMutating, setIsMutating] = useState(false);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
 
   const handleSave = async (data: {
     name: string; type: WalletType; balance: string; icon: string;
-    colorHex: string; accountNumber: string; isDefault: boolean;
+    color: string; accountNumber: string; isDefault: boolean;
   }) => {
     const bal = parseFloat(data.balance.replace(/\./g, '').replace(/,/g, '')) || 0;
     setIsMutating(true);
@@ -577,7 +580,7 @@ export default function WalletsPage() {
           type: data.type,
           balance: bal,
           icon: data.icon,
-          colorHex: data.colorHex,
+          color: data.color,
           accountNumber: data.accountNumber || undefined,
           isDefault: data.isDefault,
         });
@@ -590,7 +593,7 @@ export default function WalletsPage() {
           type: data.type,
           balance: bal,
           icon: data.icon,
-          colorHex: data.colorHex,
+          color: data.color,
           accountNumber: data.accountNumber || undefined,
           isDefault: data.isDefault,
         });
@@ -631,12 +634,12 @@ export default function WalletsPage() {
   };
 
   // Group by type
-  const byType = (Object.keys(walletTypeLabel) as WalletType[]).reduce<Record<WalletType, MockWallet[]>>(
+  const byType = (Object.keys(walletTypeLabel) as WalletType[]).reduce<Record<WalletType, Wallet[]>>(
     (acc, t) => {
       acc[t] = wallets.filter((w) => w.type === t);
       return acc;
     },
-    { bank: [], cash: [], ewallet: [], savings: [] }
+    { cash: [], bank: [], credit: [], e_wallet: [], investment: [], other: [] }
   );
 
   return (
@@ -698,10 +701,10 @@ export default function WalletsPage() {
         </div>
 
         {/* Grouped wallet lists */}
-        {(Object.entries(byType) as [WalletType, MockWallet[]][]).map(([type, list]) => {
+        {(Object.entries(byType) as [WalletType, Wallet[]][]).map(([type, list]) => {
           if (list.length === 0) return null;
           const Icon = WALLET_TYPE_ICONS[type];
-          const typeTotal = list.reduce((s, w) => s + w.balance, 0);
+          const typeTotal = list.reduce((s, w) => s.plus(new Decimal(w.balance)), new Decimal(0)).toString();
           return (
             <div key={type}>
               <div className="flex items-center justify-between mb-3">
@@ -716,7 +719,7 @@ export default function WalletsPage() {
                     ({list.length})
                   </span>
                 </div>
-                <span className="text-[12px] font-black text-gray-600">{formatCurrency(String(typeTotal), "vi-VN")}</span>
+                <span className="text-[12px] font-black text-gray-600">{formatCurrency(typeTotal, "vi-VN")}</span>
               </div>
               <div className="space-y-3">
                 {list.map((wallet) => (

@@ -8,19 +8,21 @@
 import { useState } from 'react';
 import { Wallet, Zap, Check, X, RefreshCw, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { formatCurrency } from '@finance/api-client';
+import { formatVND } from '@finance/api-client';
+
+import Decimal from 'decimal.js';
 
 const mockCashWallet = {
-  balance: 1500000,
+  balance: '1500000',
   lastSynced: "01/04/2026 08:30"
 };
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
 interface CashWalletStripProps {
-  balance?: number;
+  balance?: string;
   lastSynced?: string;
-  onSync?: (newBalance: number, spent: number) => void;
+  onSync?: (newBalance: string, spent: string) => void;
 }
 
 export function CashWalletStrip({
@@ -37,15 +39,18 @@ export function CashWalletStrip({
   const fmt = (v: string) =>
     v.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-  const rawInput = parseInt(inputVal.replace(/,/g, '') || '0');
-  const diff = balance - rawInput;
+  const rawInputStr = inputVal.replace(/,/g, '') || '0';
+  const rawInput = new Decimal(rawInputStr);
+  const currentBalance = new Decimal(balance);
+  const diff = currentBalance.minus(rawInput);
 
   const handleSync = () => {
-    if (!inputVal || isNaN(rawInput)) return;
-    const spent = Math.max(0, diff);
-    setBalance(rawInput);
+    if (!inputVal || rawInput.isNaN()) return;
+    const spent = Decimal.max(0, diff).toFixed(2);
+    const newBalance = rawInput.toFixed(2);
+    setBalance(newBalance);
     setSyncedAt(new Date().toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }));
-    onSync?.(rawInput, spent);
+    onSync?.(newBalance, spent);
     setIsSuccess(true);
     setTimeout(() => {
       setIsSuccess(false);
@@ -89,7 +94,7 @@ export function CashWalletStrip({
             animate={{ opacity: 1, scale: 1 }}
             className="text-[22px] font-black text-amber-700 leading-none"
           >
-            {formatCurrency(String(balance), "vi-VN")}
+            {formatVND(balance)}
           </motion.p>
         </div>
 
@@ -130,7 +135,7 @@ export function CashWalletStrip({
               >
                 <div className="flex items-center justify-between p-3 rounded-lg bg-amber-50 border border-amber-200">
                   <span className="text-sm font-medium text-gray-700">Số dư hiện tại</span>
-                  <span className="text-lg font-bold text-amber-700">{formatCurrency(String(balance), "vi-VN")}</span>
+                  <span className="text-lg font-bold text-amber-700">{formatVND(balance)}</span>
                 </div>
 
                 <div>
@@ -147,19 +152,19 @@ export function CashWalletStrip({
                   />
                 </div>
 
-                {inputVal && !isNaN(rawInput) && (
+                {inputVal && !rawInput.isNaN() && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="p-3 rounded-lg bg-blue-50 border border-blue-200"
                   >
-                    {diff > 0 ? (
+                    {diff.gt(0) ? (
                       <div className="flex items-start gap-2">
                         <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
                         <div className="text-sm text-blue-900">
                           <p className="font-semibold">Chi phí không tên sẽ được tạo</p>
                           <p className="text-xs text-blue-700 mt-1">
-                            Số tiền: <strong>{formatCurrency(String(diff), "vi-VN")}</strong> (vì số dư giảm)
+                            Số tiền: <strong>{formatVND(diff)}</strong> (vì số dư giảm)
                           </p>
                         </div>
                       </div>
@@ -167,7 +172,7 @@ export function CashWalletStrip({
                       <div className="flex items-start gap-2">
                         <RefreshCw className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
                         <div className="text-sm text-green-900">
-                          <p className="font-semibold">Số dư tăng {formatCurrency(String(Math.abs(diff)), "vi-VN")}</p>
+                          <p className="font-semibold">Số dư tăng {formatVND(Math.abs(diff))}</p>
                           <p className="text-xs text-green-700 mt-1">Không tạo giao dịch</p>
                         </div>
                       </div>
@@ -215,7 +220,7 @@ export function CashWalletStrip({
                   <Check className="w-8 h-8 text-green-600" />
                 </motion.div>
                 <p className="text-lg font-bold text-gray-800">Đồng bộ thành công!</p>
-                <p className="text-sm text-gray-600 mt-1">Số dư: {formatCurrency(String(rawInput), "vi-VN")}</p>
+                <p className="text-sm text-gray-600 mt-1">Số dư: {formatVND(rawInput)}</p>
               </motion.div>
             )}
           </AnimatePresence>

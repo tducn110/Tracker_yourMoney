@@ -9,15 +9,16 @@
 
 import { useState, useRef } from 'react';
 import { Plus, Wallet as WalletIcon, GripVertical, ArrowUpDown } from 'lucide-react';
-import { useWallet, type MockWallet } from '@/app/context/WalletContext';
-import { formatCurrency } from '@finance/api-client';
+import { useWallet } from '@/app/context/WalletContext';
+import { formatVND } from '@finance/api-client';
+import { Wallet } from '@finance/api-client/types';
 import { WalletCard } from './WalletCard';
 import { WalletSyncModal } from './WalletSyncModal';
 
 // ─── Draggable Wallet Card Wrapper ────────────────────────────────────────────
 
 interface DraggableWalletCardProps {
-  wallet: MockWallet;
+  wallet: Wallet;
   isActive: boolean;
   reorderMode: boolean;
   isDragOver: boolean;
@@ -63,7 +64,7 @@ function DraggableWalletCard({
 // ─── Strip Header ─────────────────────────────────────────────────────────────
 
 interface WalletStripHeaderProps {
-  total: number;
+  total: string;
   walletCount: number;
   reorderMode: boolean;
   onToggleReorder: () => void;
@@ -87,7 +88,7 @@ function WalletStripHeader({ total, walletCount, reorderMode, onToggleReorder }:
       <div className="flex items-center gap-3">
         <div className="text-right">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Tổng cộng</p>
-          <p className="text-[18px] font-black text-gray-900">{formatCurrency(String(total), "vi-VN")}</p>
+          <p className="text-[18px] font-black text-gray-900">{formatVND(total)}</p>
         </div>
 
         {/* Reorder toggle */}
@@ -122,7 +123,7 @@ function WalletStripHeader({ total, walletCount, reorderMode, onToggleReorder }:
 export function MultiWalletStrip() {
   const { wallets, totalBalance, defaultWallet, updateWallet } = useWallet();
   const [activeId, setActiveId]       = useState<string | null>(null);
-  const [syncTarget, setSyncTarget]   = useState<MockWallet | null>(null);
+  const [syncTarget, setSyncTarget]   = useState<Wallet | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [dragOverId, setDragOverId]   = useState<string | null>(null);
   const dragItemRef                   = useRef<string | null>(null);
@@ -134,8 +135,8 @@ export function MultiWalletStrip() {
 
   // ── Sync ──
 
-  const handleSyncConfirm = async (walletId: string, newBalance: number) => {
-    await updateWallet(walletId, { balance: newBalance } as Partial<MockWallet>);
+  const handleSyncConfirm = async (walletId: string, newBalance: string) => {
+    await updateWallet(walletId, { balance: newBalance });
     setSyncTarget(null);
   };
 

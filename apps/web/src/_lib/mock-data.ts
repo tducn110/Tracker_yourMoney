@@ -11,7 +11,8 @@ import type {
   Goal,
   CategorySpending,
   MonthlyTrend,
-  User
+  User,
+  Wallet
 } from "@finance/api-client";
 
 export const MOCK_USER: User = {
@@ -25,27 +26,53 @@ export const MOCK_USER: User = {
   currency: 'VND'
 };
 
-export const MOCK_WALLETS = [
+export const MOCK_WALLETS: Wallet[] = [
   {
-    id: 'mb-bank',
-    name: 'MB Bank',
-    icon: '🏦',
-    balance: 15200000,
-    type: 'bank' as const,
-    colorHex: '#4361ee',
-    accountNumber: '****1234',
+    id: 'w1',
+    userId: 'u1',
+    name: 'Tiền mặt',
+    type: 'cash',
+    balance: '1500000',
+    initialBalance: '1500000',
+    icon: '💵',
+    color: '#10b981',
     isDefault: true,
-    lastSynced: '01/04 09:00',
+    version: 1,
+    lastSyncedAt: '01/04/2026 08:30',
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
   },
   {
-    id: 'cash',
-    name: 'Tiền Mặt',
-    icon: '💵',
-    balance: 1500000,
-    type: 'cash' as const,
-    colorHex: '#f59e0b',
+    id: 'w2',
+    userId: 'u1',
+    name: 'Techcombank',
+    type: 'bank',
+    balance: '42500000',
+    initialBalance: '40000000',
+    icon: '🏦',
+    color: '#ef4444',
     isDefault: false,
-    lastSynced: '01/04 08:30',
+    version: 1,
+    lastSyncedAt: '02/04/2026 14:15',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    accountNumber: '1234567890',
+  },
+  {
+    id: 'w3',
+    userId: 'u1',
+    name: 'HSBC Visa',
+    type: 'credit',
+    balance: '-12500000',
+    initialBalance: '0',
+    icon: 'CreditCard',
+    color: '#EF4444',
+    isDefault: false,
+    version: 1,
+    lastSyncedAt: '02/04/2026 14:15',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    accountNumber: '**** 8888',
   },
 ];
 
@@ -239,7 +266,7 @@ export const MOCK_BILLS: Bill[] = [
 ];
 
 export const MOCK_CASH_WALLET = {
-  balance: '12500000',
+  balance: '1500000',
   currency: 'VND',
   lastSyncAt: new Date().toISOString(),
 };
