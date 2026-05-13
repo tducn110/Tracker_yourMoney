@@ -130,6 +130,7 @@ export const authRoutes = new Hono()
           fullName: user!.fullName,
           username: user!.username,
           avatarUrl: user!.avatarUrl,
+          hasOnboarded: user!.hasOnboarded ?? false,
         },
       });
     } catch (e: any) {
@@ -164,6 +165,7 @@ export const authRoutes = new Hono()
           username: users.username,
           avatarUrl: users.avatarUrl,
           avatarText: users.avatarText,
+          hasOnboarded: users.hasOnboarded,
           createdAt: users.createdAt,
         })
         .from(users)

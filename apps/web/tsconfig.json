@@ -29,6 +29,15 @@
       ],
       "@finance/api": [
         "../api/src/index.ts"
+      ],
+      "@finance/db": [
+        "../../packages/db/src/index.ts"
+      ],
+      "@finance/shared-schemas": [
+        "../../packages/shared-schemas/src/index.ts"
+      ],
+      "@finance/api-client": [
+        "../../packages/api-client/src/index.ts"
       ]
     }
   },
