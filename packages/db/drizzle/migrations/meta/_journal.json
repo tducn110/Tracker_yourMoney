@@ -21,6 +21,13 @@
       "when": 1778087158106,
       "tag": "0002_lame_mentallo",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778656118279,
+      "tag": "0003_numerous_miracleman",
+      "breakpoints": true
     }
   ]
 }
