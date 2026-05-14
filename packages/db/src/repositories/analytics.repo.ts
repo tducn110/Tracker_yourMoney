@@ -1,6 +1,5 @@
 // packages/db/src/repositories/analytics.repo.ts
 import { and, eq, sql } from "drizzle-orm";
-import * as schema from "../schema/index";
 import { transactions, bills, goals, userSettings } from "../schema";
 import { BaseRepository, type DB } from "./base-repository";
 

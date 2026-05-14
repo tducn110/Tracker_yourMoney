@@ -7,8 +7,6 @@ import { eq, and, isNull, gt } from "@finance/db";
 import { signAccessToken, signRefreshToken, verifyToken } from "../lib/jwt";
 import { verifyFirebaseIdToken } from "../lib/firebase-auth";
 
-const BCRYPT_COST = 12; // Legacy, will be phased out
-
 // Hash a token for safe DB storage (SHA-256)
 async function hashToken(token: string): Promise<string> {
   const encoder = new TextEncoder();

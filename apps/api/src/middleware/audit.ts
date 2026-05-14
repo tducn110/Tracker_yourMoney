@@ -18,7 +18,6 @@ export const auditMiddleware = createMiddleware(async (c, next) => {
     return;
   }
 
-  const start = Date.now();
   const resource = extractResource(c.req.path);
   const resourceId = extractResourceId(c.req.path);
 

@@ -3,7 +3,7 @@
 // TABLE 3: refresh_tokens — JWT refresh token management
 import {
   bigint, integer, varchar, boolean, timestamp, decimal,
-  pgTable, pgEnum, index, bigserial,
+  pgTable, pgEnum, index,
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
 

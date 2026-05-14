@@ -1,5 +1,5 @@
 import { and, eq, isNull, or } from "drizzle-orm";
-import { categories, type Category, type NewCategory } from "../schema/categories";
+import { categories, type NewCategory } from "../schema/categories";
 import { BaseRepository, type DB } from "./base-repository";
 
 /**

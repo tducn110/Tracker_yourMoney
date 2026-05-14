@@ -5,7 +5,7 @@
 // [v13.0] Replaced 1:1 cash_wallet with multi-wallet design per ERD.
 import {
   bigint, integer, decimal, timestamp, varchar, boolean,
-  pgTable, pgEnum, index, check, bigserial,
+  pgTable, pgEnum, index, check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { users } from "./users";

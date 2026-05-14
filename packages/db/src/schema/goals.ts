@@ -5,7 +5,7 @@
 // completedAt được set tự động khi current_saved >= target_amount (với 1% tolerance)
 import {
   bigint, integer, varchar, decimal, timestamp, date, text,
-  pgTable, pgEnum, index, check, bigserial,
+  pgTable, pgEnum, index, check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { users } from "./users";
