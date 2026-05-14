@@ -13,6 +13,8 @@ export const users = pgTable("users", {
   avatarText:    varchar("avatar_text", { length: 5 }),
   isActive:      boolean("is_active").notNull().default(true),
   emailVerified: boolean("email_verified").notNull().default(false),
+  hasOnboarded:  boolean("has_onboarded").notNull().default(false),
+  onboardingCompletedAt: timestamp("onboarding_completed_at"),
   lastLoginAt:   timestamp("last_login_at"),
   deletedAt:     timestamp("deleted_at"),
   createdAt:     timestamp("created_at").notNull().defaultNow(),

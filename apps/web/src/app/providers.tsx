@@ -19,7 +19,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
             onError: (err: any) => {
               // Global 401 handler — redirect to login
               if (err?.status === 401) {
-                if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+                if (
+                  typeof window !== 'undefined' &&
+                  !window.location.pathname.includes('/login') &&
+                  !window.location.pathname.includes('/onboarding')
+                ) {
                   window.location.href = '/login';
                 }
                 return;

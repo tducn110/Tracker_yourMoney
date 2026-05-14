@@ -17,6 +17,7 @@ interface User {
   fullName?: string;
   username?: string;
   avatarUrl?: string;
+  hasOnboarded?: boolean;
 }
 
 interface AuthContextType {
@@ -24,6 +25,7 @@ interface AuthContextType {
   loading: boolean;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  markOnboarded: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,6 +52,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (response.ok) {
             const data = await response.json();
             setUser(data.data);
+          } else if (response.status === 401) {
+            // Unauthenticated state is expected during app startup or after logout.
+            setUser(null);
           } else {
             // Token expired or invalid at backend
             let errorMsg = "";
@@ -104,13 +109,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         const errorMessage = errorData?.error?.message || `Lỗi kết nối backend (${response.status})`;
+        const internalMessage = errorData?.error?.details?.internalMessage;
+        if (internalMessage) {
+          console.error("[Auth] Backend error details:", internalMessage);
+        }
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
       setUser(data.data.user);
       toast.success("Đăng nhập thành công");
-      router.push("/");
+      router.push(data.data.user.hasOnboarded ? "/" : "/onboarding");
     } catch (error: any) {
       console.error("Social login error:", error);
       toast.error(error.message || "Đăng nhập thất bại");
@@ -138,12 +147,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const markOnboarded = () => {
+    setUser((currentUser) => currentUser ? { ...currentUser, hasOnboarded: true } : currentUser);
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
       loading, 
       loginWithGoogle, 
-      logout 
+      logout,
+      markOnboarded,
     }}>
       {children}
     </AuthContext.Provider>
