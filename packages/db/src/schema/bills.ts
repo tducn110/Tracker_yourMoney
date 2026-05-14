@@ -6,7 +6,7 @@
 // Trạng thái tính tại API: SUM(amount_paid) WHERE bill_id + period_month
 import {
   bigint, integer, decimal, varchar, boolean, timestamp, char, text,
-  pgTable, pgEnum, index, check, bigserial,
+  pgTable, pgEnum, index, check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { users } from "./users";

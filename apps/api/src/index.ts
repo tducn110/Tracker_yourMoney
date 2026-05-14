@@ -17,7 +17,6 @@ import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { cors } from 'hono/cors';
 import { compress } from 'hono/compress';
-import { db } from '@finance/db';
 import type { Context } from 'hono';
 
 import { logger, logRequest, logError } from './lib/logger';

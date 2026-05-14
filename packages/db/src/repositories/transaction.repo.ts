@@ -1,5 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
-import { transactions, type Transaction, type NewTransaction } from "../schema/transactions";
+import { transactions, type NewTransaction } from "../schema/transactions";
 import { BaseRepository, type DB } from "./base-repository";
 
 /**

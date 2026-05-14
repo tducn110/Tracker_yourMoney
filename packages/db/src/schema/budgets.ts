@@ -1,4 +1,4 @@
-import { pgTable, bigint, integer, varchar, decimal, date, timestamp, pgEnum, boolean, index, unique, bigserial } from "drizzle-orm/pg-core";
+import { pgTable, bigint, integer, varchar, decimal, date, timestamp, pgEnum, boolean, index, unique } from "drizzle-orm/pg-core";
 import { users } from "./users";
 import { categories } from "./categories";
 

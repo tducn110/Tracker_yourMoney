@@ -1,6 +1,6 @@
 // apps/api/src/services/goal-service.ts
 import Decimal from "decimal.js";
-import { db, notifications, wallets, walletLogs, transactions, and, eq, sql, SYSTEM_CATEGORY_NAMES, SAVINGS_CATEGORY_DEFAULTS } from "@finance/db";
+import { db, notifications, wallets, walletLogs, and, eq, sql, SYSTEM_CATEGORY_NAMES, SAVINGS_CATEGORY_DEFAULTS } from "@finance/db";
 import type { GoalRepository } from "@finance/db/src/repositories/goal.repo";
 import type { InsertGoal, UpdateGoal, ContributeGoal } from "@finance/shared-schemas";
 import { NotFoundError, ConflictError, BadRequestError } from "../lib/errors";

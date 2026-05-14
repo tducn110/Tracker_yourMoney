@@ -8,7 +8,7 @@
 // ⚡ COMPOSITE INDEX (user_id, display_date) — CRITICAL for Budget Engine performance
 import {
   bigint, integer, decimal, varchar, timestamp, date,
-  pgTable, pgEnum, index, check, bigserial,
+  pgTable, pgEnum, index, check,
 } from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
 import { users } from "./users";

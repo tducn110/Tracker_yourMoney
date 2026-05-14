@@ -3,7 +3,7 @@ import Decimal from "decimal.js";
 import type { TransactionRepository } from "@finance/db/src/repositories/transaction.repo";
 import type { BillRepository } from "@finance/db/src/repositories/bill.repo";
 import type { InsertBill, UpdateBill, InsertBillPayment } from "@finance/shared-schemas";
-import { db, wallets, walletLogs, transactions, and, eq, sql } from "@finance/db";
+import { db, wallets, walletLogs, and, eq, sql } from "@finance/db";
 import { NotFoundError, ConflictError, BadRequestError } from "../lib/errors";
 
 export type BillStatus = "paid" | "partial" | "pending";
@@ -157,4 +157,3 @@ export class BillService {
     await this.repository.delete(id, userId);
   }
 }
-

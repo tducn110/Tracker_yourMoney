@@ -1,6 +1,6 @@
 import { eq, and, inArray } from "drizzle-orm";
 import { budgets, budgetCategories, type Budget, type NewBudget } from "../schema/budgets";
-import { BaseRepository, type DB } from "./base-repository";
+import { BaseRepository } from "./base-repository";
 
 export class BudgetRepository extends BaseRepository {
   async findAll(userId: string): Promise<Budget[]> {

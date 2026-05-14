@@ -1,7 +1,7 @@
 // packages/db/src/queries/transactions.ts
 // Drizzle query builders for transactions — thay thế View v_category_spending_current
 import { db } from "../client";
-import { transactions, categories } from "../schema";
+import { transactions } from "../schema";
 import { and, eq, gte, lte, like, desc, sql, type SQL } from "drizzle-orm";
 
 // Get transactions for a user within a date range (used by Budget Engine)

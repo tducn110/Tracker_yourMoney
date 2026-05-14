@@ -3,7 +3,7 @@
 // TABLE 12: audit_logs — Ghi log thao tác quan trọng (Phase 2)
 import {
   bigint, varchar, boolean, timestamp, text, json,
-  pgTable, pgEnum, index, bigserial,
+  pgTable, pgEnum, index,
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
 

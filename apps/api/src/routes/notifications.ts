@@ -3,7 +3,7 @@
 import { Hono } from "hono";
 import { db, notifications } from "@finance/db";
 import { eq, and, desc } from "@finance/db";
-import { ok, err } from "../lib/response";
+import { ok } from "../lib/response";
 
 export const notificationRoutes = new Hono<{ Variables: { userId: string } }>()
   // GET /api/v1/notifications — list user notifications (latest 50)
