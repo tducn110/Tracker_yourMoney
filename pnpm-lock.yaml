@@ -12,9 +12,6 @@ importers:
 
   .:
     dependencies:
-      '@tailwindcss/oxide-linux-x64-gnu':
-        specifier: ^4.3.0
-        version: 4.3.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -110,9 +107,6 @@ importers:
       '@finance/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
-      '@finance/db':
-        specifier: workspace:*
-        version: link:../../packages/db
       '@finance/shared-schemas':
         specifier: workspace:*
         version: link:../../packages/shared-schemas
@@ -2807,12 +2801,6 @@ packages:
 
   '@tailwindcss/oxide-linux-x64-gnu@4.2.4':
     resolution: {integrity: sha512-7Mx25E4WTfnht0TVRTyC00j3i0M+EeFe7wguMDTlX4mRxafznw0CA8WJkFjWYH5BlgELd1kSjuU2JiPnNZbJDA==}
-    engines: {node: '>= 20'}
-    cpu: [x64]
-    os: [linux]
-
-  '@tailwindcss/oxide-linux-x64-gnu@4.3.0':
-    resolution: {integrity: sha512-DRNdQRpSGzRGfARVuVkxvM8Q12nh19l4BF/G7zGA1oe+9wcC6saFBHTISrpIcKzhiXtSrlSrluCfvMuledoCTQ==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [linux]
@@ -8415,8 +8403,6 @@ snapshots:
 
   '@tailwindcss/oxide-linux-x64-gnu@4.2.4':
     optional: true
-
-  '@tailwindcss/oxide-linux-x64-gnu@4.3.0': {}
 
   '@tailwindcss/oxide-linux-x64-musl@4.2.4':
     optional: true

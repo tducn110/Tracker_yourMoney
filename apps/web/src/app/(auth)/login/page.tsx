@@ -16,11 +16,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user) {
-      if (user.hasOnboarded === false) {
-        router.push('/onboarding');
-      } else {
-        router.push('/');
-      }
+      router.push('/');
     }
   }, [user, router]);
 

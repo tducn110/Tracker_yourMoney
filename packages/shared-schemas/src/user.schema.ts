@@ -40,7 +40,6 @@ export const userResponseSchema = z.object({
   avatarText:    z.string().nullable(),
   isActive:      z.boolean(),
   emailVerified: z.boolean(),
-  hasOnboarded:  z.boolean().default(false),
   createdAt:     z.coerce.date(),
 });
 

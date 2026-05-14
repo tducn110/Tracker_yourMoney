@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { 
   onAuthStateChanged, 
   signInWithPopup, 
@@ -17,7 +17,6 @@ interface User {
   fullName?: string;
   username?: string;
   avatarUrl?: string;
-  hasOnboarded?: boolean;
 }
 
 interface AuthContextType {
@@ -25,7 +24,6 @@ interface AuthContextType {
   loading: boolean;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
-  markOnboarded: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,10 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
           if (response.ok) {
             const data = await response.json();
-            setUser({
-              ...data.data,
-              hasOnboarded: data.data.hasOnboarded ?? false,
-            });
+            setUser(data.data);
           } else {
             // Token expired or invalid at backend
             let errorMsg = "";
@@ -128,23 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loginWithGoogle = async () => {
-    const demoUser = {
-      id: "1",
-      email: "demouser@gmail.com",
-      fullName: "Demo User",
-      username: "demouser",
-      avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=demouser",
-      hasOnboarded: false,
-    };
-    setUser(demoUser);
-    toast.success("Đăng nhập thành công!");
-    router.push("/onboarding");
-  };
-
-  const markOnboarded = useCallback(() => {
-    setUser((prev) => (prev ? { ...prev, hasOnboarded: true } : prev));
-  }, []);
+  const loginWithGoogle = () => loginWithSocial(googleProvider);
 
   const logout = async () => {
     try {
@@ -164,8 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user, 
       loading, 
       loginWithGoogle, 
-      logout,
-      markOnboarded,
+      logout 
     }}>
       {children}
     </AuthContext.Provider>

@@ -86,45 +86,6 @@ apiClient.interceptors.response.use(
     return data;
   },
   (error: any) => {
-    const url = error.config?.url || '';
-    if (url.includes('/api/v1/budgets/summary')) {
-      return Promise.resolve({ totalIncome: "25000000", totalSpent: "14500000", totalBudget: "25000000", remainingBudget: "10500000" });
-    }
-    if (url.includes('/api/v1/budgets')) {
-      return Promise.resolve([{ id: "b1", name: "Ngân sách tháng", amount: "25000000", spent: "14500000", categoryId: 0, period: "monthly" }]);
-    }
-    if (url.includes('/api/v1/wallet/cash')) {
-      return Promise.resolve({ id: "w1", name: "Ví Tiền Mặt", type: "cash", balance: "15000000", initialBalance: "15000000", isDefault: true, icon: "💵" });
-    }
-    if (url.includes('/api/v1/wallet')) {
-      return Promise.resolve([{ id: "w1", name: "Ví Tiền Mặt", type: "cash", balance: "15000000", initialBalance: "15000000", isDefault: true, icon: "💵" }]);
-    }
-    if (url.includes('/api/v1/transactions')) {
-      return Promise.resolve({
-        transactions: [
-          { id: "t1", amount: "55000", type: "expense", note: "Ăn trưa văn phòng", displayDate: "2026-05-13", category: { name: "Ăn Uống", icon: "🍔", color: "#F59E0B" } },
-          { id: "t2", amount: "25000000", type: "income", note: "Lương tháng", displayDate: "2026-05-01", category: { name: "Thu Nhập", icon: "💰", color: "#10B981" } }
-        ],
-        total: 2,
-        pages: 1
-      });
-    }
-    if (url.includes('/api/v1/goals')) {
-      return Promise.resolve([{ id: "g1", name: "Mua iPhone 16 Pro", targetAmount: "25000000", currentSaved: "8500000", monthlyContribution: "2000000", icon: "📱", deadline: "2026-12-31" }]);
-    }
-    if (url.includes('/api/v1/bills')) {
-      return Promise.resolve([{ id: "bl1", name: "Tiền trọ", amount: "5000000", dueDay: 5, icon: "🏠", isActive: true }]);
-    }
-    if (url.includes('/api/v1/categories')) {
-      return Promise.resolve([
-        { id: 1, name: "Thu Nhập", icon: "💰", color: "#10B981", type: "income" },
-        { id: 2, name: "Ăn Uống", icon: "🍔", color: "#F59E0B", type: "expense" }
-      ]);
-    }
-    if (url.includes('/api/auth/me')) {
-      return Promise.resolve({ id: "1", email: "demouser@gmail.com", fullName: "Demo User", username: "demouser", avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=demouser" });
-    }
-
     const message = error.response?.data?.error?.message || error.message || 'Unknown API Error';
     return Promise.reject({
       message,
