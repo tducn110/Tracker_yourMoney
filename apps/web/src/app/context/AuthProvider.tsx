@@ -64,13 +64,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } catch {
               // fallback to status text
             }
-            console.error(
-              `Auth /me failed: HTTP ${response.status} ${response.statusText} ${errorMsg ? `— ${errorMsg}` : ""}`,
-            );
+            if (process.env.NODE_ENV !== 'production') {
+              console.error(
+                `Auth /me failed: HTTP ${response.status} ${response.statusText} ${errorMsg ? `— ${errorMsg}` : ""}`,
+              );
+            }
             setUser(null);
           }
         } catch (error) {
-          console.error("Sync user error:", error);
+          if (process.env.NODE_ENV !== 'production') console.error("Sync user error:", error);
           setUser(null);
         }
       } else {
@@ -104,14 +106,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           errorData = await response.json();
         } else {
           const text = await response.text();
-          console.error("Non-JSON error response:", text);
+          if (process.env.NODE_ENV !== 'production') console.error("Non-JSON error response:", text);
           errorData = { error: { message: `Server error (${response.status}): ${text.substring(0, 100)}` } };
         }
         
         const errorMessage = errorData?.error?.message || `Lỗi kết nối backend (${response.status})`;
         const internalMessage = errorData?.error?.details?.internalMessage;
         if (internalMessage) {
-          console.error("[Auth] Backend error details:", internalMessage);
+          if (process.env.NODE_ENV !== 'production') console.error("[Auth] Backend error details:", internalMessage);
         }
         throw new Error(errorMessage);
       }
@@ -121,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.success("Đăng nhập thành công");
       router.push(data.data.user.hasOnboarded ? "/" : "/onboarding");
     } catch (error: any) {
-      console.error("Social login error:", error);
+      if (process.env.NODE_ENV !== 'production') console.error("Social login error:", error);
       toast.error(error.message || "Đăng nhập thất bại");
     } finally {
       // Keep guard active for a short bit to prevent race with Auth observer
@@ -142,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.push("/login");
       toast.success("Đã đăng xuất");
     } catch (error) {
-      console.error("Logout error:", error);
+      if (process.env.NODE_ENV !== 'production') console.error("Logout error:", error);
       toast.error("Lỗi khi đăng xuất");
     }
   };
