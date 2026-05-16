@@ -56,15 +56,16 @@ const authUserSelect = {
 
 async function seedDefaultCategories(userId: string) {
   const existing = await db
-    .select({ id: categories.id })
+    .select({ name: categories.name })
     .from(categories)
     .where(eq(categories.userId, userId))
-    .limit(1);
-  
-  if (existing.length > 0) return; // Already has categories
-  
+  const existingNames = new Set(existing.map((category) => category.name));
+  const missingCategories = DEFAULT_CATEGORIES.filter((category) => !existingNames.has(category.name));
+
+  if (missingCategories.length === 0) return;
+
   await db.insert(categories).values(
-    DEFAULT_CATEGORIES.map((cat) => ({ userId, ...cat }))
+    missingCategories.map((cat) => ({ userId, ...cat }))
   );
 }
 

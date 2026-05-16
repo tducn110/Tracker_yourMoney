@@ -70,15 +70,16 @@ async function getDefaultWallet(userId: string) {
 
 async function ensureDefaultCategories(userId: string) {
   const existing = await db
-    .select({ id: categories.id })
+    .select({ name: categories.name })
     .from(categories)
     .where(eq(categories.userId, userId as any))
-    .limit(1);
+  const existingNames = new Set(existing.map((category) => category.name));
+  const missingCategories = DEFAULT_CATEGORIES.filter((category) => !existingNames.has(category.name));
 
-  if (existing.length > 0) return;
+  if (missingCategories.length === 0) return;
 
   await db.insert(categories).values(
-    DEFAULT_CATEGORIES.map((category) => ({ userId, ...category }))
+    missingCategories.map((category) => ({ userId, ...category }))
   );
 }
 

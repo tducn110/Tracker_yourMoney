@@ -91,23 +91,9 @@ function getDefaultDates(period: BudgetPeriod): { start: string; end: string } {
 export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData }: BudgetFormModalProps) {
   const isEditing = !!initialData;
   const { data: categories = [], isLoading: categoriesLoading } = useCategories();
-  const apiExpenseCategories = categories.filter((c: Category) => c.type === 'expense');
-
-  // Fallback mock categories khi backend chưa chạy / chưa có data
-  const MOCK_EXPENSE_CATEGORIES: Category[] = [
-    { id: 101, name: 'Ăn uống', icon: '🍜', color: '#F59E0B', type: 'expense' },
-    { id: 102, name: 'Đồ uống', icon: '🧃', color: '#3B82F6', type: 'expense' },
-    { id: 103, name: 'Di chuyển', icon: '🚗', color: '#EAB308', type: 'expense' },
-    { id: 104, name: 'Mua sắm', icon: '🛍️', color: '#EC4899', type: 'expense' },
-    { id: 105, name: 'Sức khỏe', icon: '💊', color: '#10B981', type: 'expense' },
-    { id: 106, name: 'Giải trí', icon: '🎬', color: '#8B5CF6', type: 'expense' },
-    { id: 107, name: 'Hóa đơn', icon: '📄', color: '#6B7280', type: 'expense' },
-    { id: 108, name: 'Nhà cửa', icon: '🏠', color: '#EF4444', type: 'expense' },
-    { id: 109, name: 'Giáo dục', icon: '📚', color: '#6366F1', type: 'expense' },
-    { id: 110, name: 'Tiện ích', icon: '⚡', color: '#F97316', type: 'expense' },
-    { id: 111, name: 'Khác', icon: '💳', color: '#14B8A6', type: 'expense' },
-  ];
-  const EXPENSE_CATEGORIES = apiExpenseCategories.length > 0 ? apiExpenseCategories : MOCK_EXPENSE_CATEGORIES;
+  const EXPENSE_CATEGORIES = categories.filter(
+    (c: Category) => c.type === 'expense' && c.name !== 'Tiết Kiệm',
+  );
 
   const [name, setName] = useState('');
   const [limitInput, setLimitInput] = useState('');
