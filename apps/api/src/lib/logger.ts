@@ -57,6 +57,12 @@ export function logError(
   const isOperational = isOperationalError(err);
   const logLevel = isOperational ? "warn" : "error";
   const errObj = err instanceof Error ? err : new Error(String(err));
+  const cause = errObj.cause instanceof Error
+    ? {
+        message: errObj.cause.message,
+        name: errObj.cause.name,
+      }
+    : undefined;
 
   logger[logLevel]({
     event: isOperational ? "OPERATIONAL_ERROR" : "PROGRAMMER_ERROR",
@@ -68,6 +74,7 @@ export function logError(
       // Only include stack trace for programmer errors
       stack: isOperational ? undefined : errObj.stack,
       name: errObj.name,
+      cause,
     },
   });
 }

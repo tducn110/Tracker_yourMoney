@@ -13,7 +13,8 @@ import type {
   LoginCredentials,
   RegisterData,
   AuthResponse,
-  Wallet
+  Wallet,
+  OnboardingStatus,
 } from './types';
 
 /**
@@ -37,8 +38,19 @@ export const authAPI = {
 
 export const userAPI = {
   settings: () => apiClient.get('/api/v1/user/settings') as unknown as Promise<any>,
+  updateProfile: (data: { fullName?: string; avatarText?: string }) =>
+    apiClient.put<User>('/api/v1/user/profile', data) as unknown as Promise<User>,
   updateSettings: (data: Record<string, unknown>) =>
     apiClient.put('/api/v1/user/settings', data) as unknown as Promise<any>,
+  onboardingStatus: () =>
+    apiClient.get<OnboardingStatus>('/api/v1/user/onboarding/status') as unknown as Promise<OnboardingStatus>,
+  completeOnboarding: (data: { seedSamplePack: boolean }) =>
+    (
+      apiClient.post<{ success: boolean; hasOnboarded: boolean; samplePackSeeded: boolean }>(
+        '/api/v1/user/onboarding/complete',
+        data,
+      ) as unknown as Promise<{ success: boolean; hasOnboarded: boolean; samplePackSeeded: boolean }>
+    ),
 };
 
 export const budgetAPI = {

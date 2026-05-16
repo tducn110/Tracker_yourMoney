@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node ../../node_modules/next/dist/bin/next dev -p 3000",
+    "dev": "node ../../node_modules/next/dist/bin/next dev --turbo",
     "build": "node ../../node_modules/next/dist/bin/next build",
     "start": "node ../../node_modules/next/dist/bin/next start",
     "lint": "eslint .",
@@ -15,7 +15,6 @@
     "@emotion/styled": "^11.14.1",
     "@finance/api": "workspace:*",
     "@finance/api-client": "workspace:*",
-    "@finance/db": "workspace:*",
     "@finance/shared-schemas": "workspace:*",
     "@hono/zod-validator": "^0.7.6",
     "@hookform/resolvers": "^5.2.2",

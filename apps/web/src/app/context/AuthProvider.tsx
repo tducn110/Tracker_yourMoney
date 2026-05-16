@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { 
   onAuthStateChanged, 
   signInWithPopup, 
@@ -51,10 +51,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
           if (response.ok) {
             const data = await response.json();
-            setUser({
-              ...data.data,
-              hasOnboarded: data.data.hasOnboarded ?? false,
-            });
+            setUser(data.data);
+          } else if (response.status === 401) {
+            // Unauthenticated state is expected during app startup or after logout.
+            setUser(null);
           } else {
             // Token expired or invalid at backend
             let errorMsg = "";
@@ -109,13 +109,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         const errorMessage = errorData?.error?.message || `Lỗi kết nối backend (${response.status})`;
+        const internalMessage = errorData?.error?.details?.internalMessage;
+        if (internalMessage) {
+          console.error("[Auth] Backend error details:", internalMessage);
+        }
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
       setUser(data.data.user);
       toast.success("Đăng nhập thành công");
-      router.push("/");
+      router.push(data.data.user.hasOnboarded ? "/" : "/onboarding");
     } catch (error: any) {
       console.error("Social login error:", error);
       toast.error(error.message || "Đăng nhập thất bại");
@@ -128,23 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loginWithGoogle = async () => {
-    const demoUser = {
-      id: "1",
-      email: "demouser@gmail.com",
-      fullName: "Demo User",
-      username: "demouser",
-      avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=demouser",
-      hasOnboarded: false,
-    };
-    setUser(demoUser);
-    toast.success("Đăng nhập thành công!");
-    router.push("/onboarding");
-  };
-
-  const markOnboarded = useCallback(() => {
-    setUser((prev) => (prev ? { ...prev, hasOnboarded: true } : prev));
-  }, []);
+  const loginWithGoogle = () => loginWithSocial(googleProvider);
 
   const logout = async () => {
     try {
@@ -157,6 +145,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Logout error:", error);
       toast.error("Lỗi khi đăng xuất");
     }
+  };
+
+  const markOnboarded = () => {
+    setUser((currentUser) => currentUser ? { ...currentUser, hasOnboarded: true } : currentUser);
   };
 
   return (

@@ -37,17 +37,35 @@ const DEFAULT_CATEGORIES = [
   { name: "Khác", icon: "📦", color: "#6B7280", type: "expense" as const, sortOrder: 99 },
 ];
 
+const authUserSelect = {
+  id: users.id,
+  email: users.email,
+  username: users.username,
+  fullName: users.fullName,
+  avatarUrl: users.avatarUrl,
+  avatarText: users.avatarText,
+  isActive: users.isActive,
+  emailVerified: users.emailVerified,
+  hasOnboarded: users.hasOnboarded,
+  onboardingCompletedAt: users.onboardingCompletedAt,
+  lastLoginAt: users.lastLoginAt,
+  deletedAt: users.deletedAt,
+  createdAt: users.createdAt,
+  updatedAt: users.updatedAt,
+};
+
 async function seedDefaultCategories(userId: string) {
   const existing = await db
-    .select({ id: categories.id })
+    .select({ name: categories.name })
     .from(categories)
     .where(eq(categories.userId, userId))
-    .limit(1);
-  
-  if (existing.length > 0) return; // Already has categories
-  
+  const existingNames = new Set(existing.map((category) => category.name));
+  const missingCategories = DEFAULT_CATEGORIES.filter((category) => !existingNames.has(category.name));
+
+  if (missingCategories.length === 0) return;
+
   await db.insert(categories).values(
-    DEFAULT_CATEGORIES.map((cat) => ({ userId, ...cat }))
+    missingCategories.map((cat) => ({ userId, ...cat }))
   );
 }
 
@@ -69,42 +87,83 @@ export const authRoutes = new Hono()
         return err(c, 400, "INVALID_TOKEN", "Token không chứa email");
       }
 
-      // 2. Sync user với database
+      // 2. Sync user với database (with retry for race conditions)
       step = "sync_user_db";
       logger.info({ event: "DB_SYNC_START", uid });
       let user = await db
-        .select()
+        .select(authUserSelect)
         .from(users)
         .where(eq(users.firebaseUid, uid))
         .limit(1)
         .then((rows) => rows[0]);
-      logger.info({ event: "DB_SYNC_FOUND", found: !!user });
+      logger.info({ event: "DB_SYNC_FOUND_BY_UID", found: !!user });
 
       if (!user) {
-        // Thử tìm bằng email
+        // Thử tìm bằng email (có thể user đã tạo trước đó với password)
         user = await db
-          .select()
+          .select(authUserSelect)
           .from(users)
           .where(eq(users.email, email))
           .limit(1)
           .then((rows) => rows[0]);
+        logger.info({ event: "DB_SYNC_FOUND_BY_EMAIL", found: !!user });
 
         if (user) {
           // Link existing account with Firebase UID
           await db.update(users).set({ firebaseUid: uid }).where(eq(users.id, user.id));
         } else {
-          // Create new account
-          const username = email.split("@")[0] + Math.floor(Math.random() * 1000);
-          const [createdUser] = await db.insert(users).values({
-            firebaseUid: uid,
-            email,
-            username,
-            fullName: name || email.split("@")[0],
-            avatarUrl: picture || null,
-            emailVerified: true,
-          }).returning();
+          // Create new account — with retry for race conditions
+          const maxRetries = 3;
+          let created = false;
+          for (let attempt = 0; attempt < maxRetries && !created; attempt++) {
+            try {
+              const username = email.split("@")[0] + Math.floor(Math.random() * 10000);
+              const [createdUser] = await db.insert(users).values({
+                firebaseUid: uid,
+                email,
+                username,
+                fullName: name || email.split("@")[0],
+                avatarUrl: picture || null,
+                emailVerified: true,
+              }).returning(authUserSelect);
 
-          user = createdUser;
+              user = createdUser;
+              created = true;
+            } catch (insertErr: any) {
+              // PostgreSQL unique violation code
+              if (insertErr.code === '23505' && attempt < maxRetries - 1) {
+                // Could be race condition → re-check if user was created by concurrent request
+                user = await db
+                  .select(authUserSelect)
+                  .from(users)
+                  .where(eq(users.firebaseUid, uid))
+                  .limit(1)
+                  .then((rows) => rows[0]);
+                if (user) {
+                  created = true;
+                  break; // User was created by concurrent request — use it
+                }
+                // Username collision → retry with new random suffix
+                logger.warn({
+                  event: "DB_INSERT_RETRY",
+                  attempt: attempt + 1,
+                  uid,
+                  email,
+                  error: insertErr.message,
+                });
+                // Small backoff before retry
+                if (attempt < maxRetries - 1) {
+                  await new Promise(r => setTimeout(r, 150 * (attempt + 1)));
+                }
+                continue;
+              }
+              // Re-throw non-retryable errors
+              throw insertErr;
+            }
+          }
+          if (!created) {
+            throw new Error(`Duplicate key violation khi tạo user sau ${maxRetries} lần thử`);
+          }
         }
       }
 
@@ -130,7 +189,7 @@ export const authRoutes = new Hono()
           fullName: user!.fullName,
           username: user!.username,
           avatarUrl: user!.avatarUrl,
-          hasOnboarded: user!.hasOnboarded ?? false,
+          hasOnboarded: user!.hasOnboarded,
         },
       });
     } catch (e: any) {

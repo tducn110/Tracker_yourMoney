@@ -40,7 +40,6 @@
     }
   },
   "dependencies": {
-    "@tailwindcss/oxide-linux-x64-gnu": "^4.3.0",
     "tsx": "^4.21.0"
   }
 }

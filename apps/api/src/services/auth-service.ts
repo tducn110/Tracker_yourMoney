@@ -23,7 +23,7 @@ export async function socialLogin(
   ipAddress?: string,
 ) {
   const payload = await verifyFirebaseIdToken(idToken);
-  const { email, name, picture, user_id: firebaseUid } = payload;
+  const { email, name, picture, uid: firebaseUid } = payload;
 
   if (!email) {
     throw Object.assign(new Error("Firebase token missing email"), { code: "INVALID_TOKEN" });

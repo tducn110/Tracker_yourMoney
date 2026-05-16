@@ -217,16 +217,19 @@ export function InlineChatQuickAdd() {
       // Send raw text to backend — AI re-parses and saves
       const userInput = msg.originalInput || msg.data!.note;
       const result = await transactionsAPI.quickAdd(userInput, { walletId });
+      const savedTransaction = result?.data ?? result?.transaction ?? result;
+      const savedNote = savedTransaction?.note || msg.data.note;
+      const savedAmount = Number(savedTransaction?.amount ?? msg.data.amount);
 
       const confirmMsg: Message = {
         id: `confirm-${Date.now()}`,
         role: 'bot',
-        content: `✅ Đã lưu: **${result.note || msg.data.note}** — **${formatVND(Number(result.amount))}** vào danh sách giao dịch!`,
+        content: `✅ Đã lưu: **${savedNote}** — **${formatVND(savedAmount)}** vào danh sách giao dịch!`,
         timestamp: new Date(),
         confirmed: true,
       };
       setMessages(prev => [...prev, confirmMsg]);
-      toast.success(`Đã ghi nhận: ${result.note || msg.data.note}`, {
+      toast.success(`Đã ghi nhận: ${savedNote}`, {
         icon: <Sparkles className="text-blue-500" />,
       });
 
@@ -287,7 +290,7 @@ export function InlineChatQuickAdd() {
         </div>
         <div className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-white/10 rounded-full">
           <Sparkles size={12} className="text-yellow-300" />
-          <span className="text-[11px] font-black text-white">AI Parse</span>
+          <span className="text-[11px] font-black text-white">Xem trước</span>
         </div>
       </div>
 

@@ -8,10 +8,39 @@ export interface User {
   email: string;
   fullName: string;
   avatarUrl?: string;
-  monthlyBudget: string;
-  emergencyBuffer: string;
-  incomeDate: number;
-  currency: string;
+  avatarText?: string | null;
+  isActive?: boolean;
+  emailVerified?: boolean;
+  hasOnboarded?: boolean;
+  monthlyBudget?: string;
+  emergencyBuffer?: string;
+  incomeDate?: number;
+  currency?: string;
+}
+
+export interface OnboardingStatus {
+  hasOnboarded: boolean;
+  canSkipToApp: boolean;
+  profile: {
+    id: string;
+    email: string;
+    fullName: string;
+    username: string;
+    avatarUrl?: string | null;
+  };
+  walletSummary: {
+    id: string;
+    name: string;
+    type: Wallet['type'];
+    balance: string;
+    isDefault: boolean;
+  } | null;
+  settingsSummary: {
+    monthlyBudget: string;
+    emergencyBuffer: string;
+    incomeDate: number;
+    currency: string;
+  };
 }
 
 export interface Transaction {
@@ -166,5 +195,4 @@ export type DeepCamelCase<T> = T extends Date | File | Blob | RegExp
   : T extends object
   ? { [K in keyof T as CamelCase<string & K>]: DeepCamelCase<T[K]> }
   : T;
-
 
