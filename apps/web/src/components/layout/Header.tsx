@@ -42,6 +42,7 @@ function IconButton({
     <button
       onClick={onClick}
       title={title}
+      aria-label={title}
       className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-blue-50 text-gray-500 hover:text-blue-600 flex items-center justify-center transition-all active:scale-95 shrink-0"
     >
       {children}
@@ -59,7 +60,7 @@ function HomeGreeting() {
 
   return (
     <div>
-      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+      <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">
         {greeting} 👋
       </p>
       <h1 className="text-[17px] font-black text-gray-900 leading-tight">
@@ -85,6 +86,7 @@ function NotificationBell() {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
+        aria-label="Thông báo"
         className="relative w-9 h-9 rounded-xl bg-gray-100 hover:bg-blue-50 text-gray-500 hover:text-blue-600 flex items-center justify-center transition-all active:scale-95 shrink-0"
       >
         <Bell size={17} />
@@ -194,7 +196,7 @@ export function Header({ onQuickAddClick }: HeaderProps) {
           </button>
 
           {/* Avatar placeholder */}
-          <button className="w-9 h-9 rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[11px] font-black shadow-sm shrink-0 hover:scale-105 active:scale-95 transition-all overflow-hidden">
+          <button aria-label={user?.fullName ?? 'Tài khoản'} className="w-9 h-9 rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[11px] font-black shadow-sm shrink-0 hover:scale-105 active:scale-95 transition-all overflow-hidden">
             {user?.avatarUrl ? (
               <img src={user.avatarUrl} alt={user.fullName ?? ''} className="w-full h-full object-cover" />
             ) : (

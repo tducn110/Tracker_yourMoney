@@ -83,7 +83,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       toast.success('Đã thêm ví mới');
       return newWallet;
     } catch (error) {
-      console.error('Error adding wallet:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error adding wallet:', error);
       toast.error('Không thể thêm ví mới');
       throw error;
     }
@@ -96,7 +96,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
       toast.success('Đã cập nhật ví');
     } catch (error) {
-      console.error('Error updating wallet:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error updating wallet:', error);
       toast.error('Không thể cập nhật ví');
       throw error;
     }
@@ -109,7 +109,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
       toast.success('Đã xóa ví');
     } catch (error) {
-      console.error('Error deleting wallet:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error deleting wallet:', error);
       toast.error('Không thể xóa ví');
       throw error;
     }
@@ -124,7 +124,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
       toast.success('Đã đặt làm ví mặc định');
     } catch (error) {
-      console.error('Error setting default wallet:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error setting default wallet:', error);
       toast.error('Không thể đặt ví mặc định');
       throw error;
     }

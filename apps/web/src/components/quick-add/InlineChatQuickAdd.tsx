@@ -285,7 +285,7 @@ export function InlineChatQuickAdd() {
           <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-blue-600" />
         </div>
         <div>
-          <h3 className="text-[15px] font-black text-white">Finny AI</h3>
+          <h2 className="text-[15px] font-black text-white">Finny AI</h2>
           <p className="text-[11px] font-bold text-blue-200">OpenRouter AI • Online</p>
         </div>
         <div className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-white/10 rounded-full">
