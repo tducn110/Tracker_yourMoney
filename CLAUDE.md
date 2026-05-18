@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **Tracker_yourMoney** (3660 symbols, 5963 relationships, 115 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **finance-for-me-local** (3065 symbols, 4918 relationships, 82 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -24,10 +24,10 @@ This project is indexed by GitNexus as **Tracker_yourMoney** (3660 symbols, 5963
 
 | Resource | Use for |
 |----------|---------|
-| `gitnexus://repo/Tracker_yourMoney/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/Tracker_yourMoney/clusters` | All functional areas |
-| `gitnexus://repo/Tracker_yourMoney/processes` | All execution flows |
-| `gitnexus://repo/Tracker_yourMoney/process/{name}` | Step-by-step execution trace |
+| `gitnexus://repo/finance-for-me-local/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/finance-for-me-local/clusters` | All functional areas |
+| `gitnexus://repo/finance-for-me-local/processes` | All execution flows |
+| `gitnexus://repo/finance-for-me-local/process/{name}` | Step-by-step execution trace |
 
 ## CLI
 

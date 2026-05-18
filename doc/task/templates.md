@@ -1,117 +1,134 @@
-````markdown
+<!-- Verified against current repo files and GitHub metadata on 18/05/2026 -->
+
 # Finance Tracker V3 — Final Project Report
 
 ## Team Information
 
-|                       |                                               |
-| --------------------- | --------------------------------------------- |
-| **Team Name**         | Not specified in repository                    |
-| **Project Name**      | Finance Tracker V3                            |
+| Field | Value |
+| --- | --- |
+| **Team Name** | Antigravity |
+| **Project Name** | Finance Tracker V3 — Personal Finance Management Application |
 | **GitHub Repository** | https://github.com/tducn110/Tracker_yourMoney |
-| **Demo Deploy**       | https://finance-for-me-local.vercel.app       |
-| **Video Demo**        | Not specified in repository                   |
-| **Submission Date**   | 13/05/2026                                    |
+| **Primary Deploy Evidence** | Latest successful Vercel Production deployment on 16/05/2026: `https://finance-for-me-local-n2q6yvmiw-ntduc011006dn-3691s-projects.vercel.app` |
+| **Secondary Deploy Evidence** | Latest successful GitHub Pages deployment on 16/05/2026: `https://tducn110.github.io/Tracker_yourMoney/` |
+| **Video Demo** | https://www.youtube.com/watch?v=zAD1gF02NrU |
+| **Submission Date** | 15/05/2026 |
 
 ### Team Members
 
-| Full Name      | Student ID       | Role                                                  |
-| -------------- | ---------------- | ----------------------------------------------------- |
-| Nguyen Tam Duc | Not provided | Team lead / Full-stack developer / architecture / deployment |
-| Tran Vo Ba Vuong | Not provided | Frontend / UI refactor / auth flow / route integration |
-| Chau Tuan Kiet | Not provided | Backend / financial logic / database integrity / worker automation |
+The repository history clearly shows three primary student contributors plus a small amount of Claude-authored support commits. Student IDs below come from the team-provided GitHub report content and should still match the final submission roster.
 
-Note: Full name, student ID, and video demo information are not available in the repository history; please confirm before official submission.
+| Member | Git Evidence | Verified Contribution Signal | Student ID |
+| --- | --- | --- | --- |
+| Nguyen Tam Duc | `tducn`, `tdu._cn`, `tducn110` | Project lead, monorepo setup, backend/API architecture, auth, deployment, final integration | 24020005 |
+| Tran Vo Ba Vuong | `ViccVuongVicc`, `tvbavuong@gmail.com` | Large share of merged UI/refactor work and recent accessibility/PageSpeed work | 24020008 |
+| Chau Tuan Kiet | `kiet00394-collab`, `Chau Tuan Kiet` | Backend and onboarding-related feature work, automation-related merges | 24020010 |
 
 ---
 
 ## Project Overview and Technologies Used
 
-**Application Description:**
+### Application Description
 
-Finance Tracker V3 is a personal finance management application following a Budget-First approach. It helps users create budgets by category, record transactions, manage wallets, recurring bills, and savings goals. The application focuses on real-time spending status display, reduces manual data entry with Quick Add/AI parsing, and provides an analytics dashboard to support better spending decisions.
+Finance Tracker V3 is a budget-first personal finance application built as a pnpm/Turborepo monorepo. The current codebase supports user onboarding, wallet management, transactions, budgets, recurring bills, savings goals, analytics, notifications, and authenticated settings flows. The architecture separates a Next.js App Router frontend (`apps/web`) from a Hono API package (`apps/api`) while sharing database schema and validation logic through workspace packages.
 
-**Tech Stack:**
+### Verified Tech Stack
 
-| Layer           | Technology                                                                                                              |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Frontend        | Next.js 16.1.4 App Router, React 19.2.5, TypeScript 6.0.3, Tailwind CSS 4.2.4, Radix UI, Lucide React, Motion, Recharts |
-| Backend         | Hono 4.12.14, Zod 4.3.6, Firebase Auth/Admin, Jose JWT, Pino logging, Sentry Node (optional)                            |
-| Database        | PostgreSQL-compatible database via `drizzle-orm/pg-core`, `pg`, Drizzle Kit; schema and repositories in `packages/db`   |
-| Shared Packages | `@finance/api-client`, `@finance/shared-schemas`, `@finance/db`, `@finance/cache`                                       |
-| Deploy          | Vercel, Hono embedded in Next.js catch-all API route `apps/web/src/app/api/[[...route]]/route.ts`                       |
-| Tooling         | Turborepo 2.9.6, pnpm 9.12.3, ESLint 9, GitNexus code intelligence                                                      |
+The current codebase is the source of truth for this section. Some older docs still mention Next.js 15 and TiDB/MySQL, but the active package and schema files now show the stack below.
 
-**Key Features:**
+| Layer | Verified Technology |
+| --- | --- |
+| Frontend | Next.js `16.1.4`, React `19.2.5`, TypeScript `6.0.3`, Tailwind CSS `4.2.4`, TanStack Query, Radix UI, shadcn/ui-style component set under `apps/web/src/components/ui`, Motion, Recharts |
+| Backend | Hono `4.12.14`, Zod `4.3.6`, Firebase Auth/Admin, `jose`, `pino`, optional `@sentry/node` |
+| Database | Supabase PostgreSQL per `ARCHITECTURE.md`, implemented in code as PostgreSQL dialect via Drizzle ORM `0.45.2`, `pg-core`, `drizzle-kit` |
+| Monorepo Tooling | pnpm `9.12.3`, Turborepo `2.9.6`, ESLint `9`, GitNexus index for code intelligence |
+| Shared Packages | `@finance/api`, `@finance/api-client`, `@finance/db`, `@finance/shared-schemas`, `@finance/cache` |
+| Deployment | Vercel serverless deployment for the web app and embedded Hono API, plus GitHub Pages deployment records in repo history |
 
-- Dashboard overview with Quick Add, income/expense, budgets, goals, recent transactions, and upcoming bills.
-- Budget-First: create, edit, delete, and track budgets by category via `BudgetGrid`, `BudgetOverviewCard`, `BudgetFormModal`.
-- Transaction management: list, search, filter by type, sort, CSV import/export, optimistic UI.
-- Wallet/account management: multiple wallet types, balance, default wallet, transfer between wallets, wallet audit logs.
-- Recurring bill management and bill payment, automatically creating related ledger transactions.
-- Savings goal management and contributions toward goals.
-- Analytics: spending by category charts and 6-month income/expense trends.
-- Auth: Firebase Google login + API session/JWT, route guard on backend.
-- Observability: pino structured logging, correlation id, rate limiting, optional Sentry via `SENTRY_DSN`.
+### Monorepo Structure
 
-**Screenshots to attach before submission:**
+| Path | Purpose |
+| --- | --- |
+| `apps/web` | Next.js App Router frontend |
+| `apps/api` | Hono API, middleware, route modules, logging, auth, instrumentation |
+| `apps/worker` | Background/worker package present in workspace |
+| `packages/db` | Drizzle schema, migrations, repositories, DB scripts |
+| `packages/shared-schemas` | Zod schemas shared across layers |
+| `packages/api-client` | Typed frontend API client |
+| `packages/cache` | Shared cache utilities |
 
-- Dashboard: `/`
-- Transactions: `/transactions`
-- Budgets: `/budgets` and `/budgets/[id]`
-- Wallets: `/wallets`
-- Goals: `/goals`
-- Bills: `/bills`
-- Analytics: `/analytics`
-- Settings: `/settings`
+### Key Features Verified in the Current Codebase
+
+- Authenticated login flow with Firebase-backed auth and `/api/auth/*` session endpoints.
+- Onboarding wizard at `/onboarding`.
+- Dashboard at `/` with quick-add entry points, financial overview, and linked data widgets.
+- Budget management, including budget detail pages and category-linked allocations.
+- Transactions list with filtering, sorting, pagination-oriented API usage, CSV import, and quick-add flows.
+- Multi-wallet management, cash wallet shortcuts, transfers, and wallet audit logging support.
+- Recurring bills with payment endpoint support.
+- Savings goals with contribution flow.
+- Analytics for category spending and monthly trend.
+- Notifications and user settings endpoints.
+- Optional server-side Sentry instrumentation and structured pino logging.
+
+### Submission Assets Verified
+
+- Final screenshots for key pages are stored under `doc/screenshots/` and referenced in the root `README.md`.
+- Responsive proof screenshots are stored under `doc/screenshots/`.
+- Video demo link is listed in the root `README.md`: <https://www.youtube.com/watch?v=zAD1gF02NrU>.
+- `ARCHITECTURE.md` and `doc/wiki/ARCHITECTURE.md` do exist in the current repository and can be cited as supporting design documentation.
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px">
+  <div><img src="../screenshots/Screenshot 2026-05-17 at 14.47.07.png" alt="Dashboard screenshot" style="width:100%;border-radius:8px" /><p align="center">Dashboard</p></div>
+  <div><img src="../screenshots/Screenshot 2026-05-17 at 14.49.23.png" alt="Transactions screenshot" style="width:100%;border-radius:8px" /><p align="center">Transactions</p></div>
+  <div><img src="../screenshots/Screenshot 2026-05-17 at 14.49.35.png" alt="Wallets screenshot" style="width:100%;border-radius:8px" /><p align="center">Wallets</p></div>
+  <div><img src="../screenshots/Screenshot 2026-05-17 at 14.49.45.png" alt="Budgets screenshot" style="width:100%;border-radius:8px" /><p align="center">Budgets</p></div>
+</div>
 
 ---
 
 ## Setup and Run Instructions
 
-**System Requirements:**
+### System Requirements
 
-| Tool       | Version                                             |
-| ---------- | --------------------------------------------------- |
-| Node.js    | >= 18, recommended Node 20+                         |
-| pnpm       | 9.12.3                                              |
-| Database   | PostgreSQL-compatible database via `DATABASE_URL`   |
-| Firebase   | Firebase project for client auth and Firebase Admin |
-| Vercel CLI | Optional, used for deployment                       |
+| Tool | Requirement |
+| --- | --- |
+| Node.js | `>=18`, with Node 20+ recommended by project docs |
+| pnpm | `9.12.3` |
+| Database | PostgreSQL database via `DATABASE_URL`; architecture docs identify the target service as Supabase PostgreSQL |
+| Firebase | Client and Admin credentials for auth flows |
+| Optional | Vercel CLI for manual deployment workflows |
 
-**Setup Steps:**
+### Verified Local Commands
 
 ```bash
-# 1. Clone repository
 git clone https://github.com/tducn110/Tracker_yourMoney.git
 cd Tracker_yourMoney
-
-# 2. Install dependencies
 pnpm install
 
-# 3. Configure environment
-cp .env.example .env
-# Fill in DATABASE_URL, JWT_SECRET, Firebase client/admin keys, AI_API_KEY if using AI Quick Add.
+# Configure environment
+cp .env.example .env.local
 
-# 4. Generate / update database schema in dev environment
+# Database workflow from root package.json
 pnpm db:generate
 pnpm db:push
 
-# 5. Run application locally
+# Start local development
 pnpm dev
 
-# 6. Quality check commands
+# Quality checks
 pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
 ```
-````
 
-**Configuration Notes:**
+### Configuration Notes
 
-- Local dev: Next.js web and Hono API run via Turborepo; API backend default port `3001`.
-- Production/Vercel: `apps/web/src/app/api/[[...route]]/route.ts` delegates all `/api/*` requests to Hono app using `hono/vercel`, runtime `nodejs`.
-- `.env.example` still contains old label "TiDB Serverless", but current code uses `drizzle.config.ts` with `dialect: 'postgresql'` and `pg-core` schema.
+- The root workspace scripts in `package.json` are more up to date than some older README/doc fragments.
+- In local development, the Next.js frontend runs separately from the Hono server.
+- In production on Vercel, `apps/web/src/app/api/[[...route]]/route.ts` embeds the Hono app directly into the Next.js deployment as a Node.js serverless route.
+- The active Drizzle schema uses PostgreSQL types from `drizzle-orm/pg-core`.
 
 ---
 
@@ -119,78 +136,65 @@ pnpm build
 
 ### (a) Role Assignment
 
-| Member         | Role                | Responsibilities                                                                                                     |
-| -------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Nguyen Tam Duc | Leader / Full-stack | Planning, Next.js frontend, Hono backend, Drizzle database, auth, API client, Vercel deploy, hardening and bug fixes |
+The role split below is based on contributor identities, merged PR history, and commit messages. It should be treated as evidence-backed project attribution, not a substitute for each member’s official self-report.
 
-If this is a multi-member group submission, please add full names, student IDs, and task assignments for each member.
+| Member | Role Summary | Evidence |
+| --- | --- | --- |
+| Nguyen Tam Duc | Team lead, architecture, backend integration, auth, deployment, final integration | Git identities `tducn`, `tdu._cn`, repo owner `tducn110`, setup/deployment/auth-related PRs and commits |
+| Tran Vo Ba Vuong | Frontend refactor, UI implementation, accessibility/PageSpeed, merged feature branches | Git identity `ViccVuongVicc`, strong presence in merged PRs and commit totals |
+| Chau Tuan Kiet | Backend/onboarding support, feature implementation, automation-related work | Git identity `kiet00394-collab`, onboarding and feature branch activity |
 
 ### (b) Wireframe
 
-- **Tool Used:** No Figma/Stitch file found in local repo.
-- **Pages Designed/Built in Codebase:**
-  - [x] Login
-  - [x] Dashboard
-  - [x] Transactions
-  - [x] Budgets
-  - [x] Budget Detail
-  - [x] Wallets
-  - [x] Goals
-  - [x] Bills
-  - [x] Analytics
-  - [x] Settings
+- Tool used: Figma.
+- Design coverage listed in the root `README.md`: Dashboard, Transactions, Wallets, Budgets, Goals, Bills, Analytics, Settings, and Onboarding.
+- The implemented page set is also verified directly from the App Router structure.
 
-Evidence to add before submission: export wireframes from Figma/Stitch for main screens and add to repo, as the local GitHub currently lacks wireframe files.
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px">
+  <div><img src="../screenshots/Screenshot from 2026-05-17 21-28-54.png" alt="AI Quick Add design proof" style="width:100%;border-radius:8px" /><p align="center">AI Quick Add</p></div>
+  <div><img src="../screenshots/Screenshot from 2026-05-17 21-29-59.png" alt="Onboarding design proof" style="width:100%;border-radius:8px" /><p align="center">Onboarding Wizard</p></div>
+</div>
 
 ### (c) Project Plan
 
-**Milestones synthesized from git history, PR titles, contributors, and repo documents:**
+The table below reflects the team’s planned milestone schedule. GitHub timestamps are still useful as implementation evidence, but they should not replace the original planned timeline because many tasks were updated, fixed, and merged multiple times after the initial implementation window.
 
-| Milestone                                                          | Deadline / Timeline | Status                                                                                    |
-| ------------------------------------------------------------------ | ------------------- | ----------------------------------------------------------------------------------------- |
-| Requirements analysis and gap analysis                             | 20/04/2026          | Partial in `doc/ops/checklists/Project Requirements & Implementation Plan.md` |
-| Initial framework structure                                         | 22/04/2026          | Started, commit `2dd223e` (`tducn`) |
-| Auth migration, budget-first core, wallet and Quick Add foundation  | 25/04/2026          | GitHub PRs #1-#10: `feat(auth)`, `feat(budget)`, `feat(wallet)`, `feat(quick-add)`, `feat(ui)` |
-| Documentation reorganization and schema alignment                   | 26/04/2026          | GitHub PR #12, local docs cleanup and schema alignment |
-| UI refactor and container-presentational cleanup                    | 27/04/2026          | GitHub PR #13, #16, #18 |
-| Phase 1 + Phase 2 release to main                                   | 28/04/2026          | GitHub PR #27, #28, #29, #30, #31, #33 |
-| Dashboard localization refactor and API wiring                      | 02/05/2026          | GitHub PR #39, #40, #41, #42, #43, #46, #47, #48, #49, #50, #51, #52, #53, #54, #58, #59, #62, #63, #64 |
-| Worker, recurring bills, notifications, settings UI                 | 03/05/2026          | GitHub PR #74, #76, #78, #79, #80, #81, #82, #83, #84, #85, #86, #87, #88, #89, #90, #91, #92 |
-| Financial integrity hardening, wallet OCC, audit trails             | 04/05/2026          | GitHub PR #93, #94 |
-| API hardening: rate limit, CORS, error response, pino cleanup       | 06/05/2026          | GitHub PR #96-#116, issue-driven hardening across auth, logging, CORS, and error UX |
-| Vercel API routing, auth fix, Hono embed in Next.js                 | 09/05/2026          | GitHub PR #139, #144, #145, #146 |
-| Category seed and budget form fix                                   | 09/05/2026          | GitHub PR #147, #148 |
-| AI Quick Add, dashboard/S2S refactor, wallet analytics              | 11/05/2026          | GitHub PR #149, #150, #151, #152, #153, #154, #155 |
-| Type error fix and lockfile sync                                    | 11/05/2026          | GitHub PR #156, #157 |
-| Final report and submission assets                                  | 13/05/2026          | Report written; remaining assets still need screenshots, video, wireframes, self-reports |
+| Milestone | Deadline | Status |
+| --- | --- | --- |
+| Complete wireframe & Figma design | 10/04/2026 | Planned milestone from team report |
+| Setup GitHub, monorepo, and database schema | 15/04/2026 | Planned milestone from team report |
+| Complete authentication (Firebase + JWT) | 18/04/2026 | Planned milestone from team report |
+| Basic UI (Dashboard, Transactions, Wallets) | 22/04/2026 | Planned milestone from team report |
+| Database integration & full CRUD API | 28/04/2026 | Planned milestone from team report |
+| AI Quick Add, Analytics, Bills, Goals | 05/05/2026 | Planned milestone from team report |
+| Onboarding Wizard, Optimization & Peer Review | 12/05/2026 | Planned milestone from team report |
+| Submission | 15/05/2026 | Planned milestone from team report |
 
 ### (d) GitHub Repository
 
-- **Repository link:** https://github.com/tducn110/Tracker_yourMoney
-- **Current local branch:** `main`
-- **Remote:** `origin https://github.com/tducn110/Tracker_yourMoney.git`
-- **GitNexus index:** `Tracker_yourMoney`, 308 files, 3660 symbols, 5963 relationships, 115 execution flows.
-- **Last indexed commit:** `46ada24027a468906f7179176aef38ca31ec6403`
+- Repository: `https://github.com/tducn110/Tracker_yourMoney`
+- Default working branch in local repo: `main`
+- Branch strategy visible in history: feature branches named `feature/issue-*`, targeted fix branches named `fix/*`, plus merge back into `main`
+- GitNexus context from `AGENTS.md`: repo indexed as `Tracker_yourMoney`
 
 ### (e) GitHub Workflow
 
-The team uses the GitHub repository with commit history following Conventional Commits, grouping changes by `feat`, `fix`, `chore`, `docs`, `refactor`. Commit history includes many merge commits from Pull Requests, e.g., PR #157, #156, #154, #152, #150, #144, #139, #129-#136. Major fixes are tied to issue/PR numbers in commit messages, making change tracking and review easier.
+- The project uses PR-based integration rather than long-lived direct commits to `main` for most major work.
+- Branch names follow a consistent pattern such as `feature/issue-149-ai-quick-add`, `feature/issue-151-dashboard-refactor`, `fix/102-detailed-error-ux`, and `fix/accessibility-page-speed`.
+- Commit and PR naming broadly follow Conventional Commit style with prefixes such as `feat`, `fix`, `docs`, `chore`, and `refactor`.
+- The visible contributor set in git history includes three primary student contributors and a small set of Claude support commits.
+- GitHub still has a non-trivial open backlog. The current open issues sample includes layout/navigation, dashboard, transactions, budgets, goals, bills, wallets, settings, categories/notifications, analytics, testing, AI, caching, and responsive polish issues. The latest `gh issue list --state open --limit 100` output returned 32 open issues, including `#165`, `#164`, `#128` to `#117`, `#75`, `#73` to `#69`, `#68` to `#65`, `#61`, `#60`, `#57`, `#56`, `#55`, `#49`, `#45`, and `#44`.
 
-Contributors visible in the GitHub history are `tducn110` / `tdu._cn`, `ViccVuongVicc`, `kiet00394-collab`, and `Claude`. The early foundation work is mostly associated with `tducn110` / `tdu._cn`, while later feature hardening and release work is spread across `ViccVuongVicc` and `kiet00394-collab`.
-
-**Example commit messages:**
+### (f) Representative Evidence
 
 ```text
-feat(api,web): implement AI Quick Add with Gemini integration (#150)
-feat(web): enhance wallet integration and analytics (#154)
-fix(vercel): fix auth and api deployment by embedding Hono as Next.js route (#144)
-fix(api): add success:false to 429 rate limit error response (#100)
-fix(web): parse JSON error responses and display detailed error messages (#102)
-chore: update pnpm-lock.yaml
-docs: update implementation plan and backlog tasks
+#168 [FIX] PageSpeed audit — a11y, contrast, heading hierarchy, console errors
+#159 feat: onboarding wizard 4 buoc - info, wallet, budget, transaction
+#150 feat(api,web): AI Quick Add & Gemini Integration
+#145 [FIX] Fix Vercel deployment: embed Hono API as Next.js catch-all route (#144)
+#116 fix: remove broken ignoreCommand and improve error UX (#102)
+#94  [FIX] Financial logic integrity and PostgreSQL synchronization (#93)
 ```
-
-Screenshots of commits/PRs should be added from GitHub UI before submission.
 
 ---
 
@@ -198,57 +202,54 @@ Screenshots of commits/PRs should be added from GitHub UI before submission.
 
 ### (a) Pages Built
 
-| Page          | URL / Route     | Description                                                                                               | Implemented By |
-| ------------- | --------------- | --------------------------------------------------------------------------------------------------------- | -------------- |
-| Login         | `/login`        | Sign in with Firebase/Google and create API session                                                       | Nguyen Tam Duc |
-| Dashboard     | `/`             | Quick Add, income/expense overview, wallets, featured budgets, goals, recent transactions, upcoming bills | Nguyen Tam Duc |
-| Transactions  | `/transactions` | Transaction history, search/filter/sort, import/export CSV, pagination/load more                          | Nguyen Tam Duc |
-| Budgets       | `/budgets`      | Create/edit/delete budgets, summary strip, active/finished budgets                                        | Nguyen Tam Duc |
-| Budget Detail | `/budgets/[id]` | Budget details and chart per budget                                                                       | Nguyen Tam Duc |
-| Wallets       | `/wallets`      | Manage multiple wallets, add/edit/delete, set default, transfer money                                     | Nguyen Tam Duc |
-| Goals         | `/goals`        | Manage savings goals and contribute to goals                                                              | Nguyen Tam Duc |
-| Bills         | `/bills`        | Manage recurring bills and pay bills                                                                      | Nguyen Tam Duc |
-| Analytics     | `/analytics`    | Spending by category charts and income/expense trends                                                     | Nguyen Tam Duc |
-| Settings      | `/settings`     | User and financial settings                                                                               | Nguyen Tam Duc |
-| Dev Guide     | `/dev-guide`    | Internal UI patterns documentation                                                                        | Nguyen Tam Duc |
-
-According to Vercel build log, these routes were built successfully: `/`, `/analytics`, `/bills`, `/budgets`, `/budgets/[id]`, `/dev-guide`, `/goals`, `/login`, `/settings`, `/transactions`, `/wallets`, and dynamic API route `/api/[[...route]]`.
+| Route | Purpose | Verification |
+| --- | --- | --- |
+| `/login` | Login page | `apps/web/src/app/(auth)/login/page.tsx` |
+| `/onboarding` | Multi-step onboarding flow | `apps/web/src/app/(auth)/onboarding/page.tsx` |
+| `/` | Dashboard | `apps/web/src/app/(dashboard)/page.tsx` |
+| `/transactions` | Transactions page | `apps/web/src/app/(dashboard)/transactions/page.tsx` |
+| `/budgets` | Budgets list | `apps/web/src/app/(dashboard)/budgets/page.tsx` |
+| `/budgets/[id]` | Budget detail | `apps/web/src/app/(dashboard)/budgets/[id]/page.tsx` |
+| `/wallets` | Wallet management | `apps/web/src/app/(dashboard)/wallets/page.tsx` |
+| `/goals` | Goals page | `apps/web/src/app/(dashboard)/goals/page.tsx` |
+| `/bills` | Bills page | `apps/web/src/app/(dashboard)/bills/page.tsx` |
+| `/analytics` | Analytics page | `apps/web/src/app/(dashboard)/analytics/page.tsx` |
+| `/settings` | Settings page | `apps/web/src/app/(dashboard)/settings/page.tsx` |
+| `/dev-guide` | Internal UI/dev guide page | `apps/web/src/app/(dashboard)/dev-guide/page.tsx` |
+| `/api/[[...route]]` | Catch-all API bridge | `apps/web/src/app/api/[[...route]]/route.ts` |
 
 ### (b) Tailwind CSS Usage
 
-The project uses Tailwind CSS v4.2.4 with `@tailwindcss/postcss`, component-first UI and utility classes directly in JSX/TSX. The interface follows 8px grid layout, responsive padding `p-4 md:p-6`, max width for dashboard, desktop/mobile grid, dark hero cards, and primary color `#4361ee`.
-
-**Typical utility classes:**
-
-```text
-p-4 md:p-6 pb-24 max-w-[1200px] mx-auto space-y-6
-grid grid-cols-1 lg:grid-cols-3 gap-4
-bg-linear-to-br from-blue-500 to-indigo-600
-rounded-xl border border-gray-100 shadow-sm
-animate-in fade-in slide-in-from-bottom-4 duration-500
-```
+- Tailwind CSS `4.2.4` is installed in `apps/web/package.json`.
+- The frontend also uses Radix UI, a shadcn/ui-style component layer under `apps/web/src/components/ui`, MUI packages, Motion, Sonner, and Recharts.
+- The root layout metadata currently identifies the app as `Finance Tracker V3` with Vietnamese description text.
+- The internal codebase shows a utility-class workflow rather than a separate CSS module-heavy approach.
 
 ### (c) Interactive Features
 
-| Feature                        | Description                                                                                                                  | File / Component                                                                                                                     | Implemented By |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
-| Quick Add / AI parsing         | Add transaction quickly by text, call `/api/v1/transactions/quick`, invalidate transactions, budget summary and wallet cache | `apps/web/src/components/quick-add/*`, `apps/api/src/routes/transactions.ts`, `apps/api/src/services/adapters/gemini-nlp-adapter.ts` | Nguyen Tam Duc |
-| Budget CRUD                    | Create/edit/delete budget, toast success/error, invalidates `['budgets']` and `['budgets','summary']`                        | `apps/web/src/app/(dashboard)/budgets/page.tsx`, `apps/web/src/_lib/hooks/use-budgets.ts`                                            | Nguyen Tam Duc |
-| Transaction search/filter/sort | Search, filter income/expense, sort newest/oldest/amount, group by date                                                      | `apps/web/src/app/(dashboard)/transactions/_components/TransactionsContainer.tsx`                                                    | Nguyen Tam Duc |
-| CSV import/export              | Export CSV UTF-8, import CSV via FormData and idempotency key                                                                | `TransactionsContainer.tsx`, `transactionsAPI.importCSV`                                                                             | Nguyen Tam Duc |
-| Wallet management              | Add/edit/delete wallet, select icon/color, set default, transfer money                                                       | `apps/web/src/app/(dashboard)/wallets/page.tsx`, `apps/web/src/components/wallet/*`                                                  | Nguyen Tam Duc |
-| Bills payment                  | Manage bills and pay bills via `/api/v1/bills/:id/pay`                                                                       | `apps/web/src/app/(dashboard)/bills/*`, `apps/api/src/routes/bills.ts`                                                               | Nguyen Tam Duc |
-| Goals contribution             | Contribute to goals, create related transaction                                                                              | `apps/web/src/app/(dashboard)/goals/*`, `apps/api/src/routes/goals.ts`                                                               | Nguyen Tam Duc |
-| Analytics charts               | Pie/bar/line charts from category spending and monthly trend                                                                 | `apps/web/src/app/(dashboard)/analytics/*`, `apps/api/src/routes/analytics.ts`                                                       | Nguyen Tam Duc |
-| Auth flow                      | Firebase Google provider, session auth, `/api/auth/me`, route guard                                                          | `apps/web/src/app/context/AuthProvider.tsx`, `apps/api/src/routes/auth.ts`                                                           | Nguyen Tam Duc |
+| Feature | Evidence in Code |
+| --- | --- |
+| Quick add inputs and chat-style variants | `apps/web/src/components/quick-add/*` |
+| Budget overview cards, grid, and modal CRUD UI | `apps/web/src/components/budgets/*` |
+| Transactions container with filter/sort/import flow | `apps/web/src/app/(dashboard)/transactions/_components/TransactionsContainer.tsx` |
+| Wallet cards, cash wallet widgets, and sync modal | `apps/web/src/components/wallet/*` |
+| Category manager | `apps/web/src/components/CategoryManager.tsx` |
+| Bills container/view | `apps/web/src/app/(dashboard)/bills/_components/*` |
+| Goals container/view | `apps/web/src/app/(dashboard)/goals/_components/*` |
+| Analytics container/view | `apps/web/src/app/(dashboard)/analytics/_components/*` |
+| Auth context/provider | `apps/web/src/app/context/AuthProvider.tsx` |
+| Onboarding wizard | `apps/web/src/components/onboarding/wizard.tsx` |
 
 ### (d) Multi-Device Interface
 
-- [x] Mobile (< 768px): Tailwind mobile-first, sidebar/layout with responsive spacing.
-- [x] Tablet (768px - 1024px): uses `md:*` classes for padding/grid.
-- [x] Desktop (> 1024px): dashboard uses `lg:grid-cols-3`, max width and multi-column layout.
+- Responsive intent is supported by the presence of mobile-first Tailwind usage and the existence of dedicated dashboard/layout pages.
+- Responsive proof screenshots are attached below for desktop, tablet, and mobile-sized layouts.
 
-Evidence to add: screenshots from Chrome DevTools Responsive mode for mobile/tablet/desktop.
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px">
+  <div><img src="../screenshots/Screenshot from 2026-05-17 21-11-49.png" alt="Desktop responsive screenshot" style="width:100%;border-radius:8px" /><p align="center">Desktop</p></div>
+  <div><img src="../screenshots/Screenshot from 2026-05-17 21-12-38.png" alt="Tablet responsive screenshot" style="width:100%;border-radius:8px" /><p align="center">Tablet</p></div>
+  <div><img src="../screenshots/Screenshot from 2026-05-17 21-13-37.png" alt="Mobile responsive screenshot" style="width:100%;border-radius:8px" /><p align="center">Mobile</p></div>
+</div>
 
 ---
 
@@ -256,94 +257,73 @@ Evidence to add: screenshots from Chrome DevTools Responsive mode for mobile/tab
 
 ### (a) Database Design
 
-- **Database system:** PostgreSQL-compatible database per current code (`drizzle.config.ts` dialect `postgresql`, schema using `drizzle-orm/pg-core`).
-- **ORM:** Drizzle ORM 0.45.2.
-- **Number of tables:** 14 main tables in current schema.
+The active schema is implemented in `packages/db/src/schema/*` and exported through `packages/db/src/schema/index.ts`. The current database model uses PostgreSQL-oriented Drizzle schema definitions, and `ARCHITECTURE.md` identifies the deployed database as Supabase PostgreSQL.
 
-**Table List:**
+**Verified table set: 14 tables**
 
-| Table               | Description                                          | Key Columns                                                                                           |
-| ------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `users`             | User account, Firebase/social login and profile info | `id`, `username`, `email`, `firebaseUid`, `fullName`, `isActive`, `deletedAt`                         |
-| `user_settings`     | User financial and notification settings             | `userId`, `monthlyBudget`, `currency`, `timezone`, `theme`                                            |
-| `refresh_tokens`    | Refresh token/session management                     | `id`, `userId`, `tokenHash`, `expiresAt`, `revokedAt`                                                 |
-| `categories`        | Income/expense categories, system and user-defined   | `id`, `userId`, `name`, `type`, `icon`, `color`                                                       |
-| `transactions`      | Core ledger table for income/expense/transfer        | `id`, `userId`, `walletId`, `categoryId`, `goalId`, `amount`, `type`, `displayDate`, `idempotencyKey` |
-| `wallets`           | User’s multiple wallets/accounts                     | `id`, `userId`, `name`, `type`, `balance`, `initialBalance`, `isDefault`                              |
-| `wallet_logs`       | Audit trail of wallet balance changes                | `id`, `walletId`, `userId`, `transactionId`, `balanceBefore`, `balanceAfter`, `difference`            |
-| `budgets`           | Budgets by time period                               | `id`, `userId`, `name`, `targetAmount`, `periodType`, `startDate`, `endDate`, `status`                |
-| `budget_categories` | Link budget with categories                          | `id`, `budgetId`, `categoryId`, `allocatedAmount`                                                     |
-| `goals`             | Savings goals                                        | `id`, `userId`, `name`, `targetAmount`, `currentSaved`, `deadline`, `status`                          |
-| `bills`             | Recurring bills/expenses                             | `id`, `userId`, `categoryId`, `name`, `amount`, `dueDay`, `frequency`, `autoPay`                      |
-| `bill_payments`     | Bill payment history                                 | `id`, `billId`, `userId`, `periodMonth`, `amountPaid`, `paidAt`, `idempotencyKey`                     |
-| `notifications`     | In-app notifications                                 | `id`, `userId`, `type`, `title`, `body`, `isRead`, `metadata`                                         |
-| `audit_logs`        | Log of important actions                             | `id`, `userId`, `action`, `entityType`, `entityId`, `metadata`                                        |
+| Table | Purpose |
+| --- | --- |
+| `users` | User accounts and onboarding/auth profile state |
+| `user_settings` | Financial preferences, locale, budget settings, notifications |
+| `refresh_tokens` | Session/refresh token persistence |
+| `categories` | Income and expense categories |
+| `wallets` | Multi-wallet financial accounts |
+| `wallet_logs` | Wallet balance audit trail |
+| `transactions` | Core financial ledger |
+| `bills` | Recurring bills |
+| `bill_payments` | Bill payment history |
+| `goals` | Savings goals |
+| `budgets` | Budget definitions |
+| `budget_categories` | Budget-to-category allocation mapping |
+| `notifications` | In-app notifications |
+| `audit_logs` | Mutation audit trail |
 
-**ER Diagram (Mermaid):**
-
-```mermaid
-erDiagram
-    USERS ||--|| USER_SETTINGS : configures
-    USERS ||--o{ REFRESH_TOKENS : has
-    USERS ||--o{ CATEGORIES : creates
-    USERS ||--o{ WALLETS : owns
-    USERS ||--o{ TRANSACTIONS : makes
-    USERS ||--o{ BUDGETS : sets
-    USERS ||--o{ GOALS : targets
-    USERS ||--o{ BILLS : has
-    USERS ||--o{ NOTIFICATIONS : receives
-    USERS ||--o{ AUDIT_LOGS : records
-
-    WALLETS ||--o{ TRANSACTIONS : funds
-    WALLETS ||--o{ WALLET_LOGS : logs
-    CATEGORIES ||--o{ TRANSACTIONS : categorizes
-    CATEGORIES ||--o{ BILLS : categorizes
-    CATEGORIES ||--o{ BUDGET_CATEGORIES : linked
-    BUDGETS ||--o{ BUDGET_CATEGORIES : has
-    GOALS ||--o{ TRANSACTIONS : contributions
-    BILLS ||--o{ BILL_PAYMENTS : paid_by
-```
-
-ERD file exists: `doc/wiki/erd.md`.
+The ER diagram file does exist in the repository: `doc/wiki/erd.md`.
 
 ### (b) Database Connection
 
-- **Server-side technology:** Hono REST API in `apps/api`.
-- **Connection method:** frontend calls typed API client `@finance/api-client`; API route validates with Zod, processes business logic in service layer, calls repository in `packages/db`, then queries DB via Drizzle ORM.
-- **Production routing:** Next.js catch-all `/api/[[...route]]` embeds Hono app on Vercel.
-- **CRUD operations implemented:**
-  - [x] Create
-  - [x] Read
-  - [x] Update
-  - [x] Delete
-
-**Connection architecture:**
+The current request/data flow is:
 
 ```text
-User UI
-  -> React Component / TanStack Query
-  -> @finance/api-client
-  -> /api/* Next.js catch-all or local Hono server
-  -> Hono route + Zod validation
-  -> Service layer
-  -> Repository layer
-  -> Drizzle ORM
-  -> PostgreSQL-compatible database
+Next.js UI
+-> TanStack Query and workspace API client
+-> /api/* on Next.js or local Hono server
+-> Hono route modules + middleware
+-> service layer
+-> @finance/db repositories/schema
+-> PostgreSQL-compatible database
 ```
+
+Production routing is implemented by `apps/web/src/app/api/[[...route]]/route.ts`, which exports `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, and `OPTIONS` handlers from `hono/vercel` and runs them in the Node.js runtime.
 
 ### (c) Pages Displaying Dynamic Data
 
-| Page          | Data Displayed                                                                                 | Query / Endpoint                                                                    | Implemented By |
-| ------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | -------------- |
-| Dashboard     | Quick add result, overview summary, budget summary, goals, recent transactions, upcoming bills | `/api/v1/transactions`, `/api/v1/budgets/summary`, `/api/v1/goals`, `/api/v1/bills` | Nguyen Tam Duc |
-| Transactions  | Transactions with pagination/search/filter, CSV import/export                                  | `/api/v1/transactions`, `/api/v1/transactions/import`, `/api/v1/transactions/quick` | Nguyen Tam Duc |
-| Budgets       | List, summary, create/update/delete budget                                                     | `/api/v1/budgets`, `/api/v1/budgets/summary`, `/api/v1/budgets/:id`                 | Nguyen Tam Duc |
-| Wallets       | Wallet list, balances, transfer, wallet logs indirectly                                        | `/api/v1/wallet`, `/api/v1/wallet/cash`, `/api/v1/wallet/transfer`                  | Nguyen Tam Duc |
-| Goals         | List/create/update/delete/contribute goals                                                     | `/api/v1/goals`, `/api/v1/goals/:id/contribute`                                     | Nguyen Tam Duc |
-| Bills         | List/create/update/delete/pay bills                                                            | `/api/v1/bills`, `/api/v1/bills/:id/pay`                                            | Nguyen Tam Duc |
-| Analytics     | Category spending and monthly trends                                                           | `/api/v1/analytics/category-spending`, `/api/v1/analytics/monthly-trend`            | Nguyen Tam Duc |
-| Settings      | User financial settings                                                                        | `/api/v1/user/settings`                                                             | Nguyen Tam Duc |
-| Notifications | Notifications and unread count                                                                 | `/api/v1/notifications`, `/api/v1/notifications/unread-count`                       | Nguyen Tam Duc |
+Based on `packages/api-client/src/endpoints.ts`, the frontend has typed client access to:
+
+- `/api/auth/login`, `/api/auth/register`, `/api/auth/logout`, `/api/auth/me`
+- `/api/v1/user/settings`, `/api/v1/user/profile`, `/api/v1/user/onboarding/*`
+- `/api/v1/budgets`, `/api/v1/budgets/summary`, `/api/v1/budgets/:id`
+- `/api/v1/transactions`, `/api/v1/transactions/import`, `/api/v1/transactions/quick`
+- `/api/v1/goals`, `/api/v1/goals/:id/contribute`
+- `/api/v1/bills`, `/api/v1/bills/:id/pay`
+- `/api/v1/analytics/category-spending`, `/api/v1/analytics/monthly-trend`
+- `/api/v1/wallet`, `/api/v1/wallet/cash`, `/api/v1/wallet/transfer`
+- `/api/v1/notifications`, `/api/v1/notifications/unread-count`, read/mark-all endpoints
+- `/api/v1/categories`
+
+### (d) Dynamic Pages and Data Sources
+
+| Page | Dynamic Data Examples |
+| --- | --- |
+| Dashboard | Budgets summary, transactions, goals, bills, wallet data, quick-add results |
+| Transactions | Transaction list, search/filter params, CSV import, quick-add mutation |
+| Budgets | Budget list, summary, detail by ID |
+| Wallets | Wallet list, cash wallet data, transfer actions |
+| Goals | Goal list and contribution mutations |
+| Bills | Bill list and pay-bill mutation |
+| Analytics | Category spending and monthly trend |
+| Settings | User settings and profile state |
+| Onboarding | Onboarding status and completion flow |
 
 ---
 
@@ -351,141 +331,146 @@ User UI
 
 ### (a) Performance Check with Lighthouse
 
-The local repo does not contain Lighthouse results or audit screenshots. Vercel deploy logs show production build compiled successfully with Next.js 16.1.4/Turbopack and generated 12 routes, but Lighthouse scores must be run on the deployed URL before submission.
+Lighthouse before/after evidence is stored under `doc/screenshots/` and summarized in the root `README.md`. The recorded score improved from **75** before optimization to **92** after optimization.
 
-**Results before optimization:**
+**Verified optimization and hardening work**
 
-| Metric         | Score                                |
-| -------------- | ------------------------------------ |
-| Performance    | To be added after running Lighthouse |
-| Accessibility  | To be added after running Lighthouse |
-| Best Practices | To be added after running Lighthouse |
-| SEO            | To be added after running Lighthouse |
+| Area | Evidence |
+| --- | --- |
+| Error UX | PR `#116` improved detailed error handling and removed broken command behavior |
+| Auth race condition | PR `#114` added a guard in `AuthProvider` for social login flow |
+| Rate limit response consistency | PR `#113` added `success: false` for HTTP 429 responses |
+| Auth endpoint rate-limit tuning | PR `#112` raised auth rate limit to `30 req/min` |
+| Production auth debugging | PR `#111` added step tracking for social auth debugging |
+| Cold-start cleanup | PR `#110` removed dead imports and redundant env initialization |
+| Dynamic Vercel CORS support | PR `#109` added `*.vercel.app` origin support |
+| Vercel API deployment strategy | PR `#145` embedded Hono as a Next.js catch-all route |
+| Budget/category seeding fixes | PRs `#147` and `#148` |
+| Accessibility/PageSpeed | PR `#168` and commit `2297025` on 17/05/2026 |
 
-**Identified issues and fixes:**
+**Lighthouse evidence**
 
-| Issue                                                    | Action Taken                                                            |
-| -------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Lockfile out of sync causing Vercel deploy failure       | Updated `pnpm-lock.yaml`, PR #157                                       |
-| API routing on Vercel incompatible with separate backend | Embedded Hono app into Next.js catch-all API route, PR #144             |
-| CORS for Vercel subdomains                               | Added dynamic CORS for `*.vercel.app`, PR #96                           |
-| API cold start / logging                                 | Removed dead imports, replaced `console.*` with pino structured logging |
-| JSON error UX                                            | Parse JSON error response and show message/correlationId clearly        |
-| Basic SEO metadata                                       | Root layout has `metadata.title` and `metadata.description`             |
-
-**Results after optimization:**
-
-| Metric         | Score                                                                             |
-| -------------- | --------------------------------------------------------------------------------- |
-| Performance    | To be added after running Lighthouse on `https://finance-for-me-local.vercel.app` |
-| Accessibility  | To be added after running Lighthouse                                              |
-| Best Practices | To be added after running Lighthouse                                              |
-| SEO            | To be added after running Lighthouse                                              |
-
-Suggested command to generate evidence:
-
-```bash
-pnpm build
-# After app is deployed and fully functional:
-npx lighthouse https://finance-for-me-local.vercel.app --view
-```
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:12px">
+  <div><img src="../screenshots/lighthouse-before.jpeg" alt="Lighthouse before optimization" style="width:100%;border-radius:8px" /><p align="center">Before optimization - 75</p></div>
+  <div><img src="../screenshots/lighthouse-after.jpg" alt="Lighthouse after optimization" style="width:100%;border-radius:8px" /><p align="center">After optimization - 92</p></div>
+</div>
 
 ### (b) Error Monitoring & User Behavior Tracking
 
-**Google Analytics / Firebase Measurement:**
+- Backend Sentry instrumentation is present but optional.
+- `apps/api/src/index.ts` loads `./instrument` only when `SENTRY_DSN` is set.
+- The API stack uses pino-based structured logging, correlation IDs, and centralized error formatting.
+- The codebase exposes `/api/v1/health` for a basic health response.
+- The frontend Firebase config still includes `measurementId` support, but this repository alone does not prove active Google Analytics dashboards or tracked reports.
 
-- [ ] No Google Analytics dashboard evidence found in repo.
-- **Measurement ID:** `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` exists in `.env.example` and `apps/web/src/_lib/firebase.ts`.
-- Code only passes `measurementId` to Firebase config; no import/use of `getAnalytics` seen, so tracking dashboard must be added if rubric requires it.
+### (c) Deployment History Summary
 
-**Sentry (or equivalent):**
+GitHub deployment records confirm all three of the following:
 
-- [x] Integrated (optional).
-- **Tool used:** Sentry Node.
-- **Config:** `SENTRY_DSN` in `.env.example`; package `@sentry/node` in `apps/api/package.json`.
-- **Related files:** `apps/api/src/index.ts` imports `./instrument` if `SENTRY_DSN` exists; `apps/api/src/instrument.ts` calls `Sentry.init({ dsn, sendDefaultPii: true, tracesSampleRate: 1.0 })`.
-- **Error types monitored:** API/runtime errors in backend Hono/Node, with correlation id and structured pino logs.
+| Environment | Latest Verified Success | URL |
+| --- | --- | --- |
+| Vercel Production | 16/05/2026 17:52 UTC | `https://finance-for-me-local-n2q6yvmiw-ntduc011006dn-3691s-projects.vercel.app` |
+| Vercel Preview | 16/05/2026 17:50 UTC | `https://finance-for-me-local-dhxirty0l-ntduc011006dn-3691s-projects.vercel.app` |
+| GitHub Pages | 16/05/2026 17:49 UTC | `https://tducn110.github.io/Tracker_yourMoney/` |
+
+GitHub Pages deployment records also exist as early as 27/04/2026, which shows repeated deployment activity throughout the project timeline.
 
 ---
 
 ## Task 5 - UI/UX Peer Review & Evaluation
 
-### (a) Feedback for Other Teams
+### (a) Verified Review Signals
 
-No peer-review file or GitHub discussion/issue about feedback for other teams in local repo. Peer review evidence must be added before submission.
+The repository does contain evidence of internal review and revision through pull request flow, review requests, and follow-up fixes. Useful examples include:
 
-**Reviewed Team #1:**
+- PR `#27` and PR `#32` requested review from `tducn110` during the early database/release phases.
+- PR `#78`, `#110`, `#111`, `#113`, `#115`, `#140`, and `#159` also include visible `reviewRequests`.
+- PR `#112`, `#113`, and `#114` show review involvement from both `tducn110` and `kiet00394-collab` during the auth hardening phase.
+- PR `#162` reverted the fake-auth onboarding flow after integration review showed that it was not suitable for the real Firebase flow.
+- PR `#168` is a final accessibility/PageSpeed cleanup pass after earlier UI and integration work had already landed.
 
-- **Team Name / Project:** To be added
-- **Project Link:** To be added
+### (b) External Team Feedback Status
 
-| Aspect            | Strengths                        | Suggestions for Improvement      |
-| ----------------- | -------------------------------- | -------------------------------- |
-| Usability         | To be added after review session | To be added after review session |
-| Aesthetics        | To be added after review session | To be added after review session |
-| User-Friendliness | To be added after review session | To be added after review session |
-
-**Reviewed Team #2:**
-
-- **Team Name / Project:** To be added
-- **Project Link:** To be added
-
-| Aspect            | Strengths                        | Suggestions for Improvement      |
-| ----------------- | -------------------------------- | -------------------------------- |
-| Usability         | To be added after review session | To be added after review session |
-| Aesthetics        | To be added after review session | To be added after review session |
-| User-Friendliness | To be added after review session | To be added after review session |
-
-### (b) Handling Feedback from Other Teams
-
-The repo does not contain documentation of feedback received from other teams. UX changes evidenced in commit history include: auth loading state, wallet integration, analytics, detailed error UX, dashboard refactor, category manager, and cash wallet widget.
-
-| Feedback                                    | Source                      | Decision    | Reason / Commit                                                                |
-| ------------------------------------------- | --------------------------- | ----------- | ------------------------------------------------------------------------------ |
-| Show API errors more clearly                | Internal testing / UX issue | Implemented | `804e27f`, `48aed12` - parse JSON error responses and display detailed message |
-| Fix social login race condition             | Internal testing            | Implemented | `1cf5543` - guard AuthProvider social login flow                               |
-| Dashboard and wallet need better visibility | Internal iteration          | Implemented | `1439c58` - enhance wallet integration and analytics                           |
-| Quick Add needs to be faster                | Internal iteration          | Implemented | `8b3ca4b` - AI Quick Add integration                                           |
-| Peer review from other teams                | No evidence                 | To be added | Create `docs/peer-review-feedback.md` or add GitHub issue/discussion link      |
+- No repository-local artifact clearly proves cross-team UI/UX review exchange, such as screenshots, markdown notes, or issue links to another team’s repository.
+- The safe evidence-based statement is that internal review activity is verifiable, while external peer-review artifacts are still missing from this local repository snapshot.
+- If the course submission requires cross-team review proof, it should be attached separately rather than invented in this report.
 
 ---
 
 ## Deliverables Checklist
 
-- [x] **Source code on GitHub** - repository: https://github.com/tducn110/Tracker_yourMoney
-- [x] **README.md with overview and setup** - exists with tech stack, setup, QA commands.
-- [x] **ERD** - exists at `doc/wiki/erd.md`, Mermaid ERD included in this report.
-- [x] **Vercel Deploy** - production alias in log: https://finance-for-me-local.vercel.app
-- [ ] **Screenshots of key features** - need to capture and insert into report/README.
-- [ ] **Lighthouse screenshots and scores** - need to run on deployed URL.
-- [ ] **Video demo on YouTube** - link to be added, max 10 minutes, min 720p, not private.
-- [ ] **Wireframes** - need to export from Figma/Stitch and add to repo.
-- [ ] **Peer review evidence** - need to add feedback for/from other teams.
-- [ ] **Self-Report** - not found in repository; create files in `docs/self-reports/`.
+**Verified from codebase or GitHub**
+
+- [x] Source repository exists and is active on GitHub.
+- [x] Monorepo structure is clear and runnable from root scripts.
+- [x] Core App Router pages exist for login, onboarding, dashboard, transactions, budgets, wallets, goals, bills, analytics, settings, and dev guide.
+- [x] Typed API client and Hono route structure exist.
+- [x] Drizzle schema and ERD file exist.
+- [x] Deployment records exist for Vercel Preview, Vercel Production, and GitHub Pages.
+- [x] Optimization/hardening PR history is visible and recent.
+
+**Attached or still pending before final submission**
+
+- [x] Final screenshots for key pages are present in the Final-Report site content.
+- [x] Responsive screenshots for mobile/tablet/desktop are attached above.
+- [x] Lighthouse before/after screenshots are attached above.
+- [x] Video demo link is listed in the team information table.
+- [x] Wireframe/design coverage is documented above with available visual proof.
+- [ ] External cross-team peer-review evidence if the rubric requires it.
+- [x] Student self-reports exist under `doc/self-reports/`.
+- [x] Official team name and student IDs provided by the team report.
+- [x] Official submission date provided by the team report.
 
 ---
 
 ## Self-Reports
 
-According to course template, each member must commit a self-report to `docs/self-reports/self-report-[StudentID].md`. The repo currently has no such folder/file.
+The current local checkout does contain self-report files:
 
-| Full Name      | Student ID       | Self-Report Link                                                                     |
-| -------------- | ---------------- | ------------------------------------------------------------------------------------ |
-| Nguyen Tam Duc | Not specified in repository | Need to create `docs/self-reports/self-report-[StudentID].md` and insert GitHub link |
+```text
+doc/self-report/self-report-24020005.md
+doc/self-report/self-report-24020008.md
+doc/self-report/self-report-24020010.md
+```
+
+These files should stay aligned with the final deployed report content.
+
+---
+
+## Actionable Fill-In List
+
+To finish this report without re-researching GitHub:
+
+1. Team name, student IDs, and submission date have been filled from the team-provided GitHub report content.
+2. Keep the inserted screenshots aligned with the final deployed app.
+3. Keep the YouTube demo URL in the top metadata table up to date.
+4. Replace the design proof screenshots with exported Figma frames if stricter rubric evidence is required.
+5. Add cross-team peer-review artifacts if they exist outside the repository.
+6. Keep the self-report files synchronized with the final deployed report site.
+7. Keep the Lighthouse screenshots synchronized with the final production URL if the rubric requires a fresh audit.
 
 ---
 
 ## Appendix - Codebase Evidence
 
-**GitNexus Code Intelligence:**
+### Key Local Evidence Files
 
-- Repo indexed: `Tracker_yourMoney`
-- Path: `/home/tducn/finance-for-me-local`
-- Remote: `https://github.com/tducn110/Tracker_yourMoney`
-- Stats: 308 files, 3660 symbols, 5963 relationships, 115 execution flows
-- Top modules: UI, Services, Repositories, Quick-add, Dashboard, Routes, Budgets, Hooks, Context, Wallet, Middleware
+| File | Why It Matters |
+| --- | --- |
+| `package.json` | Current workspace scripts and tooling versions |
+| `apps/web/package.json` | Frontend versions and UI dependencies |
+| `apps/api/package.json` | Backend versions and Sentry dependency |
+| `apps/web/src/app/layout.tsx` | App metadata |
+| `apps/web/src/app/api/[[...route]]/route.ts` | Vercel deployment architecture |
+| `apps/api/src/index.ts` | Middleware, logging, CORS, route mounting, health route |
+| `packages/api-client/src/endpoints.ts` | Typed endpoint inventory |
+| `packages/db/src/schema/index.ts` | Exported schema modules |
+| `packages/db/src/schema/*.ts` | Table definitions and constraints |
+| `doc/wiki/erd.md` | Existing ERD file |
+| `ARCHITECTURE.md` | Repository-level architecture write-up |
+| `doc/wiki/ARCHITECTURE.md` | Additional architecture documentation |
 
-**Main API route map:**
+### Main API Route Map
 
 ```text
 /api/auth
@@ -502,10 +487,10 @@ According to course template, each member must commit a self-report to `docs/sel
 /api/v1/health
 ```
 
-**Important source files:**
+### Important Source Files
 
-| File                                                                              | Role                                          |
-| --------------------------------------------------------------------------------- | --------------------------------------------- |
+| File | Role |
+| --- | --- |
 | `apps/web/src/app/(dashboard)/page.tsx`                                           | Dashboard layout                              |
 | `apps/web/src/app/(dashboard)/transactions/_components/TransactionsContainer.tsx` | Transaction search/filter/sort/import/export  |
 | `apps/web/src/app/(dashboard)/budgets/page.tsx`                                   | Budget CRUD UI                                |
@@ -516,48 +501,10 @@ According to course template, each member must commit a self-report to `docs/sel
 | `packages/db/src/schema/*.ts`                                                     | Drizzle database schema                       |
 | `packages/shared-schemas/src/*.ts`                                                | Zod validation schemas                        |
 | `doc/wiki/erd.md`                                                                 | ERD Mermaid                                   |
-| `vercel_deploy_2.log`                                                             | Evidence of successful deploy                 |
 
-**Recent GitHub/Git commits and PRs:**
+### Key GitHub Evidence Used
 
-```text
-159 feat: onboarding wizard 4 buoc - info, wallet, budget, transaction
-157 chore: update pnpm-lock.yaml
-156 fix(web): resolve type errors and normalize currency formatting
-154 feat(web): Wallet Integration & Analytics Improvements
-152 feat(api,web): Dashboard & S2S Engine Refactor
-150 feat(api,web): AI Quick Add & Gemini Integration
-145 [FIX] Fix Vercel deployment: embed Hono API as Next.js catch-all route (#144)
-140 [FEAT] Comprehensive System Refactor and Auth Optimization (#129-136)
-116 fix: remove broken ignoreCommand and improve error UX (#102)
-107 [FIX] Database Standardization & Migration Sync
-94 [FIX] Financial logic integrity and PostgreSQL synchronization (#93)
-92 [FIX] Worker DB env, Firebase SSR crash, Next.js cache headers, UI/API updates (#91)
-90 [FEAT] backend scale & UI tailwind v4 fixes (#87)
-88 [FEAT] Backend Scale & Performance (Phase 11-15) and UI Refactoring
-86 [FEAT] Automation, Notifications and Settings (Phase 10 & 11) (#54)
-83 feat(web): enhance login UI with premium background and loading state (Phase 9) & fix worker tsconfig
-82 [FEAT] Frontend Refactor, React-Query, Optimistic Updates (Phases 6-8)
-80 feat: complete feature gaps (Phase 5)
-79 feat: wire frontend to real APIs (Phase 4)
-78 Feature/issue 37 phase 3 locales
-76 fix(db): add walletId to transaction schemas and fix type errors (Phase 3)
-33 🚀 Release: dev to main (Phase 1 + Phase 2)
-31 [FEAT] Phase 1: Schema Database (Drizzle ORM)
-29 feat(db): sync database schema to ERD (migration 0012)
-27 [FEAT] Phase 1: Schema Database (Drizzle ORM) (#26)
-24 [FEAT] Phase 7 - Backend Error Handling Standardization
-17 [CHORE] Remove unused placeholder tables: budget_wallets & cash_wallet_logs
-12 feat(doc): finalize documentation reorganization and gitignore update
-11 [FEAT] Firebase Social Login & Session Cookie Migration
-10 [FEAT] Global UI Design Reframing (V3 Aesthetics)
-9 feat(quick-add): enhanced quick-add components with NLP and Simple modes
-8 feat(wallet): implement multi-wallet management and sync UI
-7 feat(auth): complete migration to Firebase Social Login and Session Cookies
-6 feat(budget): implement core budget-first infrastructure
-5 [FEAT] Global UI Design Reframing (V3 Aesthetics)
-```
-
-```
-
-```
+- Merged PR history from `gh pr list --state merged --limit 100`
+- Open issue sample from `gh issue list --state open --limit 100`
+- Deployment records from `gh api repos/tducn110/Tracker_yourMoney/deployments?per_page=100`
+- Deployment statuses for the latest Vercel Production, Vercel Preview, and GitHub Pages records
