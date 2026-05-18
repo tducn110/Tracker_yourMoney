@@ -25,15 +25,15 @@ description: Final project report for Finance Tracker V3.
 | Chau Tuan Kiet | 24020010 | Frontend / UI-UX / Dashboard / Components |
 
 
-## Individual Self-Reports
+## Individual Self-Report
 
-The individual self-reports are included as separate pages and linked here for direct access from the group report.
+The individual self-report files are included as separate pages and linked here for direct access from the group report.
 
 | Team Member | Student ID | Self-Report |
 | --- | --- | --- |
-| Nguyen Tam Duc | 24020005 | [Nguyen Tam Duc self-report](/self-reports/nguyen-tam-duc/) |
-| Tran Vo Ba Vuong | 24020008 | [Tran Vo Ba Vuong self-report](/self-reports/tran-vo-ba-vuong/) |
-| Chau Tuan Kiet | 24020010 | [Chau Tuan Kiet self-report](/self-reports/chau-tuan-kiet/) |
+| Nguyen Tam Duc | 24020005 | [Nguyen Tam Duc self-report](/self-report/nguyen-tam-duc/) |
+| Tran Vo Ba Vuong | 24020008 | [Tran Vo Ba Vuong self-report](/self-report/tran-vo-ba-vuong/) |
+| Chau Tuan Kiet | 24020010 | [Chau Tuan Kiet self-report](/self-report/chau-tuan-kiet/) |
 
 ## Project Overview & Technologies Used
 
@@ -458,7 +458,7 @@ Ran Lighthouse before and after optimization. Score improved from **75 → 92**.
   <li className="done"><strong>README.md</strong> — Setup guide, project overview, feature list with screenshots, ERD</li>
   <li className="done"><strong>ARCHITECTURE.md</strong> — Detailed system architecture documentation</li>
   <li className="done"><strong>Video demo</strong> — <a href="https://www.youtube.com/watch?v=zAD1gF02NrU" target="_blank" rel="noopener">youtube.com/watch?v=zAD1gF02NrU</a></li>
-  <li className="done"><strong>Self-Reports</strong> — Each member committed file to `doc/self-report/`</li>
+  <li className="done"><strong>Self-Report</strong> — Each member committed file to `doc/self-report/`</li>
   <li className="done"><strong>Vercel Deployment</strong> — <a href="https://finance-for-me-local.vercel.app" target="_blank" rel="noopener">finance-for-me-local.vercel.app</a></li>
 </ul>
 
@@ -583,14 +583,14 @@ df74302 Merge PR #10: feature/issue-5-aesthetics                                
 2dd223e chore: initial framework structure                                             (Nguyen Tam Duc)
 ```
 
-## Self-Reports
+## Self-Report
 
 Each member committed a self-report file to `doc/self-report/self-report-[StudentID].md` in the repository.
 
 | Full Name | Student ID | Self-Report Link |
 | --- | --- | --- |
-| Nguyen Tam Duc | 24020005 | [/self-reports/nguyen-tam-duc](/self-reports/nguyen-tam-duc/) |
-| Tran Vo Ba Vuong | 24020008 | [/self-reports/tran-vo-ba-vuong](/self-reports/tran-vo-ba-vuong/) |
-| Chau Tuan Kiet | 24020010 | [/self-reports/chau-tuan-kiet](/self-reports/chau-tuan-kiet/) |
+| Nguyen Tam Duc | 24020005 | [/self-report/nguyen-tam-duc](/self-report/nguyen-tam-duc/) |
+| Tran Vo Ba Vuong | 24020008 | [/self-report/tran-vo-ba-vuong](/self-report/tran-vo-ba-vuong/) |
+| Chau Tuan Kiet | 24020010 | [/self-report/chau-tuan-kiet](/self-report/chau-tuan-kiet/) |
 
 Final Project Report — Finance Tracker V3 | Team Antigravity | Submission Date: 15/05/2026
