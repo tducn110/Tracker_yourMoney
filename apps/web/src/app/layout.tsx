@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Providers } from './providers';
+import { GoogleAnalytics } from '../components/GoogleAnalytics';
 import '../styles/tailwind.css';
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body suppressHydrationWarning>
+        <GoogleAnalytics />
         <Providers>{children}</Providers>
       </body>
     </html>
