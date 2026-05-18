@@ -31,9 +31,9 @@ The individual self-report files are included as separate pages and linked here 
 
 | Team Member | Student ID | Self-Report |
 | --- | --- | --- |
-| Nguyen Tam Duc | 24020005 | [Nguyen Tam Duc self-report](/self-report/nguyen-tam-duc/) |
-| Tran Vo Ba Vuong | 24020008 | [Tran Vo Ba Vuong self-report](/self-report/tran-vo-ba-vuong/) |
-| Chau Tuan Kiet | 24020010 | [Chau Tuan Kiet self-report](/self-report/chau-tuan-kiet/) |
+| Nguyen Tam Duc | 24020005 | [Nguyen Tam Duc self-report](doc/self-report/self-report-24020005.md) |
+| Tran Vo Ba Vuong | 24020008 | [Tran Vo Ba Vuong self-report](doc/self-report/self-report-24020008.md) |
+| Chau Tuan Kiet | 24020010 | [Chau Tuan Kiet self-report](doc/self-report/self-report-24020010.md) |
 
 ## Project Overview & Technologies Used
 
@@ -589,8 +589,8 @@ Each member committed a self-report file to `doc/self-report/self-report-[Studen
 
 | Full Name | Student ID | Self-Report Link |
 | --- | --- | --- |
-| Nguyen Tam Duc | 24020005 | [/self-report/nguyen-tam-duc](/self-report/nguyen-tam-duc/) |
-| Tran Vo Ba Vuong | 24020008 | [/self-report/tran-vo-ba-vuong](/self-report/tran-vo-ba-vuong/) |
-| Chau Tuan Kiet | 24020010 | [/self-report/chau-tuan-kiet](/self-report/chau-tuan-kiet/) |
+| Nguyen Tam Duc | 24020005 | [doc/self-report/self-report-24020005.md](doc/self-report/self-report-24020005.md) |
+| Tran Vo Ba Vuong | 24020008 | [doc/self-report/self-report-24020008.md](doc/self-report/self-report-24020008.md) |
+| Chau Tuan Kiet | 24020010 | [doc/self-report/self-report-24020010.md](doc/self-report/self-report-24020010.md) |
 
 Final Project Report — Finance Tracker V3 | Team Antigravity | Submission Date: 15/05/2026
