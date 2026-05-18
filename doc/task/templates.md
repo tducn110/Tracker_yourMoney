@@ -417,13 +417,13 @@ The repository does contain evidence of internal review and revision through pul
 - [x] Video demo link is listed in the team information table.
 - [x] Wireframe/design coverage is documented above with available visual proof.
 - [ ] External cross-team peer-review evidence if the rubric requires it.
-- [x] Student self-reports exist under `doc/self-reports/`.
+- [x] Student self-report files exist under `doc/self-report/`.
 - [x] Official team name and student IDs provided by the team report.
 - [x] Official submission date provided by the team report.
 
 ---
 
-## Self-Reports
+## Self-Report
 
 The current local checkout does contain self-report files:
 
