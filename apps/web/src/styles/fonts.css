@@ -1,5 +1,5 @@
 /* Google Fonts moved to next/font in layout.tsx — self-hosted, zero blocking */
 
 * {
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-main), system-ui, -apple-system, sans-serif;
 }
