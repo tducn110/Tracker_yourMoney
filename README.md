@@ -122,6 +122,7 @@ The team divided work by application layer, each member owning a core domain. Al
 ### (b) Wireframe
 
 - **Tool used:** Figma
+- **Figma link:** [Figma Design File](https://www.figma.com/make/ui7EMsUQkDe4AXHTDgQ3uq/Finance-Tracker-Design--Copy-?t=ghAZbsaKaRbIAxVL-1&preview-route=%2Fsettings)
 - **Pages designed:**
 
 - [x] Dashboard (Budget-First overview)
