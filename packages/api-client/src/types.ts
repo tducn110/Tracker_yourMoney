@@ -168,6 +168,7 @@ export interface BudgetSummary {
   percent: number;
   totalIncome?: string;
   projectedSpending?: string;
+  monthlyExpense?: string;
 }
 
 export interface BudgetDetail extends Budget {

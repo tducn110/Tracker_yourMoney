@@ -109,11 +109,11 @@ export const billsAPI = {
 };
 
 export const analyticsAPI = {
-  
+  categorySpending: (month?: string, date?: string) =>
     apiClient.get<CategorySpending[]>('/api/v1/analytics/category-spending', { params: { month, date } }) as unknown as Promise<CategorySpending[]>,
   dailySummary: (date?: string) =>
     apiClient.get<DailySummary>('/api/v1/analytics/daily-summary', { params: { date } }) as unknown as Promise<DailySummary>,
-  
+  monthlyTrend: (months?: number, endMonth?: string) =>
     apiClient.get<MonthlyTrend[]>('/api/v1/analytics/monthly-trend', { params: { months, endMonth } }) as unknown as Promise<MonthlyTrend[]>,
 };
 

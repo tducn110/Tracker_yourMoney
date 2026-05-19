@@ -75,34 +75,50 @@ export class BudgetService {
       .where(and(eq(budgets.userId, userId), eq(budgets.status, "active")))
       .groupBy(budgets.id);
 
-    if (activeBudgets.length === 0) {
-      return {
-        totalLimit: "0.00",
-        totalSpent: "0.00",
-        totalIncome: "0.00",
-        projectedSpending: "0.00",
-        left: "0.00",
-        percent: 0,
-      };
-    }
-
-    // Now fetch total income in current month
+    // Always fetch total income and total expense in current month
     const now = new Date();
-    const incomeStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const incomeEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    const monthEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
     const [incomeRow] = await db
-      .select({ total: sum(transactions.amount) })
+      .select({ total: sql<string>`COALESCE(SUM(${transactions.amount}), '0.00')` })
       .from(transactions)
       .where(
         and(
           eq(transactions.userId, userId),
           eq(transactions.type, "income"),
-          gte(transactions.displayDate, incomeStart),
-          lte(transactions.displayDate, incomeEnd),
+          gte(transactions.displayDate, monthStart),
+          lte(transactions.displayDate, monthEnd),
         ),
       );
+
+    const [expenseRow] = await db
+      .select({ total: sql<string>`COALESCE(SUM(${transactions.amount}), '0.00')` })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.type, "expense"),
+          gte(transactions.displayDate, monthStart),
+          lte(transactions.displayDate, monthEnd),
+        ),
+      );
+
+    const totalIncome = new Decimal(incomeRow?.total ?? "0").toFixed(2);
+    const monthlyExpense = new Decimal(expenseRow?.total ?? "0").toFixed(2);
+
+    if (activeBudgets.length === 0) {
+      return {
+        totalLimit: "0.00",
+        totalSpent: "0.00",
+        totalIncome,
+        monthlyExpense,
+        projectedSpending: "0.00",
+        left: "0.00",
+        percent: 0,
+      };
+    }
 
     let totalLimit = new Decimal(0);
     let totalSpent = new Decimal(0);
@@ -132,7 +148,8 @@ export class BudgetService {
     return {
       totalLimit: totalLimit.toFixed(2),
       totalSpent: totalSpent.toFixed(2),
-      totalIncome: new Decimal(incomeRow?.total ?? "0").toFixed(2),
+      totalIncome,
+      monthlyExpense,
       projectedSpending: totalProjected.toFixed(2),
       left: left.toFixed(2),
       percent: Math.round(percent),
