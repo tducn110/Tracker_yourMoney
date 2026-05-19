@@ -233,11 +233,10 @@ export const MOCK_BILLS: Bill[] = [
     name: 'Tiền mạng FPT', 
     amount: '275000', 
     dueDay: 25, 
-    status: 'active', 
+    isActive: true, 
     frequency: 'monthly', 
     icon: '🌐', 
-    autoPay: false, 
-    nextDueDate: '2024-04-25' 
+    autoPay: false,
   },
   { 
     id: 'b2', 
@@ -245,11 +244,10 @@ export const MOCK_BILLS: Bill[] = [
     name: 'Netflix Premium', 
     amount: '260000', 
     dueDay: 28, 
-    status: 'active', 
+    isActive: true, 
     frequency: 'monthly', 
     icon: '📺', 
-    autoPay: true, 
-    nextDueDate: '2024-04-28' 
+    autoPay: true,
   },
   { 
     id: 'b3', 
@@ -257,11 +255,10 @@ export const MOCK_BILLS: Bill[] = [
     name: 'Tiền nhà', 
     amount: '5000000', 
     dueDay: 1, 
-    status: 'active', 
+    isActive: true, 
     frequency: 'monthly', 
     icon: '🏠', 
-    autoPay: false, 
-    nextDueDate: '2024-05-01' 
+    autoPay: false,
   },
 ];
 

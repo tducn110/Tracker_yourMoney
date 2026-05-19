@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { TrendingUp, TrendingDown, Receipt, Plus, Zap } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@finance/api-client';
+import { formatCurrencyInput, parseCurrencyInput } from '@/_lib/utils/currency-input';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 
@@ -66,7 +67,13 @@ export function QuickInputForm({ onSubmit }: QuickInputFormProps) {
   const [submitting, setSubmitting] = useState<TransactionType | null>(null);
 
   const update = (type: TransactionType, field: keyof FormState, value: string) => {
-    setForms(prev => ({ ...prev, [type]: { ...prev[type], [field]: value } }));
+    setForms(prev => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        [field]: field === 'amount' ? formatCurrencyInput(value) : value,
+      },
+    }));
   };
 
   const handleSubmit = async (type: TransactionType) => {
@@ -75,7 +82,7 @@ export function QuickInputForm({ onSubmit }: QuickInputFormProps) {
       toast.error('Vui lòng nhập đầy đủ thông tin');
       return;
     }
-    const numAmount = parseFloat(form.amount.replace(/[^\d.]/g, ''));
+    const numAmount = Number(parseCurrencyInput(form.amount));
     if (isNaN(numAmount) || numAmount <= 0) {
       toast.error('Số tiền không hợp lệ');
       return;

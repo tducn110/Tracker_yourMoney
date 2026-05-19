@@ -18,7 +18,7 @@ export function FixedExpensesCard() {
     );
   }
 
-  const activeBills = apiBills.filter((b: Bill) => b.status === 'active');
+  const activeBills = apiBills.filter((b: Bill) => b.isActive === true);
   const totalMonthly = activeBills.reduce((sum: Decimal, b: Bill) => sum.plus(new Decimal(b.amount || 0)), new Decimal(0));
 
   if (activeBills.length === 0) {

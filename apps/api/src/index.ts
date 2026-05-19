@@ -1,10 +1,7 @@
 import './env';
 // ── INSTRUMENTATION ──────────────────────────────────────────────────
-// Only load Sentry in Node.js fallback if DSN is present.
-// For Cloudflare Workers, use @sentry/cloudflare middleware if needed.
-if (process.env.SENTRY_DSN) {
-  import('./instrument').catch(() => {});
-}
+import './instrument';
+import * as Sentry from '@sentry/node';
 
 // ── GLOBAL POLYFILLS ───────────────────────────────────────────────
 // Support BigInt serialization in JSON.stringify (required for PostgreSQL bigint IDs)
@@ -65,6 +62,12 @@ const getCorrelationId = (c: Context) => {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 };
 
+const getClientIp = (c: Context) => {
+  return c.req.header('x-forwarded-for')?.split(',')[0]?.trim()
+    ?? c.req.header('x-real-ip')
+    ?? undefined;
+};
+
 // ── GLOBAL MIDDLEWARES ──────────────────────────────────────────────
 // Payload Compression (Phase 29) — gzip/deflate for JSON responses >1KB
 app.use('*', compress({ threshold: 1024 }));
@@ -75,6 +78,8 @@ app.use('*', cors({
     if (
       origin === 'http://127.0.0.1:3000' ||
       origin === 'http://localhost:3000' ||
+      origin === 'http://localhost:3002' ||
+      origin === 'http://127.0.0.1:3002' ||
       origin.endsWith('.vercel.app')
     ) {
       return origin;
@@ -82,24 +87,30 @@ app.use('*', cors({
     return 'http://localhost:3000';
   },
   credentials: true,
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'x-correlation-id', 'Idempotency-Key', 'x-e2e-secret'],
 }));
 
 // Structured Logging & Correlation ID
 app.use('*', async (c, next) => {
   const correlationId = getCorrelationId(c);
+  const userAgent = c.req.header('user-agent');
+  const clientIp = getClientIp(c);
   c.set('correlationId', correlationId);
   c.header('x-correlation-id', correlationId); // Echo back for debugging
   c.header('x-hono-matched', 'true'); // Verify Hono is hit
   const start = Date.now();
 
-  logRequest('API_REQUEST_START', c.req.path, c.req.method, correlationId);
+  logRequest('API_REQUEST_START', c.req.path, c.req.method, correlationId, {
+    userAgent,
+    clientIp,
+  });
   await next();
 
   const durationMs = Date.now() - start;
   const status = c.res.status;
   const logLevel = status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info';
+  const userId = c.get('userId');
 
   logger[logLevel]({
     event: 'API_REQUEST_END',
@@ -107,6 +118,9 @@ app.use('*', async (c, next) => {
     method: c.req.method,
     status,
     correlationId,
+    userId,
+    userAgent,
+    clientIp,
     durationMs,
   });
 });
@@ -191,6 +205,8 @@ app.notFound((c) => {
 // Standardize error responses
 app.onError((err, c) => {
   const correlationId = c.get('correlationId');
+  const userId = c.get('userId');
+  const userEmail = c.get('userEmail');
   const errorMessage = err.message || '';
 
   const isDuplicate = errorMessage.includes('ER_DUP_ENTRY') || 
@@ -199,6 +215,16 @@ app.onError((err, c) => {
                      (err as any).code === '23505';
 
   if (err instanceof AppError) {
+    if (err.status >= 500) {
+      Sentry.withScope((scope) => {
+        scope.setTag('correlationId', correlationId);
+        scope.setTag('route', c.req.path);
+        scope.setTag('method', c.req.method);
+        scope.setLevel('error');
+        if (userId) scope.setUser({ id: userId, email: userEmail || undefined });
+        Sentry.captureException(err);
+      });
+    }
     return c.json({
       success: false,
       error: { code: err.code, message: err.message, details: err.details, correlationId }
@@ -213,6 +239,14 @@ app.onError((err, c) => {
   }
 
   logError(err, c.req.path, c.req.method, correlationId);
+  Sentry.withScope((scope) => {
+    scope.setTag('correlationId', correlationId);
+    scope.setTag('route', c.req.path);
+    scope.setTag('method', c.req.method);
+    scope.setLevel('error');
+    if (userId) scope.setUser({ id: userId, email: userEmail || undefined });
+    Sentry.captureException(err);
+  });
   return c.json({
     success: false,
     error: { 

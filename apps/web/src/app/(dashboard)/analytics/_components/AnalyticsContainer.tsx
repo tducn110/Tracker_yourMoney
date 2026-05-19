@@ -1,8 +1,17 @@
 'use client';
 
-import { useCategorySpending, useMonthlyTrend } from '@/_lib/hooks/finance';
+import { useState, useMemo } from 'react';
+import { useCategorySpending, useDailySummary, useMonthlyTrend } from '@/_lib/hooks/finance';
 import { AnalyticsView } from './AnalyticsView';
-// Provide an inline skeleton since the ui component might be missing
+
+function getTodayInputValue() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getMonthFromDate(date: string) {
+  return date.slice(0, 7);
+}
+
 function AnalyticsSkeleton() {
   return (
     <div className="p-6 space-y-6 animate-pulse">
@@ -21,37 +30,50 @@ function AnalyticsSkeleton() {
 }
 
 export function AnalyticsContainer() {
-  // Fetch data using hooks
-  const { data: categorySpending, isLoading: isLoadingCat } = useCategorySpending();
-  const { data: monthlyTrend, isLoading: isLoadingTrend } = useMonthlyTrend(6);
+  const [draftDate, setDraftDate] = useState(getTodayInputValue);
+  const [selectedDate, setSelectedDate] = useState(getTodayInputValue);
+  const [trendMonths, setTrendMonths] = useState(6);
+  const selectedMonth = getMonthFromDate(selectedDate);
 
-  if (isLoadingCat || isLoadingTrend) {
+  const { data: categorySpending, isLoading: isLoadingCat } = useCategorySpending(selectedMonth, selectedDate);
+  const { data: dailySummary, isLoading: isLoadingSummary } = useDailySummary(selectedDate);
+  const { data: monthlyTrend, isLoading: isLoadingTrend } = useMonthlyTrend(trendMonths, selectedMonth);
+
+  const isLoading = isLoadingCat || isLoadingSummary || isLoadingTrend;
+
+  const totalIncome = Number(dailySummary?.income ?? 0);
+  const totalExpense = Number(dailySummary?.expense ?? 0);
+  const savings = Number(dailySummary?.savings ?? 0);
+
+  // Trend data — properly hooks into selected endMonth
+  const monthlyData = useMemo(() => {
+    return (monthlyTrend || []).map((trend: any) => ({
+      month: trend.month,
+      income: Number(trend.income || 0),
+      expense: Number(trend.expense || 0),
+    }));
+  }, [monthlyTrend]);
+
+  const selectedDateLabel = new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(selectedDate + 'T00:00:00'));
+
+  const pieData = useMemo(() => {
+    return (categorySpending || [])
+      .map((cat: any) => ({
+        name: cat.categoryName,
+        value: Number(cat.amount ?? cat.totalSpent ?? 0),
+      }))
+      .filter((item) => item.value > 0);
+  }, [categorySpending]);
+
+  const hasStats = totalIncome > 0 || totalExpense > 0;
+
+  if (isLoading) {
     return <AnalyticsSkeleton />;
   }
-
-  // Calculate totals from monthlyTrend
-  let totalIncome = 0;
-  let totalExpense = 0;
-
-  const monthlyData = (monthlyTrend || []).map((trend: any) => {
-    const inc = Number(trend.income);
-    const exp = Number(trend.expense);
-    totalIncome += inc;
-    totalExpense += exp;
-    return {
-      month: trend.month,
-      income: inc,
-      expense: exp,
-    };
-  });
-
-  const savings = totalIncome - totalExpense;
-
-  // Format category data for PieChart
-  const pieData = (categorySpending || []).map((cat: any) => ({
-    name: cat.categoryName,
-    value: Number(cat.totalSpent),
-  }));
 
   return (
     <AnalyticsView
@@ -60,6 +82,14 @@ export function AnalyticsContainer() {
       savings={savings}
       pieData={pieData}
       monthlyData={monthlyData}
+      selectedDate={draftDate}
+      selectedDateLabel={selectedDateLabel}
+      trendMonths={trendMonths}
+      hasStats={hasStats}
+      hasPendingFilter={draftDate !== selectedDate}
+      onDateChange={setDraftDate}
+      onApplyFilter={() => setSelectedDate(draftDate)}
+      onTrendMonthsChange={setTrendMonths}
     />
   );
 }

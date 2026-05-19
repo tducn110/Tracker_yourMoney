@@ -17,7 +17,15 @@ export const logger = pino({
   },
   // Redact sensitive fields — never log PII
   redact: {
-    paths: ["*.password", "*.passwordHash", "*.token", "*.refreshToken", "*.authorization"],
+    paths: [
+      "*.password",
+      "*.passwordHash",
+      "*.token",
+      "*.refreshToken",
+      "*.authorization",
+      "*.cookie",
+      "*.setCookie",
+    ],
     censor: "[REDACTED]",
   },
 });

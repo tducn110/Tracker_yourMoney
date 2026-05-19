@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { formatVND } from '@finance/api-client';
 import { toast } from 'sonner';
+import { formatCurrencyInput, parseCurrencyInput } from '@/_lib/utils/currency-input';
 
 type TransactionType = 'expense' | 'income';
 
@@ -63,18 +64,12 @@ export function MoneyLoverQuickInput() {
   const setSelectedCat  = type === 'expense' ? setExpCat : setIncCat;
   const selectedCat     = cats.find((c) => c.id === selectedCatId) ?? cats[0];
 
-  const formatNumberInput = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
-    if (!numbers) return '';
-    return new Intl.NumberFormat('vi-VN').format(parseInt(numbers, 10));
-  };
-
   const handleAmountChange = (value: string) => {
-    setAmount(formatNumberInput(value));
+    setAmount(formatCurrencyInput(value));
   };
 
   const handleQuickAmount = (value: number) => {
-    setAmount(new Intl.NumberFormat('vi-VN').format(value));
+    setAmount(formatCurrencyInput(value));
   };
 
   const handleTypeChange = (t: TransactionType) => {
@@ -83,7 +78,7 @@ export function MoneyLoverQuickInput() {
   };
 
   const handleSubmit = async () => {
-    const numAmount = parseFloat(amount.replace(/\./g, ''));
+    const numAmount = Number(parseCurrencyInput(amount));
     if (isNaN(numAmount) || numAmount <= 0) {
       toast.error('Vui lòng nhập số tiền hợp lệ');
       return;

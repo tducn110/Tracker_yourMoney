@@ -1,9 +1,17 @@
+/**
+ * Firebase initialisation.
+ *
+ * Reverted to static imports — the dynamic import + proxy pattern caused
+ * a race condition where AuthProvider mounted before the firebase SDK
+ * finished loading, crashing Google login.
+ *
+ * The main bundle-savings came from dynamic imports in layout/page and
+ * MUI removal (~650 KB total).  Firebase static import adds ~112 KB but
+ * is required for reliable auth initialization.
+ */
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  type Auth
-} from "firebase/auth";
+import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,

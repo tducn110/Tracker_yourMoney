@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import {
   Search,
   TrendingUp,
   TrendingDown,
   ArrowUpDown,
   Download,
-  Upload,
   ReceiptText,
   ArrowUpIcon,
   ArrowDownIcon,
@@ -36,6 +35,9 @@ function SummaryBar({ txs }: { txs: Transaction[] }) {
     .reduce((acc, t) => acc.plus(new Decimal(t.amount)), new Decimal(0));
   const net = income.minus(expense);
   const isNetPositive = net.gte(0);
+  const hasData = txs.length > 0;
+
+  if (!hasData) return null;
 
   return (
     <div className="grid grid-cols-3 gap-3">
@@ -193,7 +195,6 @@ interface TransactionsViewProps {
   sortOrder: SortOrder;
   onSortChange: (val: SortOrder) => void;
   onExportCSV?: () => void;
-  onImportCSV?: (file: File) => Promise<void>;
   onLoadMore?: () => void;
   hasMore?: boolean;
   offset?: number;
@@ -211,13 +212,11 @@ export function TransactionsView({
   sortOrder,
   onSortChange,
   onExportCSV,
-  onImportCSV,
   onLoadMore,
   hasMore = false,
   offset = 0,
 }: TransactionsViewProps) {
   const [showSort, setShowSort] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="p-4 md:p-6 pb-24 max-w-[960px] mx-auto space-y-5">
@@ -321,33 +320,7 @@ export function TransactionsView({
           Xuất CSV
         </button>
 
-        {/* Import */}
-        {onImportCSV && (
-          <>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-gray-200 text-[11px] font-bold text-gray-600 hover:border-emerald-300 hover:text-emerald-600 transition-all shadow-sm"
-            >
-              <Upload size={13} />
-              Nhập CSV
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  onImportCSV(file).finally(() => {
-                    // Reset input so same file can be re-imported
-                    if (fileInputRef.current) fileInputRef.current.value = '';
-                  });
-                }
-              }}
-            />
-          </>
-        )}
+
       </div>
 
       {/* Transaction list */}

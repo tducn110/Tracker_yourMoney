@@ -7,7 +7,7 @@
  */
 
 import { useState } from 'react';
-import { Bell, Search, Plus, X, Check, Loader2 } from 'lucide-react';
+import { Bell, Plus } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthProvider';
 import { useTranslations } from '@/locales';
@@ -26,29 +26,6 @@ const getRouteTitles = (t: (key: string) => string): Record<string, string> => (
   '/wallets':      t('nav.wallets'),
 });
 
-
-// ─── Icon button ──────────────────────────────────────────────────────────────
-
-function IconButton({
-  onClick,
-  children,
-  title,
-}: {
-  onClick?: () => void;
-  children: React.ReactNode;
-  title?: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      aria-label={title}
-      className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-blue-50 text-gray-500 hover:text-blue-600 flex items-center justify-center transition-all active:scale-95 shrink-0"
-    >
-      {children}
-    </button>
-  );
-}
 
 // ─── HomeGreeting ─────────────────────────────────────────────────────────────
 
@@ -156,7 +133,6 @@ interface HeaderProps {
 export function Header({ onQuickAddClick }: HeaderProps) {
   const { t } = useTranslations();
   const { user } = useAuth();
-  const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
 
   const isHome    = pathname === '/';
@@ -177,11 +153,6 @@ export function Header({ onQuickAddClick }: HeaderProps) {
 
         {/* Right: actions */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Search toggle */}
-          <IconButton onClick={() => setSearchOpen((v) => !v)} title={t('header.search.tooltip')}>
-            {searchOpen ? <X size={17} /> : <Search size={17} />}
-          </IconButton>
-
           {/* Notifications */}
           <NotificationBell />
 
@@ -203,24 +174,6 @@ export function Header({ onQuickAddClick }: HeaderProps) {
               user?.fullName?.charAt(0).toUpperCase() ?? 'U'
             )}
           </button>
-        </div>
-      </div>
-
-      {/* Search dropdown */}
-      <div
-        className="overflow-hidden transition-all duration-200 border-t border-gray-200/50"
-        style={{ maxHeight: searchOpen ? '80px' : '0px', opacity: searchOpen ? 1 : 0 }}
-      >
-        <div className="px-4 md:px-6 py-3 bg-white/60">
-          <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-100 transition-all">
-            <Search size={16} className="text-gray-400 shrink-0" />
-            <input
-              type="text"
-              placeholder={t('header.search.placeholder')}
-              className="flex-1 bg-transparent outline-none text-[14px] text-gray-900 placeholder:text-gray-400"
-              autoFocus={searchOpen}
-            />
-          </div>
         </div>
       </div>
     </header>

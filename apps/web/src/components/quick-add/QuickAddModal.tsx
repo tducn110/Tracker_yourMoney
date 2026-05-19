@@ -7,7 +7,8 @@
  * - Uses WalletContext
  */
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type React from 'react';
 import { useForm } from 'react-hook-form';
 import {
   Dialog,
@@ -17,16 +18,19 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/loading';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Plus, Coffee, ShoppingCart, Car, Home, Utensils, Zap,
   MoreHorizontal, Check, Briefcase, Gift, Laptop, TrendingUp,
-  Handshake, ShoppingBag, Heart, Film, Book, Phone,
+  Handshake, ShoppingBag, Heart, Film, Book,
 } from 'lucide-react';
 import { formatCurrency } from '@finance/api-client';
 import { useWallet } from '@/app/context/WalletContext';
+import { useCategories, useCreateCategory } from '@/_lib/hooks/finance';
 import { toast } from 'sonner';
 
 interface CreateTransactionDTO {
@@ -69,6 +73,14 @@ const INCOME_CATEGORIES = [
   { id: 'other_in',   label: 'Khác',        icon: MoreHorizontal, color: 'gray' },
 ];
 
+type CategoryOption = {
+  id: string;
+  label: string;
+  icon?: React.ElementType;
+  emoji?: string;
+  color: string;
+};
+
 // Map color name → hex for active state
 const COLOR_MAP: Record<string, string> = {
   emerald: '#10b981', pink: '#ec4899', amber: '#f59e0b', purple: '#8b5cf6',
@@ -80,17 +92,36 @@ const COLOR_MAP: Record<string, string> = {
 
 export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps) {
   const { wallets, defaultWallet } = useWallet();
+  const { data: apiCategories = [] } = useCategories();
+  const createCategory = useCreateCategory();
   const [type, setType]                 = useState<'expense' | 'income'>('expense');
   const [selectedExpCat, setExpCat]     = useState('food');
   const [selectedIncCat, setIncCat]     = useState('salary');
   const [selectedWallet, setWallet]     = useState(defaultWallet?.id ?? wallets[0]?.id ?? '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryIcon, setNewCategoryIcon] = useState('📦');
+  const [newCategoryColor, setNewCategoryColor] = useState('#6B7280');
 
-  const cats         = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  const fallbackCats = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  const dbCats = useMemo<CategoryOption[]>(
+    () =>
+      apiCategories
+        .filter((category) => category.type === type || category.type === 'both')
+        .map((category) => ({
+          id: `id:${category.id}`,
+          label: category.name,
+          emoji: category.icon,
+          color: category.color || '#6b7280',
+        })),
+    [apiCategories, type],
+  );
+  const cats: CategoryOption[] = dbCats.length > 0 ? dbCats : fallbackCats;
   const selectedCat  = type === 'expense' ? selectedExpCat : selectedIncCat;
   const setSelectedCat = type === 'expense' ? setExpCat : setIncCat;
 
-  const { register, handleSubmit, reset, watch } = useForm<CreateTransactionDTO>({
+  const { register, handleSubmit, reset, watch, setValue } = useForm<CreateTransactionDTO>({
     defaultValues: {
       type: 'expense',
       category: 'food',
@@ -102,10 +133,35 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
 
   const amountValue = watch('amount');
 
+  useEffect(() => {
+    register('amount', { required: true, min: 1 });
+  }, [register]);
+
+  const fallbackWalletId = defaultWallet?.id ?? wallets[0]?.id ?? '';
+  const walletIds = useMemo(() => new Set(wallets.map((wallet) => wallet.id)), [wallets]);
+  const actualWalletId = selectedWallet && walletIds.has(selectedWallet)
+    ? selectedWallet
+    : fallbackWalletId;
+
+  useEffect(() => {
+    if (!wallets.length) {
+      setWallet('');
+      return;
+    }
+
+    if (!selectedWallet || !walletIds.has(selectedWallet)) {
+      setWallet(fallbackWalletId);
+    }
+  }, [fallbackWalletId, selectedWallet, walletIds, wallets.length]);
+
   const onFormSubmit = async (data: CreateTransactionDTO) => {
+    if (!actualWalletId) {
+      toast.error('Vui lòng tạo ví trước khi thêm giao dịch');
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await onSubmit({ ...data, type, category: selectedCat, walletId: selectedWallet });
+      await onSubmit({ ...data, type, category: selectedCat, walletId: actualWalletId });
       toast.success('Đã thêm giao dịch thành công!');
       reset();
       onClose();
@@ -118,7 +174,33 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
 
   const handleTypeChange = (v: string) => {
     setType(v as 'expense' | 'income');
+    setShowCategoryForm(false);
     // Keep per-type selection, no category reset
+  };
+
+  const handleCreateCategory = async () => {
+    const name = newCategoryName.trim();
+    if (!name) {
+      toast.error('Vui lòng nhập tên danh mục');
+      return;
+    }
+
+    try {
+      const created = await createCategory.mutateAsync({
+        name,
+        type,
+        icon: newCategoryIcon || '📦',
+        color: newCategoryColor || '#6B7280',
+      });
+      setSelectedCat(`id:${created.id}`);
+      setNewCategoryName('');
+      setNewCategoryIcon('📦');
+      setNewCategoryColor('#6B7280');
+      setShowCategoryForm(false);
+      toast.success('Đã tạo danh mục mới');
+    } catch {
+      // useCreateCategory already shows the API error toast.
+    }
   };
 
   return (
@@ -161,10 +243,12 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
               Số tiền
             </Label>
             <div className="relative">
-              <Input
+              <CurrencyInput
                 id="amount"
-                type="number"
-                {...register('amount', { required: true, min: 0 })}
+                value={String(amountValue || '')}
+                onValueChange={(rawValue) => {
+                  setValue('amount', Number(rawValue || 0), { shouldDirty: true, shouldValidate: true });
+                }}
                 className="text-center text-[32px] font-black h-16 border-none focus-visible:ring-0 bg-transparent text-gray-900 placeholder:text-gray-200"
                 placeholder="0"
                 autoFocus
@@ -179,12 +263,12 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
           </div>
 
           {/* Wallet Selector */}
-          {wallets.length > 1 && (
+          {wallets.length > 0 && (
             <div className="space-y-2">
               <Label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Ví</Label>
               <div className="flex flex-wrap gap-2">
                 {wallets.map((w) => {
-                  const isActive = selectedWallet === w.id;
+                  const isActive = actualWalletId === w.id;
                   return (
                     <button
                       key={w.id}
@@ -212,7 +296,8 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
             <div className="grid grid-cols-3 gap-2">
               {cats.map((cat) => {
                 const isActive = selectedCat === cat.id;
-                const hexColor = COLOR_MAP[cat.color] ?? '#6b7280';
+                const hexColor = COLOR_MAP[cat.color] ?? cat.color ?? '#6b7280';
+                const Icon = cat.icon;
                 return (
                   <button
                     key={cat.id}
@@ -225,12 +310,53 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
                         : { borderColor: '#f1f5f9', backgroundColor: '#fff', color: '#9ca3af' }
                     }
                   >
-                    <cat.icon size={20} />
+                    {Icon ? <Icon size={20} /> : <span className="text-[20px] leading-none">{cat.emoji || '📦'}</span>}
                     <span className="text-[11px] font-bold">{cat.label}</span>
                   </button>
                 );
               })}
+              <button
+                type="button"
+                onClick={() => setShowCategoryForm((value) => !value)}
+                className="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-3 text-gray-500 transition-all hover:border-blue-200 hover:text-blue-600"
+              >
+                <Plus size={20} />
+                <span className="text-[11px] font-bold">Tạo mới</span>
+              </button>
             </div>
+            {showCategoryForm ? (
+              <div className="grid gap-2 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <Input
+                  value={newCategoryName}
+                  onChange={(event) => setNewCategoryName(event.target.value)}
+                  placeholder="Tên danh mục mới"
+                  className="bg-white"
+                />
+                <div className="grid grid-cols-[72px_1fr] gap-2">
+                  <Input
+                    value={newCategoryIcon}
+                    onChange={(event) => setNewCategoryIcon(event.target.value)}
+                    placeholder="Icon"
+                    className="bg-white"
+                  />
+                  <Input
+                    value={newCategoryColor}
+                    onChange={(event) => setNewCategoryColor(event.target.value)}
+                    placeholder="#6B7280"
+                    className="bg-white"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  disabled={createCategory.isPending}
+                  onClick={handleCreateCategory}
+                  className="h-9 rounded-lg"
+                >
+                  {createCategory.isPending ? <Spinner className="mr-2" /> : <Plus className="mr-2 h-4 w-4" />}
+                  Tạo danh mục
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           {/* Note Input */}
@@ -249,15 +375,16 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
           {/* Submit Button */}
           <Button
             type="submit"
-            disabled={isSubmitting || !amountValue}
+            disabled={isSubmitting || !amountValue || !actualWalletId}
             className="w-full h-12 rounded-xl text-[15px] font-black shadow-lg transition-all"
             style={{
               backgroundColor: type === 'expense' ? '#ef4444' : '#10b981',
               color: '#fff',
             }}
           >
+            {isSubmitting ? <Spinner className="mr-2" /> : null}
             {isSubmitting ? 'Đang lưu...' : 'Lưu Giao Dịch'}
-            <Check size={18} className="ml-2" />
+            {!isSubmitting ? <Check size={18} className="ml-2" /> : null}
           </Button>
         </form>
       </DialogContent>

@@ -19,6 +19,7 @@ import { formatVND } from '@finance/api-client';
 import { useWallet } from '@/app/context/WalletContext';
 import { useCreateTransaction, useCategories } from '@/_lib/hooks/finance';
 import { resolveCategoryId } from '@/_lib/category-map';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { toast } from 'sonner';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -197,7 +198,7 @@ interface TransactionPreviewProps {
 }
 
 function TransactionPreview({ amount, typeConfig, category, walletName, walletIcon }: TransactionPreviewProps) {
-  const numAmount = parseFloat(amount.replace(/\./g, '').replace(/,/g, '')) || 0;
+  const numAmount = Number(amount || '0');
   if (!amount) return null;
 
   return (
@@ -251,12 +252,6 @@ export function SimpleQuickInput() {
     else setIncCat(id);
   };
 
-  const formatAmount = (value: string) => {
-    const digits = value.replace(/\D/g, '');
-    if (!digits) return '';
-    return new Intl.NumberFormat('vi-VN').format(parseInt(digits, 10));
-  };
-
   const { mutateAsync: createTransaction } = useCreateTransaction();
   const { data: categories = [] } = useCategories();
 
@@ -271,7 +266,7 @@ export function SimpleQuickInput() {
   };
 
   const handleSubmit = async () => {
-    const num = parseFloat(amount.replace(/\./g, '').replace(/,/g, ''));
+    const num = Number(amount || '0');
     if (isNaN(num) || num <= 0) {
       toast.error('Vui lòng nhập số tiền hợp lệ');
       return;
@@ -326,17 +321,13 @@ export function SimpleQuickInput() {
       {/* ── Row 3: Amount + Note + Submit ── */}
       <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
         <div className="relative shrink-0 w-[180px]">
-          <input
-            type="text"
-            inputMode="numeric"
+          <CurrencyInput
             value={amount}
-            onChange={(e) => setAmount(formatAmount(e.target.value))}
+            onValueChange={setAmount}
             placeholder="Số tiền..."
-            className="w-full h-10 pl-4 pr-8 bg-white border border-gray-200 rounded-xl text-[13px] font-black text-gray-800 placeholder:text-gray-400 outline-none focus:border-blue-400 transition-all"
+            suffix="₫"
+            className="h-10 rounded-xl border border-gray-200 focus:border-blue-400 outline-none text-[13px] font-black text-gray-800 placeholder:text-gray-400 bg-white transition-all"
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-bold text-gray-400">
-            ₫
-          </span>
         </div>
         <input
           type="text"

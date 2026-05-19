@@ -24,7 +24,7 @@ export function QuickStatsCard() {
   }
 
   const income = new Decimal(budgetData?.totalIncome || 0).toNumber();
-  const expense = new Decimal(budgetData?.totalSpent || 0).toNumber();
+  const expense = new Decimal(budgetData?.monthlyExpense || 0).toNumber();
 
   return (
     <div className="grid grid-cols-2 gap-3">

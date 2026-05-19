@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useBills } from '@/_lib/hooks/finance';
 import { formatVND, Bill } from '@finance/api-client';
 import { useTranslations } from '@/locales';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function UpcomingBillsCard() {
   const router = useRouter();
@@ -14,9 +15,10 @@ export function UpcomingBillsCard() {
   const allBills = Array.isArray(billsData) ? (billsData as Bill[]) : [];
   
   const activeBills = useMemo(() => {
-    const active = allBills.filter((b) => b.status === 'active');
-    active.sort((a, b) => new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime());
-    return active;
+    // Backend trả về isActive (boolean), không phải status (string)
+    return allBills
+      .filter((b) => b.isActive === true)
+      .sort((a, b) => a.dueDay - b.dueDay);
   }, [allBills]);
 
   return (
@@ -36,13 +38,27 @@ export function UpcomingBillsCard() {
         </button>
       </div>
       <div className="p-2 divide-y divide-gray-50/80 flex-1 overflow-y-auto">
-        {activeBills.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-2 p-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="flex items-center gap-3 px-1 py-2">
+                <Skeleton className="h-8 w-8 rounded-xl bg-gray-100" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3.5 w-28 bg-gray-100" />
+                  <Skeleton className="h-3 w-20 bg-gray-100" />
+                </div>
+                <Skeleton className="h-4 w-16 bg-gray-100" />
+              </div>
+            ))}
+          </div>
+        ) : activeBills.length === 0 ? (
           <div className="py-8 text-center text-[12px] text-gray-500 font-medium">
             {t('dashboard.bills.noBills')}
           </div>
         ) : (
           activeBills.slice(0, 4).map((bill) => {
-            const overdue = new Date(bill.nextDueDate).getTime() < new Date().getTime();
+            const today = new Date().getDate();
+            const overdue = bill.dueDay < today;
             return (
               <div key={bill.id} className="flex items-center gap-3 px-3 py-2.5">
                 <div

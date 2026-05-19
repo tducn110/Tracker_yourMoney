@@ -6,7 +6,7 @@ import { logger } from "../../lib/logger";
 /**
  * AI NLP Adapter — uses any OpenAI-compatible LLM via REST API.
  *
- * Default: OpenRouter (inclusionai/ring-2.6-1t:free)
+ * Default: OpenRouter (meta-llama/llama-3.3-70b-instruct:free)
  * Config via env vars: AI_API_KEY, AI_MODEL, AI_BASE_URL
  *
  * On any failure (timeout, auth, parse), throws UnparseableInputError
@@ -21,7 +21,7 @@ export class GeminiNLPAdapter implements INLPAdapter {
   constructor(opts?: { apiKey?: string; baseUrl?: string; model?: string; timeoutMs?: number }) {
     this.apiKey = opts?.apiKey || process.env.AI_API_KEY || "";
     this.baseUrl = opts?.baseUrl || process.env.AI_BASE_URL || "https://openrouter.ai/api/v1";
-    this.model = opts?.model || process.env.AI_MODEL || "inclusionai/ring-2.6-1t:free";
+    this.model = opts?.model || process.env.AI_MODEL || "meta-llama/llama-3.3-70b-instruct:free";
     this.timeoutMs = opts?.timeoutMs || 15000;
   }
 
@@ -55,12 +55,13 @@ export class GeminiNLPAdapter implements INLPAdapter {
               content: `Bạn là trợ lý tài chính thông minh. Phân tích tin nhắn tiếng Việt và trả về CHỈ JSON:
 
 {
-  "intent": "transaction" | "create_wallet" | "create_category",
+  "intent": "transaction" | "create_wallet" | "create_category" | "unknown",
   "amount": "<số, ví dụ: 50000>",
   "type": "expense" | "income",
   "note": "<mô tả>",
   "keyword": "<danh mục, ví dụ: Ăn uống>",
   "walletName": "<tên ví, ví dụ: MoMo>",
+  "suggestion": "<phản hồi thân thiện khi intent là unknown>",
   "metadata": {
     "icon": "<emoji phù hợp>",
     "color": "<mã màu hex phù hợp>",
@@ -74,7 +75,8 @@ Quy tắc:
 3. Nếu người dùng nói "tạo danh mục", "thêm nhóm chi tiêu" -> intent: "create_category".
 4. Nếu là giao dịch: "50k" = 50000, "1.5tr" = 1500000.
 5. LUÔN LUÔN cung cấp metadata (icon là 1 emoji, color là mã hex tươi sáng) phù hợp cho mọi intent.
-6. Note bỏ qua số tiền và tên ví.`
+6. Note bỏ qua số tiền và tên ví.
+7. Nếu tin nhắn KHÔNG liên quan đến tài chính (ví dụ: "đi ngủ", "hello", "hôm nay trời đẹp") -> intent: "unknown", suggestion là phản hồi thân thiện bằng tiếng Việt gợi ý người dùng ghi giao dịch (ví dụ: "Mình chưa hiểu ý bạn 😊 Bạn có muốn ghi một khoản chi tiêu không? Ví dụ: 'ăn tối 80k' hoặc 'nhận lương 5tr'").`
             },
             { role: "user", content: text }
           ],
@@ -143,7 +145,17 @@ Quy tắc:
   /** Validate and normalize parsed fields into NLPParsedResult. */
   private normalizeResult(parsed: any, text: string): NLPParsedResult {
     const intent = parsed.intent || "transaction";
-    
+
+    // Handle unknown intent — return suggestion instead of throwing
+    if (intent === "unknown") {
+      const suggestion = String(
+        parsed.suggestion ||
+          "Mình chưa hiểu ý bạn 😊 Bạn có muốn ghi một khoản chi tiêu không? Ví dụ: 'ăn tối 80k' hoặc 'nhận lương 5tr'"
+      );
+      logger.info({ event: "AI_INTENT_UNKNOWN", input: text, suggestion });
+      return { intent: "unknown", suggestion };
+    }
+
     // For transaction, we need amount. For creation, we need names.
     if (intent === "transaction" && !parsed.amount && !parsed.type) {
        logger.warn({ event: "AI_MISSING_TRANSACTION_FIELDS", parsed });

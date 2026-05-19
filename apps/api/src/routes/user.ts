@@ -10,6 +10,25 @@ import { ok, err } from "../lib/response";
 
 const onboardingCompleteSchema = z.object({
   seedSamplePack: z.boolean().default(false),
+  categories: z.array(z.object({
+    name: z.string().min(1).max(50).trim(),
+    type: z.enum(["income", "expense"]),
+    icon: z.string().max(20).optional(),
+    color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+    sortOrder: z.number().int().optional(),
+  })).default([]),
+  sampleTransactions: z.array(z.object({
+    categoryName: z.string().min(1).max(50).trim(),
+    amount: z.string().regex(/^\d+(\.\d{1,2})?$/),
+    type: z.enum(["income", "expense"]),
+    note: z.string().max(255).optional(),
+    displayDate: z.string().optional(),
+  })).default([]),
+  wallet: z.object({
+    name: z.string().min(1).max(80).trim(),
+    type: z.enum(["cash", "bank", "credit", "e_wallet", "investment", "other"]),
+    initialBalance: z.string().regex(/^\d+(\.\d{1,2})?$/),
+  }).optional(),
 });
 
 const DEFAULT_CATEGORIES = [
@@ -81,6 +100,84 @@ async function ensureDefaultCategories(userId: string) {
   await db.insert(categories).values(
     missingCategories.map((category) => ({ userId, ...category }))
   );
+}
+
+async function ensureDraftCategories(
+  userId: string,
+  draftCategories: Array<{
+    name: string;
+    type: "income" | "expense";
+    icon?: string;
+    color?: string;
+    sortOrder?: number;
+  }>,
+) {
+  if (draftCategories.length === 0) return;
+
+  const existing = await db
+    .select({ name: categories.name })
+    .from(categories)
+    .where(eq(categories.userId, userId as any));
+
+  const existingNames = new Set(existing.map((category) => category.name.toLowerCase()));
+  const uniqueDrafts = draftCategories.filter((category, index, list) => {
+    const normalized = category.name.toLowerCase();
+    return (
+      !existingNames.has(normalized) &&
+      list.findIndex((item) => item.name.toLowerCase() === normalized) === index
+    );
+  });
+
+  if (uniqueDrafts.length === 0) return;
+
+  await db.insert(categories).values(
+    uniqueDrafts.map((category, index) => ({
+      userId,
+      name: category.name,
+      type: category.type,
+      icon: category.icon || "📦",
+      color: category.color || "#6B7280",
+      sortOrder: category.sortOrder ?? index + 1,
+    })),
+  );
+}
+
+async function seedDraftTransactions(
+  userId: string,
+  walletId: string,
+  draftTransactions: Array<{
+    categoryName: string;
+    amount: string;
+    type: "income" | "expense";
+    note?: string;
+    displayDate?: string;
+  }>,
+) {
+  for (const sample of draftTransactions) {
+    const [category] = await db
+      .select({ id: categories.id })
+      .from(categories)
+      .where(
+        and(
+          eq(categories.userId, userId as any),
+          eq(categories.name, sample.categoryName),
+        ),
+      )
+      .limit(1);
+
+    if (!category) continue;
+
+    await db.insert(transactions).values({
+      userId: userId as any,
+      walletId: walletId as any,
+      categoryId: category.id,
+      amount: sample.amount,
+      type: sample.type,
+      note: sample.note || null,
+      displayDate: sample.displayDate || new Date().toISOString().slice(0, 10),
+      source: "manual",
+    } as any);
+  }
 }
 
 async function seedSamplePackIfNeeded(userId: string, walletId: string) {
@@ -251,7 +348,7 @@ export const userRoutes = new Hono<{ Variables: { userId: string } }>()
   // POST /api/v1/user/onboarding/complete
   .post("/onboarding/complete", zValidator("json", onboardingCompleteSchema), async (c) => {
     const userId = c.get("userId");
-    const { seedSamplePack } = c.req.valid("json");
+    const { seedSamplePack, categories: draftCategories, sampleTransactions, wallet: walletDraft } = c.req.valid("json");
 
     const [profile] = await db
       .select({
@@ -273,9 +370,38 @@ export const userRoutes = new Hono<{ Variables: { userId: string } }>()
 
     await getOrCreateUserSettings(userId);
 
-    const wallet = await getDefaultWallet(userId);
+    let wallet = await getDefaultWallet(userId);
+    if (!wallet && walletDraft) {
+      const [createdWallet] = await db
+        .insert(wallets)
+        .values({
+          userId: userId as any,
+          name: walletDraft.name,
+          type: walletDraft.type,
+          balance: walletDraft.initialBalance,
+          initialBalance: walletDraft.initialBalance,
+          icon: "",
+          color: "#0F766E",
+          isDefault: true,
+        } as any)
+        .returning({
+          id: wallets.id,
+          name: wallets.name,
+          type: wallets.type,
+          balance: wallets.balance,
+          isDefault: wallets.isDefault,
+        });
+
+      wallet = createdWallet ?? null;
+    }
+
     if (!wallet) {
       return err(c, 400, "WALLET_REQUIRED", "Vui lòng tạo ví đầu tiên trước khi hoàn tất");
+    }
+
+    await ensureDraftCategories(userId, draftCategories);
+    if (sampleTransactions.length > 0) {
+      await seedDraftTransactions(userId, String(wallet.id), sampleTransactions);
     }
 
     const samplePackSeeded = seedSamplePack ? await seedSamplePackIfNeeded(userId, String(wallet.id)) : false;

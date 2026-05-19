@@ -68,7 +68,7 @@ export default function LoginPage() {
                 {loading === 'google' ? 'Đang kết nối...' : 'Tiếp tục với Google'}
               </span>
             </button>
-            
+
             <p className="text-[13px] text-center leading-relaxed text-slate-400 mt-6">
               Bằng cách đăng nhập, bạn đồng ý với <a href="#" className="underline hover:text-blue-600 transition-colors">Điều khoản dịch vụ</a> và <a href="#" className="underline hover:text-blue-600 transition-colors">Chính sách bảo mật</a> của chúng tôi.
             </p>

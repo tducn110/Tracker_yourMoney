@@ -6,6 +6,8 @@ import { motion } from 'motion/react';
 import Decimal from 'decimal.js';
 import { formatVND } from '@finance/api-client';
 import type { Bill as BillType } from '@finance/api-client';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { parseCurrencyInput } from '@/_lib/utils/currency-input';
 
 // ── Types ──────────────────────────────────────────────────────────────
 export type PaymentStatus = 'paid' | 'partial' | 'pending' | 'overdue';
@@ -81,7 +83,7 @@ export function BillsView({
     await onAddBill({
       name: newBill.name,
       icon: newBill.icon,
-      amount: newBill.amount.replace(/\D/g, '') || '0',
+      amount: parseCurrencyInput(newBill.amount) || '0',
       categoryId: parseInt(newBill.categoryId) || 1,
       dueDay: parseInt(newBill.dueDay) || 1,
       frequency: newBill.frequency,
@@ -317,10 +319,9 @@ export function BillsView({
                 <label className="block text-[12px] font-black text-gray-600 mb-1.5 uppercase tracking-wide">
                   Số tiền (₫)
                 </label>
-                <input
-                  type="text"
+                <CurrencyInput
                   value={newBill.amount}
-                  onChange={(e) => setNewBill({ ...newBill, amount: e.target.value })}
+                  onValueChange={(raw) => setNewBill({ ...newBill, amount: raw })}
                   placeholder="350,000"
                   required
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-[14px] font-bold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100 bg-gray-50 text-gray-900 transition-all"

@@ -23,6 +23,7 @@ import { formatVND } from '@finance/api-client';
 import { transactionsAPI } from '@finance/api-client';
 import { useWallet } from '@/app/context/WalletContext';
 import { toast } from 'sonner';
+import * as Sentry from '@sentry/nextjs';
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -144,6 +145,8 @@ export function InlineChatQuickAdd() {
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const processingRef = useRef(false);
+  const queueRef = useRef<string[]>([]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -151,11 +154,22 @@ export function InlineChatQuickAdd() {
     }
   }, [messages, isTyping]);
 
-  // ── Send: parse locally for instant preview ──
-  const handleSend = async (text?: string) => {
-    const rawInput = (text ?? inputValue).trim();
-    if (!rawInput) return;
+  // ── Send: parse locally for instant preview, or ask AI for non-financial input ──
+  const processQueue = async () => {
+    if (processingRef.current || queueRef.current.length === 0) return;
+    processingRef.current = true;
 
+    while (queueRef.current.length > 0) {
+      const nextInput = queueRef.current.shift();
+      if (nextInput) {
+        await processInput(nextInput);
+      }
+    }
+
+    processingRef.current = false;
+  };
+
+  const processInput = async (rawInput: string) => {
     const userMsg: Message = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -163,7 +177,6 @@ export function InlineChatQuickAdd() {
       timestamp: new Date(),
     };
     setMessages(prev => [...prev, userMsg]);
-    setInputValue('');
     setIsTyping(true);
 
     // Simulate AI thinking time (300-800ms)
@@ -171,15 +184,63 @@ export function InlineChatQuickAdd() {
 
     const parsed = parsePreview(rawInput);
 
+    // No amount detected locally → call backend AI to let Gemini handle it
+    // (AI may return intent:"unknown" with a friendly suggestion, or still parse correctly)
     if (!parsed.amount) {
-      const errMsg: Message = {
-        id: `err-${Date.now()}`,
-        role: 'bot',
-        content: `Mình chưa nhận diện được số tiền. Bạn thử lại với định dạng: **"ăn sáng 50k"** hoặc **"mua sách 200k"** nhé!`,
-        timestamp: new Date(),
-        error: true,
-      };
-      setMessages(prev => [...prev, errMsg]);
+      try {
+        const walletId = defaultWallet?.id ?? wallets[0]?.id;
+        const result = await transactionsAPI.quickAdd(rawInput, walletId ? { walletId } : undefined);
+        const responseData = result?.data ?? result;
+
+        // intent:"unknown" → show AI's friendly suggestion
+        if (responseData?.type === 'unknown' || result?.type === 'unknown') {
+          const suggestion = responseData?.message || result?.message ||
+            'Mình chưa hiểu ý bạn 😊 Bạn có muốn ghi một khoản chi tiêu không? Ví dụ: \'ăn tối 80k\' hoặc \'nhận lương 5tr\'';
+          const aiMsg: Message = {
+            id: `ai-${Date.now()}`,
+            role: 'bot',
+            content: suggestion,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, aiMsg]);
+          setIsTyping(false);
+          return;
+        }
+
+        // AI managed to parse it → show success and refresh
+        const savedTransaction = responseData?.data ?? responseData?.transaction ?? responseData;
+        const savedNote = savedTransaction?.note || rawInput;
+        const savedAmount = Number(savedTransaction?.amount ?? 0);
+
+        const successMsg: Message = {
+          id: `confirm-${Date.now()}`,
+          role: 'bot',
+          content: `✅ Đã lưu: **${savedNote}** — **${formatVND(savedAmount)}** vào danh sách giao dịch!`,
+          timestamp: new Date(),
+          confirmed: true,
+        };
+        setMessages(prev => [...prev, successMsg]);
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
+        queryClient.invalidateQueries({ queryKey: ['analytics'] });
+        queryClient.invalidateQueries({ queryKey: ['wallets'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
+      } catch (err: any) {
+        Sentry.captureException(err, { tags: { feature: 'inline_chat_quick_add' } });
+        const apiMsg = err?.response?.data?.error?.message || '';
+        const suggestion = apiMsg.includes('Không thể nhận diện')
+          ? 'Mình chưa nhận ra giao dịch này. Thử nhập rõ hơn nhé — ví dụ: **"ăn tối 80k"** hoặc **"nhận lương 5tr"**!'
+          : (apiMsg || 'Mình chưa nhận diện được số tiền. Bạn thử lại với định dạng: **"ăn sáng 50k"** hoặc **"mua sách 200k"** nhé!');
+        const errMsg: Message = {
+          id: `err-${Date.now()}`,
+          role: 'bot',
+          content: suggestion,
+          timestamp: new Date(),
+          error: true,
+        };
+        setMessages(prev => [...prev, errMsg]);
+      }
       setIsTyping(false);
       return;
     }
@@ -197,6 +258,15 @@ export function InlineChatQuickAdd() {
     };
     setMessages(prev => [...prev, botMsg]);
     setIsTyping(false);
+  };
+
+  const handleSend = (text?: string) => {
+    const rawInput = (text ?? inputValue).trim();
+    if (!rawInput) return;
+    
+    setInputValue('');
+    queueRef.current.push(rawInput);
+    processQueue();
   };
 
   // ── Confirm: call real API (backend re-parses with Gemini + saves) ──
@@ -236,9 +306,13 @@ export function InlineChatQuickAdd() {
       // Invalidate queries to refresh budget summary and transactions
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
     } catch (err: any) {
+      Sentry.captureException(err, { tags: { feature: 'inline_chat_confirm' } });
       // Rollback optimistic UI
       setMessages(prev =>
         prev.map(m => m.id === msg.id ? { ...m, confirmed: false } : m)
@@ -257,7 +331,6 @@ export function InlineChatQuickAdd() {
         error: true,
       };
       setMessages(prev => [...prev, errMsg]);
-      toast.error(apiError || 'Có lỗi xảy ra khi lưu giao dịch.');
     }
   };
 
@@ -286,7 +359,7 @@ export function InlineChatQuickAdd() {
         </div>
         <div>
           <h2 className="text-[15px] font-black text-white">Finny AI</h2>
-          <p className="text-[11px] font-bold text-blue-200">OpenRouter AI • Online</p>
+          <p className="text-[11px] font-bold text-blue-200">Gemini AI • Online</p>
         </div>
         <div className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-white/10 rounded-full">
           <Sparkles size={12} className="text-yellow-300" />

@@ -1,6 +1,7 @@
 'use client';
 
 import { useGoals, useCreateGoal, useContributeGoal, useUpdateGoal, useWallets } from '@/_lib/hooks/finance';
+import { formatVND } from '@finance/api-client';
 import type { Goal as GoalType } from '@finance/api-client';
 import Decimal from 'decimal.js';
 import confetti from 'canvas-confetti';
@@ -57,32 +58,37 @@ export function GoalsContainer() {
     }
   };
 
-  const handleContribute = (goalId: string, amount: string) => {
+  const handleContribute = async (goalId: string, amount: string) => {
     if (!defaultWalletId) {
       toast.error('Chưa có ví nào. Vui lòng tạo ví trước.');
       return;
     }
-    contributeGoal.mutate({
-      id: goalId,
-      data: {
-        walletId: String(defaultWalletId),
-        amount,
-      },
-    });
+    try {
+      await contributeGoal.mutateAsync({
+        id: goalId,
+        data: {
+          walletId: String(defaultWalletId),
+          amount,
+        },
+      });
+      toast.success(`Đã góp ${formatVND(amount)} vào mục tiêu 🎯`);
 
-    // Check if goal will be completed
-    const goal = activeGoals.find(g => g.id === goalId);
-    if (goal) {
-      const currentSaved = new Decimal(goal.currentSaved || 0);
-      const targetAmount = new Decimal(goal.targetAmount || 1);
-      const newSaved = currentSaved.plus(new Decimal(amount));
-      if (newSaved.gte(targetAmount)) {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-        });
+      // Check if goal will be completed
+      const goal = activeGoals.find(g => g.id === goalId);
+      if (goal) {
+        const currentSaved = new Decimal(goal.currentSaved || 0);
+        const targetAmount = new Decimal(goal.targetAmount || 1);
+        const newSaved = currentSaved.plus(new Decimal(amount));
+        if (newSaved.gte(targetAmount)) {
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+        }
       }
+    } catch (e: any) {
+      toast.error(e?.message || 'Góp thất bại');
     }
   };
 

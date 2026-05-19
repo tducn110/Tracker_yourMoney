@@ -6,6 +6,8 @@ import { motion } from 'motion/react';
 import Decimal from 'decimal.js';
 import { formatVND } from '@finance/api-client';
 import type { Goal as GoalType } from '@finance/api-client';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { parseCurrencyInput } from '@/_lib/utils/currency-input';
 
 // ── Types ──────────────────────────────────────────────────────────────
 export type GoalStatus = 'active' | 'completed' | 'paused' | 'cancelled';
@@ -65,7 +67,7 @@ export function GoalsView({
 
   // ── Impact Calculator ──────────────────────────────────────────
   const handleImpactCheck = () => {
-    const amount = parseInt(impactAmount.replace(/\D/g, ''));
+    const amount = Number(parseCurrencyInput(impactAmount));
     if (!amount) return;
     const activeGoal = activeGoals[0];
     if (!activeGoal) {
@@ -88,8 +90,8 @@ export function GoalsView({
     await onAddGoal({
       name: newGoal.name,
       icon: newGoal.icon,
-      targetAmount: newGoal.targetAmount.replace(/\D/g, '') || '0',
-      monthlyContribution: newGoal.monthlyContribution.replace(/\D/g, '') || '0',
+      targetAmount: parseCurrencyInput(newGoal.targetAmount) || '0',
+      monthlyContribution: parseCurrencyInput(newGoal.monthlyContribution) || '0',
     });
     setShowModal(false);
     setNewGoal({ name: '', icon: '🎯', targetAmount: '', monthlyContribution: '' });
@@ -244,14 +246,14 @@ export function GoalsView({
                           onContribute?.(goal.id, amt);
                         }}
                         disabled={isMutating}
-                        className="text-[11px] font-black text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                        className="px-4 py-2 rounded-lg text-[12px] font-black text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors disabled:opacity-50"
                       >
                         + Góp
                       </button>
                       {/* Toggle Status */}
                       <button
                         onClick={() => onToggleStatus?.(goal.id, 'paused')}
-                        className="flex items-center gap-1 text-[11px] font-bold px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors text-amber-600"
+                        className="px-4 py-2 rounded-lg text-[12px] font-bold bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors"
                       >
                         ⏸ Tạm dừng
                       </button>
@@ -400,10 +402,9 @@ export function GoalsView({
           </div>
         </div>
         <div className="flex gap-3">
-          <input
-            type="text"
+          <CurrencyInput
             value={impactAmount}
-            onChange={(e) => setImpactAmount(e.target.value)}
+            onValueChange={setImpactAmount}
             placeholder="Nhập số tiền muốn chi..."
             className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-[13px] font-bold outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100 bg-gray-50 text-gray-900 transition-all"
           />
@@ -483,10 +484,9 @@ export function GoalsView({
                 <label className="block text-[12px] font-black text-gray-600 mb-1.5 uppercase tracking-wide">
                   Số tiền mục tiêu (₫)
                 </label>
-                <input
-                  type="text"
+                <CurrencyInput
                   value={newGoal.targetAmount}
-                  onChange={(e) => setNewGoal({ ...newGoal, targetAmount: e.target.value })}
+                  onValueChange={(value) => setNewGoal({ ...newGoal, targetAmount: value })}
                   placeholder="25,000,000"
                   required
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-[14px] font-bold outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 bg-gray-50 text-gray-900 transition-all"
@@ -498,10 +498,9 @@ export function GoalsView({
                 <label className="block text-[12px] font-black text-gray-600 mb-1.5 uppercase tracking-wide">
                   Góp hàng tháng (₫)
                 </label>
-                <input
-                  type="text"
+                <CurrencyInput
                   value={newGoal.monthlyContribution}
-                  onChange={(e) => setNewGoal({ ...newGoal, monthlyContribution: e.target.value })}
+                  onValueChange={(value) => setNewGoal({ ...newGoal, monthlyContribution: value })}
                   placeholder="2,000,000"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 text-[14px] font-bold outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 bg-gray-50 text-gray-900 transition-all"
                 />

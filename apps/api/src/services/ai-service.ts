@@ -12,6 +12,7 @@ import { logger } from "../lib/logger";
  * - Suggesting a complete wallet set for new users
  *
  * Uses OpenRouter-compatible LLM API (config via env: AI_API_KEY, AI_BASE_URL, AI_MODEL).
+ * Default model: meta-llama/llama-3.3-70b-instruct:free
  */
 export class AIService {
   private readonly baseUrl: string;
@@ -26,7 +27,7 @@ export class AIService {
   ) {
     this.apiKey = opts?.apiKey || process.env.AI_API_KEY || "";
     this.baseUrl = opts?.baseUrl || process.env.AI_BASE_URL || "https://openrouter.ai/api/v1";
-    this.model = opts?.model || process.env.AI_MODEL || "inclusionai/ring-2.6-1t:free";
+    this.model = opts?.model || process.env.AI_MODEL || "meta-llama/llama-3.3-70b-instruct:free";
     this.timeoutMs = opts?.timeoutMs || 8000;
   }
 
@@ -65,10 +66,9 @@ export class AIService {
       return matched.id;
     }
 
-    // 2. Ask AI to generate category metadata OR use provided metadata
-    if (!this.apiKey && !metadata) {
-      // No AI key and no metadata — create a basic category with keyword as name
-      return this.createFallbackCategory(userId, keyword, type, categories.length);
+    // 2. If no API key, always create fallback regardless of metadata
+    if (!this.apiKey) {
+      return this.createFallbackCategory(userId, keyword, type, categories.length, metadata);
     }
 
     try {
@@ -115,7 +115,8 @@ export class AIService {
     userId: string,
     name: string,
     type: "income" | "expense",
-    sortOrder: number
+    sortOrder: number,
+    metadata?: { icon?: string; color?: string }
   ): Promise<number> {
     const fallbackIcons: Record<string, string> = {
       income: "💰",
@@ -131,8 +132,8 @@ export class AIService {
       userId: userId as any,
       name: capName,
       type: type as any,
-      icon: fallbackIcons[type] || "📦",
-      color: fallbackColors[type] || "#6b7280",
+      icon: metadata?.icon || fallbackIcons[type] || "📦",
+      color: metadata?.color || fallbackColors[type] || "#6b7280",
       sortOrder,
     });
 
@@ -204,9 +205,9 @@ Ví dụ:
       return String(matched.id);
     }
 
-    // 2. Ask AI to generate wallet metadata OR use provided metadata
-    if (!this.apiKey && !metadata) {
-      return this.createFallbackWallet(userId, walletHint);
+    // 2. If no API key, always create fallback regardless of metadata
+    if (!this.apiKey) {
+      return this.createFallbackWallet(userId, walletHint, metadata);
     }
 
     try {
@@ -220,10 +221,16 @@ Ví dụ:
       );
       if (exact) return String(exact.id);
 
+      // Validate wallet type
+      const validTypes = ["cash", "bank", "credit", "e_wallet", "investment", "other"];
+      const walletType = (meta.type && validTypes.includes(meta.type))
+        ? (meta.type as "cash" | "bank" | "credit" | "e_wallet" | "investment" | "other")
+        : "cash";
+
       // 4. Create wallet
       const created = await this.walletService.createWallet(userId, {
         name: meta.name,
-        type: meta.type as any,
+        type: walletType,
         icon: meta.icon,
         color: meta.color,
         initialBalance: metadata?.initialBalance || "0.00",
@@ -244,13 +251,17 @@ Ví dụ:
     }
   }
 
-  private async createFallbackWallet(userId: string, name: string): Promise<string> {
+  private async createFallbackWallet(userId: string, name: string, metadata?: { type?: string; icon?: string; color?: string }): Promise<string> {
     const capName = name.charAt(0).toUpperCase() + name.slice(1);
+    const validTypes = ["cash", "bank", "credit", "e_wallet", "investment", "other"];
+    const walletType = (metadata?.type && validTypes.includes(metadata.type))
+      ? (metadata.type as "cash" | "bank" | "credit" | "e_wallet" | "investment" | "other")
+      : "cash";
     const created = await this.walletService.createWallet(userId, {
       name: capName,
-      type: "cash",
-      icon: "💵",
-      color: "#6b7280",
+      type: walletType,
+      icon: metadata?.icon || "💵",
+      color: metadata?.color || "#6b7280",
       initialBalance: "0.00",
     });
     logger.info({ event: "AI_WALLET_FALLBACK", name: capName, userId });

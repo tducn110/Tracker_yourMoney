@@ -1,0 +1,14 @@
+.git
+.turbo
+node_modules
+.next
+.gitnexus
+.claude
+.codersinflow
+doc
+.code-review-graph
+packages/*/node_modules
+packages/*/dist
+apps/*/node_modules
+apps/*/.next
+apps/*/dist

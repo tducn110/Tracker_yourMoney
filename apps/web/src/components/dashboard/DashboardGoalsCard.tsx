@@ -12,6 +12,7 @@ import { useGoals } from '@/_lib/hooks/finance';
 import { formatVND, Goal } from '@finance/api-client';
 import Decimal from 'decimal.js';
 import { useTranslations } from '@/locales';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ─── Goal Row ─────────────────────────────────────────────────────────────────
 
@@ -141,7 +142,21 @@ export function DashboardGoalsCard() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {/* Goal list */}
         <div className="p-2">
-          {goals.length === 0 ? (
+          {isLoading ? (
+            <div className="space-y-2 p-2">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="flex items-center gap-3 px-2 py-2">
+                  <Skeleton className="h-11 w-11 rounded-xl bg-gray-100" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-3.5 w-36 bg-gray-100" />
+                    <Skeleton className="h-3 w-48 bg-gray-100" />
+                    <Skeleton className="h-1.5 w-full bg-gray-100" />
+                  </div>
+                  <Skeleton className="h-4 w-9 bg-gray-100" />
+                </div>
+              ))}
+            </div>
+          ) : goals.length === 0 ? (
             <div className="py-8 text-center text-[12px] text-gray-500 font-medium">
               {t('dashboard.goals.noGoals')}
             </div>

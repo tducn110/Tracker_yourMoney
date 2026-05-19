@@ -242,6 +242,7 @@ export default function BudgetsPage() {
         onClose={handleFormClose}
         onSubmit={editingBudget ? handleEdit : handleCreate}
         initialData={editingBudget}
+        isPending={createBudget.isPending || updateBudget.isPending}
       />
     </div>
   );

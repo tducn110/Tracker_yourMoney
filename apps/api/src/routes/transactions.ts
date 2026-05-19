@@ -75,6 +75,13 @@ export const transactionRoutes = new Hono<{ Variables: { userId: string, correla
         message = `Ví "${result.data.name}" đã được tạo thành công!`;
       } else if (result.type === 'category') {
         message = `Danh mục "${result.data.name}" đã được tạo thành công!`;
+      } else if (result.type === 'unknown') {
+        // AI hiểu input nhưng không phải giao dịch tài chính → trả gợi ý thân thiện
+        return ok(c, {
+          success: false,
+          type: 'unknown',
+          message: result.suggestion,
+        });
       }
 
       return created(c, {
@@ -126,48 +133,6 @@ export const transactionRoutes = new Hono<{ Variables: { userId: string, correla
 
   // DELETE is intentionally not exposed — transactions are immutable ledger entries.
   // To reverse a transaction, create a reversal (income → expense or vice versa).
-
-  // POST /api/v1/transactions/import — CSV bulk import
-  .post("/import", async (c) => {
-    const userId = c.get("userId");
-    const correlationId = c.get("correlationId");
-    const idempotencyKey = c.req.header("Idempotency-Key");
-
-    // Idempotency check for the entire import batch
-    if (idempotencyKey) {
-      const existing = await transactionService.getTransactionByIdempotencyKey(userId, idempotencyKey);
-      if (existing) {
-        return err(c, 409, "CONFLICT", "File này đã được import trước đó", { id: existing.id });
-      }
-    }
-
-    const formData = await c.req.formData();
-    const file = formData.get("file") as File | null;
-    const walletId = formData.get("walletId") as string | null;
-
-    if (!file) return err(c, 400, "BAD_REQUEST", "Vui lòng chọn file CSV");
-    if (!walletId) return err(c, 400, "BAD_REQUEST", "Vui lòng chọn ví");
-
-    try {
-      const text = await file.text();
-      const result = await transactionService.importCSV(userId, text, walletId, idempotencyKey);
-      logger.info({
-        event: "CSV_IMPORT_COMPLETE",
-        correlationId,
-        imported: result.imported,
-        skipped: result.skipped,
-        errors: result.errors,
-      });
-      return created(c, result);
-    } catch (e: any) {
-      logger.error({
-        event: "CSV_IMPORT_FAILED",
-        correlationId,
-        message: e.message,
-      });
-      return err(c, 422, "IMPORT_FAILED", e.message || "Không thể import file CSV");
-    }
-  })
 
   ;
 
