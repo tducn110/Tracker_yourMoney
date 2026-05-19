@@ -25,6 +25,7 @@
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
+    "gitnexus": "1.6.5",
     "prettier": "^3.8.3",
     "turbo": "^2.9.6",
     "typescript": "^6.0.3"

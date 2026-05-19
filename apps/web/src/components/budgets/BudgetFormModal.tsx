@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { X, Info, AlertCircle } from 'lucide-react';
+import { X, Info, AlertCircle, Loader2 } from 'lucide-react';
 import { useCategories } from '@/_lib/hooks/finance';
 import { formatVND, Category } from '@finance/api-client';
 
@@ -18,6 +18,7 @@ interface BudgetFormModalProps {
   onClose: () => void;
   onSubmit: (data: BudgetFormData) => void;
   initialData?: any;
+  isPending?: boolean;
 }
 
 export interface BudgetFormData {
@@ -88,7 +89,7 @@ function getDefaultDates(period: BudgetPeriod): { start: string; end: string } {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData }: BudgetFormModalProps) {
+export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData, isPending }: BudgetFormModalProps) {
   const isEditing = !!initialData;
   const { data: categories = [], isLoading: categoriesLoading } = useCategories();
   const EXPENSE_CATEGORIES = categories.filter(
@@ -173,7 +174,6 @@ export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData }: Budg
       categoryIds: selectedCats,
       walletScope,
     });
-    onClose();
   };
 
   if (!isOpen) return null;
@@ -414,14 +414,19 @@ export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData }: Budg
             </button>
             <button
               type="submit"
-              className={`flex-1 py-3 rounded-xl text-[14px] font-bold text-white transition-all ${
-                isValid
+              disabled={!isValid || isPending}
+              className={`flex-1 py-3 rounded-xl text-[14px] font-bold text-white transition-all flex items-center justify-center gap-2 ${
+                isValid && !isPending
                   ? 'hover:opacity-90 active:scale-95'
                   : 'opacity-60 cursor-not-allowed'
               }`}
               style={{ background: 'linear-gradient(135deg, #4361ee, #6366f1)' }}
             >
-              {isEditing ? 'Cập nhật' : 'Tạo ngân sách'}
+              {isPending ? (
+                <><Loader2 size={16} className="animate-spin" /> Đang xử lý...</>
+              ) : (
+                isEditing ? 'Cập nhật' : 'Tạo ngân sách'
+              )}
             </button>
           </div>
         </form>

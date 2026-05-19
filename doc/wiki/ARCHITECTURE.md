@@ -14,7 +14,7 @@ Designed for financial precision, data integrity, and premium UX.
 | `apps/web` | Next.js 16, TanStack Query, shadcn/ui, Tailwind | User-facing dashboard |
 | `apps/api` | Hono.js, Drizzle ORM, Firebase Auth | REST API (port 3001) |
 | `apps/worker` | Node.js cron | Background jobs (warm-up, bills) |
-| `packages/db` | Drizzle ORM, MySQL/TiDB | Schema, migrations, repositories |
+| `packages/db` | Drizzle ORM, PostgreSQL/Supabase | Schema, migrations, repositories |
 | `packages/api-client` | Axios | Typed HTTP client for frontend |
 | `packages/shared-schemas` | Zod | Shared validation schemas |
 | `packages/cache` | In-memory | Read-through cache for API |
@@ -29,6 +29,8 @@ graph TD
         UI["UI Components<br/>shadcn/ui + Tailwind"]
         Hooks["TanStack Query Hooks<br/>useTransactions / useGoals / useBills"]
         Client["API Client<br/>Axios + Correlation ID"]
+        GA["Google Analytics 4<br/>pageview + finance events"]
+        SentryWeb["Sentry Next.js<br/>ErrorBoundary + App Router"]
         Locale["Locales<br/>vi.json"]
     end
 
@@ -37,12 +39,14 @@ graph TD
         Container["DI Container<br/>Service → Repository wiring"]
         Services["Business Services<br/>Transaction / Wallet / Bill / Goal / Budget"]
         RateLimit["Rate Limiter"]
+        Pino["Pino JSON Logs<br/>route/status/user/duration"]
+        SentryApi["Sentry Node<br/>unexpected API errors"]
     end
 
     subgraph Data["packages/db"]
         Repos["Repositories<br/>BaseRepository pattern"]
         Drizzle["Drizzle ORM<br/>Relational Queries"]
-        TiDB[("TiDB Serverless<br/>MySQL-compatible")]
+        Postgres[("Supabase PostgreSQL")]
     end
 
     subgraph Shared["Shared Packages"]
@@ -51,13 +55,17 @@ graph TD
     end
 
     UI --> Hooks
+    UI -.-> GA
+    UI -.-> SentryWeb
     Hooks --> Client
     Client -->|"HTTP (Axios)"| MW
+    MW -.-> Pino
+    MW -.-> SentryApi
     MW --> Container
     Container --> Services
     Services --> Repos
     Repos --> Drizzle
-    Drizzle --> TiDB
+    Drizzle --> Postgres
     Client -.-> Schemas
     Services -.-> Schemas
     Services -.-> Cache
@@ -69,10 +77,12 @@ graph TD
 Browser → [Next.js] → Axios (api-client) → Correlation ID header injected
 → Hono API → correlationId middleware → authMiddleware (Firebase session/JWT)
 → Zod validation (@hono/zod-validator) → Route handler → Service proxy → Service
-→ Repository (Drizzle) → TiDB
+→ Repository (Drizzle) → PostgreSQL (Supabase)
 ```
 
 **Middleware chain:** `correlationId` → `authMiddleware` → `zodValidator` → route handler
+
+**Observability flow:** browser pageviews and finance actions emit GA4 events; React/App Router errors are captured by Sentry Next.js; API requests emit Pino JSON logs with correlation ID, route, method, status, user ID, user agent, client IP, and duration; unexpected API errors are captured by Sentry Node with correlation ID and user context.
 
 ---
 
@@ -219,11 +229,12 @@ Financial records use `deleted_at` timestamps. Physical deletion only via intern
 | State | TanStack Query (server), React Context (auth/wallet) |
 | API | Hono.js, Zod validation, jose (JWT) |
 | Auth | Firebase Auth (session cookie + Bearer token) |
-| Database | TiDB Serverless (MySQL 8.0 compatible) |
+| Database | Supabase PostgreSQL |
 | ORM | Drizzle ORM (relational queries) |
 | Precision | Decimal.js |
-| Logging | Pino (structured JSON) |
-| Error tracking | Sentry (lazy-loaded) |
+| Analytics | Google Analytics 4 (`NEXT_PUBLIC_GA_MEASUREMENT_ID`) |
+| Logging | Pino structured JSON request/error logs |
+| Error tracking | Sentry Next.js + Sentry Node |
 | Caching | In-memory (packages/cache) |
 | Testing | Vitest (API), Playwright (E2E) |
 | Monorepo | Turborepo + pnpm workspaces |

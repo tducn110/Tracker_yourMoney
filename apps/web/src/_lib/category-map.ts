@@ -53,6 +53,11 @@ export function resolveCategoryId(
   type: 'income' | 'expense',
   categories: Category[],
 ): number {
+  if (slug.startsWith('id:')) {
+    const directId = Number(slug.slice(3));
+    if (Number.isFinite(directId)) return directId;
+  }
+
   // 1. Try exact name match via slug mapping
   const targetName = SLUG_TO_NAME[slug];
   if (targetName) {

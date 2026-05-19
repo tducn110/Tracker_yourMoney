@@ -43,6 +43,35 @@ export interface OnboardingStatus {
   };
 }
 
+export interface OnboardingCategoryDraft {
+  name: string;
+  type: 'income' | 'expense';
+  icon?: string;
+  color?: string;
+  sortOrder?: number;
+}
+
+export interface OnboardingSampleTransactionDraft {
+  categoryName: string;
+  amount: string;
+  type: 'income' | 'expense';
+  note?: string;
+  displayDate?: string;
+}
+
+export interface OnboardingWalletDraft {
+  name: string;
+  type: Wallet['type'];
+  initialBalance: string;
+}
+
+export interface CompleteOnboardingRequest {
+  seedSamplePack: boolean;
+  categories?: OnboardingCategoryDraft[];
+  sampleTransactions?: OnboardingSampleTransactionDraft[];
+  wallet?: OnboardingWalletDraft;
+}
+
 export interface Transaction {
   id: string;
   userId: string;
@@ -101,16 +130,19 @@ export interface Wallet {
 export interface Bill {
   id: string;
   userId: string;
+  categoryId?: number;
   name: string;
   icon: string;
   amount: string;
   dueDay: number;
   frequency: 'monthly' | 'quarterly' | 'yearly';
-  status: 'active' | 'inactive';
+  isActive: boolean;
   autoPay: boolean;
-  nextDueDate: string;
+  notes?: string | null;
   paymentStatus?: 'paid' | 'partial' | 'pending';
   totalPaid?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Budget {
@@ -203,4 +235,3 @@ export type DeepCamelCase<T> = T extends Date | File | Blob | RegExp
   : T extends object
   ? { [K in keyof T as CamelCase<string & K>]: DeepCamelCase<T[K]> }
   : T;
-

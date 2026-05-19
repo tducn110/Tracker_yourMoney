@@ -1,12 +1,14 @@
 import Decimal from "decimal.js";
 
 export interface NLPParsedResult {
-  intent?: "transaction" | "create_wallet" | "create_category" | "command";
+  intent?: "transaction" | "create_wallet" | "create_category" | "command" | "unknown";
   amount?: string;
   note?: string;
   type?: "income" | "expense" | "transfer";
   keyword?: string; // Hint for category matching
   walletName?: string; // Hint for wallet matching
+  /** Human-readable suggestion returned when intent is "unknown" */
+  suggestion?: string;
   metadata?: {
     icon?: string;
     color?: string;
@@ -53,7 +55,7 @@ export class RegexNLPAdapter implements INLPAdapter {
       throw new UnparseableInputError(text);
     }
 
-    const mainPart = amountMatch[1].replace(/,/g, ".");
+    const mainPart = amountMatch[1].replace(/[.,](?=\d{3}(?:[.,]|$))/g, "").replace(/,/g, ".");
     const unitPart = amountMatch[2]?.toLowerCase();
     const fracPart = amountMatch[3];
 
@@ -82,9 +84,9 @@ export class RegexNLPAdapter implements INLPAdapter {
     let keyword = "Khác";
 
     // Priority matching with word boundaries to avoid partial matches (e.g., "xăng" matching "ăn")
-    const isIncome = /\b(lương|thưởng|thu nhập)\b/i.test(normalized);
-    const isFood = /\b(ăn|uống|cafe|cà phê|phở|bún|cơm|quán)\b/i.test(normalized);
-    const isTransport = /\b(xăng|xe|grab|be|taxi|bus|đi lại|di chuyển)\b/i.test(normalized);
+    const isIncome = /(?:^|[^\p{L}])(lương|thưởng|thu nhập)(?:[^\p{L}]|$)/iu.test(normalized);
+    const isFood = /(?:^|[^\p{L}])(ăn|uống|cafe|cà phê|phở|bún|cơm|quán)(?:[^\p{L}]|$)/iu.test(normalized);
+    const isTransport = /(?:^|[^\p{L}])(xăng|xe|grab|be|taxi|bus|đi lại|di chuyển)(?:[^\p{L}]|$)/iu.test(normalized);
 
     if (isIncome) {
       type = "income";

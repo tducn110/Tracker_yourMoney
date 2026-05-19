@@ -30,10 +30,7 @@ export default function DashboardPage() {
       {/* ═══ 3. Budget Grid (one featured card) ═══ */}
       <BudgetGrid />
 
-      {/* ═══ 4. TopGoals ═══ */}
-      <DashboardGoalsCard />
-
-      {/* ═══ 5. Transactions + Upcoming Bills ═══ */}
+      {/* ═══ 4. Transactions + Upcoming Bills ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
           <RecentTransactionsCard />
@@ -42,6 +39,9 @@ export default function DashboardPage() {
           <UpcomingBillsCard />
         </div>
       </div>
+
+      {/* ═══ 5. TopGoals ═══ */}
+      <DashboardGoalsCard />
 
     </div>
   );

@@ -1,9 +1,26 @@
 'use client';
 
 import { useState } from 'react';
-import { User, Bell, DollarSign, Save, Tags, Plus, Pencil, Trash2, X, Check, Loader2, Calendar } from 'lucide-react';
+import {
+  Bell,
+  Calendar,
+  Check,
+  DollarSign,
+  Loader2,
+  Pencil,
+  Plus,
+  Save,
+  Tags,
+  Trash2,
+  User,
+  WalletCards,
+  X,
+} from 'lucide-react';
 import { formatCurrency } from '@finance/api-client';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Category } from '@finance/api-client';
 
 const CATEGORY_ICONS = ['🍔', '🚗', '🏠', '🎮', '📚', '💊', '👕', '🎬', '✈️', '💼', '🎁', '🐾', '📱', '💡', '🛒', '🏥', '🎓', '☕', '🎵', '💻'];
@@ -271,6 +288,219 @@ function CategorySection({
   );
 }
 
+
+// ─── Reusable Settings Sections ───────────────────────────────────────────────
+
+type SettingsTabId = 'profile' | 'finance' | 'categories' | 'notifications';
+
+const SETTINGS_TABS: Array<{
+  id: SettingsTabId;
+  label: string;
+  description: string;
+  icon: typeof User;
+}> = [
+  { id: 'profile', label: 'Hồ sơ', description: 'Thông tin tài khoản', icon: User },
+  { id: 'finance', label: 'Tài chính', description: 'Ngân sách và lương', icon: WalletCards },
+  { id: 'categories', label: 'Danh mục', description: 'Thu nhập và chi tiêu', icon: Tags },
+  { id: 'notifications', label: 'Thông báo', description: 'Email và push', icon: Bell },
+];
+
+function SettingsPanel({
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  icon: typeof User;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="gap-0 rounded-xl border-gray-200 bg-white shadow-sm">
+      <CardHeader className="border-b border-gray-100 pb-5">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+            <Icon size={18} />
+          </div>
+          <div>
+            <CardTitle className="text-base font-bold text-gray-900">{title}</CardTitle>
+            <CardDescription className="mt-1 text-sm text-gray-500">{description}</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5 p-6">{children}</CardContent>
+    </Card>
+  );
+}
+
+function ProfilePanel({ user }: { user: SettingsViewProps['user'] }) {
+  const displayName = user.fullName || user.full_name || 'Người dùng';
+
+  return (
+    <SettingsPanel icon={User} title="Thông tin tài khoản" description="Thông tin định danh đang dùng trong toàn bộ ứng dụng.">
+      <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-5 text-center">
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-blue-500 to-indigo-600 text-3xl font-bold text-white">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+          <p className="font-bold text-gray-900">{displayName}</p>
+          <p className="mt-1 break-all text-sm text-gray-500">{user.email}</p>
+          <Button variant="outline" className="mt-4 w-full" type="button">
+            Đổi ảnh đại diện
+          </Button>
+        </div>
+
+        <div className="grid content-start gap-4">
+          <label className="grid gap-2 text-sm font-medium text-gray-700">
+            Họ và tên
+            <input
+              type="text"
+              defaultValue={displayName}
+              className="h-11 rounded-lg border border-gray-200 px-4 text-gray-900 outline-none transition-colors focus:border-blue-500"
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-medium text-gray-700">
+            Email
+            <input
+              type="email"
+              defaultValue={user.email}
+              className="h-11 rounded-lg border border-gray-200 px-4 text-gray-900 outline-none transition-colors focus:border-blue-500"
+            />
+          </label>
+          <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            Email dùng để đăng nhập và nhận các thông báo quan trọng từ hệ thống.
+          </div>
+        </div>
+      </div>
+    </SettingsPanel>
+  );
+}
+
+function FinancialPanel({
+  emergencyBuffer,
+  setEmergencyBuffer,
+  monthlyBudget,
+  setMonthlyBudget,
+  incomeDate,
+  setIncomeDate,
+}: Pick<
+  SettingsViewProps,
+  'emergencyBuffer' | 'setEmergencyBuffer' | 'monthlyBudget' | 'setMonthlyBudget' | 'incomeDate' | 'setIncomeDate'
+>) {
+  return (
+    <SettingsPanel icon={DollarSign} title="Cài đặt tài chính" description="Các giá trị mặc định dùng cho ngân sách, dự báo và nhắc nhở.">
+      <div className="grid gap-5 lg:grid-cols-2">
+        <label className="grid gap-2 text-sm font-medium text-gray-700">
+          Ngân sách tháng
+          <input
+            type="text"
+            value={monthlyBudget ? formatCurrency(monthlyBudget, 'vi-VN') : ''}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, '');
+              setMonthlyBudget(digits || '0');
+            }}
+            placeholder="0"
+            className="h-11 rounded-lg border border-gray-200 px-4 text-gray-900 outline-none transition-colors focus:border-blue-500"
+          />
+          <span className="text-xs font-normal text-gray-500">Hạn mức chi tiêu mặc định mỗi tháng.</span>
+        </label>
+
+        <label className="grid gap-2 text-sm font-medium text-gray-700">
+          Quỹ dự phòng khẩn cấp
+          <input
+            type="text"
+            value={emergencyBuffer ? formatCurrency(String(emergencyBuffer), 'vi-VN') : ''}
+            onChange={(e) => {
+              const val = parseInt(e.target.value.replace(/\D/g, '') || '0', 10);
+              setEmergencyBuffer(val);
+            }}
+            placeholder="0"
+            className="h-11 rounded-lg border border-gray-200 px-4 text-gray-900 outline-none transition-colors focus:border-blue-500"
+          />
+          <span className="text-xs font-normal text-gray-500">Khoản dự phòng được khuyến nghị giữ lại.</span>
+        </label>
+
+        <label className="grid gap-2 text-sm font-medium text-gray-700 lg:col-span-2">
+          Ngày nhận lương
+          <div className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 transition-colors focus-within:border-blue-500">
+            <Calendar size={16} className="shrink-0 text-gray-400" />
+            <select
+              value={incomeDate}
+              onChange={(e) => setIncomeDate(Number(e.target.value))}
+              className="h-11 w-full bg-transparent text-gray-900 outline-none"
+            >
+              {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                <option key={day} value={day}>Ngày {day}</option>
+              ))}
+            </select>
+          </div>
+          <span className="text-xs font-normal text-gray-500">Dùng để tính chu kỳ thu nhập và nhắc nhở ngân sách.</span>
+        </label>
+      </div>
+    </SettingsPanel>
+  );
+}
+
+function NotificationRow({
+  title,
+  description,
+  checked,
+  onCheckedChange,
+}: {
+  title: string;
+  description: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-gray-100 p-4">
+      <div>
+        <p className="font-semibold text-gray-900">{title}</p>
+        <p className="mt-1 text-sm text-gray-500">{description}</p>
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+    </div>
+  );
+}
+
+function NotificationsPanel({
+  emailNotifications,
+  setEmailNotifications,
+  pushNotifications,
+  setPushNotifications,
+}: Pick<SettingsViewProps, 'emailNotifications' | 'setEmailNotifications' | 'pushNotifications' | 'setPushNotifications'>) {
+  return (
+    <SettingsPanel icon={Bell} title="Thông báo" description="Bật tắt các kênh nhắc nhở để tránh bỏ sót giao dịch và hoá đơn.">
+      <div className="grid gap-3">
+        <NotificationRow
+          title="Email notifications"
+          description="Nhận thông báo qua email cho hoá đơn, ngân sách và hoạt động quan trọng."
+          checked={emailNotifications}
+          onCheckedChange={setEmailNotifications}
+        />
+        <NotificationRow
+          title="Push notifications"
+          description="Nhận thông báo trên thiết bị khi có nhắc nhở hoặc cập nhật mới."
+          checked={pushNotifications}
+          onCheckedChange={setPushNotifications}
+        />
+      </div>
+    </SettingsPanel>
+  );
+}
+
+function SaveSettingsButton({ onSave, isLoading, isSaving }: Pick<SettingsViewProps, 'onSave' | 'isLoading' | 'isSaving'>) {
+  return (
+    <div className="flex justify-end border-t border-gray-100 pt-5">
+      <Button onClick={onSave} disabled={isLoading || isSaving} className="w-full sm:w-auto">
+        {isSaving ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Save size={16} className="mr-2" />}
+        {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
+      </Button>
+    </div>
+  );
+}
+
 // ─── Main Settings View ──────────────────────────────────────────────────────
 
 export function SettingsView({
@@ -295,66 +525,51 @@ export function SettingsView({
   onUpdateCategory,
   onDeleteCategory,
 }: SettingsViewProps) {
-
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Cài Đặt</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Quản lý tài khoản và tùy chỉnh ứng dụng
-        </p>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Cài đặt</h1>
+        <p className="mt-1 text-sm text-gray-600">Quản lý tài khoản, ngân sách, danh mục và thông báo.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-full bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-3xl mb-4">
-                {(user.fullName || user.full_name || '?').charAt(0)}
-              </div>
-              <h3 className="font-bold text-gray-800">{user.fullName || user.full_name || ''}</h3>
-              <p className="text-sm text-gray-600 mt-1">{user.email}</p>
-              <Button variant="outline" className="mt-4 w-full">
-                Đổi Ảnh Đại Diện
-              </Button>
-            </div>
-          </div>
-        </div>
+      <Tabs defaultValue="profile" className="gap-6">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-xl bg-gray-100 p-1 lg:grid-cols-4">
+          {SETTINGS_TABS.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="h-auto justify-start rounded-lg px-3 py-3 text-left data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                <Icon size={16} />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold">{tab.label}</span>
+                  <span className="hidden truncate text-[11px] font-medium text-gray-500 sm:block">{tab.description}</span>
+                </span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
-        {/* Settings Panels */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Account Info */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <User size={20} className="text-gray-600" />
-              <h2 className="font-bold text-gray-800">Thông tin tài khoản</h2>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Họ và tên
-                </label>
-                <input
-                  type="text"
-                  defaultValue={user.fullName || user.full_name || ''}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  defaultValue={user.email}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 outline-none"
-                />
-              </div>
-            </div>
-          </div>
+        <TabsContent value="profile" className="space-y-5">
+          <ProfilePanel user={user} />
+          <SaveSettingsButton onSave={onSave} isLoading={isLoading} isSaving={isSaving} />
+        </TabsContent>
 
-          {/* Category Management */}
+        <TabsContent value="finance" className="space-y-5">
+          <FinancialPanel
+            emergencyBuffer={emergencyBuffer}
+            setEmergencyBuffer={setEmergencyBuffer}
+            monthlyBudget={monthlyBudget}
+            setMonthlyBudget={setMonthlyBudget}
+            incomeDate={incomeDate}
+            setIncomeDate={setIncomeDate}
+          />
+          <SaveSettingsButton onSave={onSave} isLoading={isLoading} isSaving={isSaving} />
+        </TabsContent>
+
+        <TabsContent value="categories">
           <CategorySection
             categories={categories}
             isLoading={categoriesLoading}
@@ -363,138 +578,18 @@ export function SettingsView({
             onUpdate={onUpdateCategory}
             onDelete={onDeleteCategory}
           />
+        </TabsContent>
 
-          {/* Financial Settings */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <DollarSign size={20} className="text-gray-600" />
-              <h2 className="font-bold text-gray-800">Cài đặt tài chính</h2>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ngân sách tháng
-                </label>
-                <input
-                  type="text"
-                  value={monthlyBudget ? formatCurrency(monthlyBudget, 'vi-VN') : ''}
-                  onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, '');
-                    setMonthlyBudget(digits || '0');
-                  }}
-                  placeholder="0"
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 outline-none"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Hạn mức chi tiêu mặc định mỗi tháng
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quỹ dự phòng khẩn cấp
-                </label>
-                <input
-                  type="text"
-                  value={emergencyBuffer ? formatCurrency(String(emergencyBuffer), 'vi-VN') : ''}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value.replace(/\D/g, '') || '0', 10);
-                    setEmergencyBuffer(val);
-                  }}
-                  placeholder="0"
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 outline-none"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Khoản dự phòng được khuyến nghị giữ lại
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ngày nhận lương
-                </label>
-                <div className="flex items-center gap-2">
-                  <Calendar size={16} className="text-gray-400" />
-                  <select
-                    value={incomeDate}
-                    onChange={(e) => setIncomeDate(Number(e.target.value))}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 outline-none"
-                  >
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                      <option key={day} value={day}>Ngày {day}</option>
-                    ))}
-                  </select>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Ngày nhận thu nhập chính trong tháng
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Notifications */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Bell size={20} className="text-gray-600" />
-              <h2 className="font-bold text-gray-800">Thông báo</h2>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-800">
-                    Email notifications
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Nhận thông báo qua email
-                  </p>
-                </div>
-                <button
-                  onClick={() => setEmailNotifications(!emailNotifications)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    emailNotifications ? 'bg-blue-600' : 'bg-gray-200'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      emailNotifications ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-800">
-                    Push notifications
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Nhận thông báo trên thiết bị
-                  </p>
-                </div>
-                <button
-                  onClick={() => setPushNotifications(!pushNotifications)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    pushNotifications ? 'bg-blue-600' : 'bg-gray-200'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      pushNotifications ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Save Button */}
-          <Button onClick={onSave} className="w-full" disabled={isLoading || isSaving}>
-            {isSaving ? (
-              <Loader2 size={16} className="mr-2 animate-spin" />
-            ) : (
-              <Save size={16} className="mr-2" />
-            )}
-            {isSaving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
-          </Button>
-        </div>
-      </div>
+        <TabsContent value="notifications" className="space-y-5">
+          <NotificationsPanel
+            emailNotifications={emailNotifications}
+            setEmailNotifications={setEmailNotifications}
+            pushNotifications={pushNotifications}
+            setPushNotifications={setPushNotifications}
+          />
+          <SaveSettingsButton onSave={onSave} isLoading={isLoading} isSaving={isSaving} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

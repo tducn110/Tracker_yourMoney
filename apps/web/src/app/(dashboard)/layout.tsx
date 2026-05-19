@@ -9,6 +9,7 @@ import { Toaster } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCreateTransaction, useCategories } from '@/_lib/hooks/finance';
 import { resolveCategoryId } from '@/_lib/category-map';
+import { event as trackEvent } from '@/_lib/gtag';
 import { transactionsAPI, goalsAPI, billsAPI, budgetAPI, walletAPI } from '@finance/api-client';
 
 /**
@@ -79,16 +80,29 @@ export default function DashboardLayout({
     date: string;
   }) => {
     const categoryId = resolveCategoryId(data.category, data.type, categories);
-    await createTransaction({
-      walletId: data.walletId,
-      categoryId,
-      amount: String(data.amount),
-      type: data.type,
-      note: data.note,
-      displayDate: data.date,
-      source: 'manual',
-    });
-    setIsQuickAddOpen(false);
+    try {
+      await createTransaction({
+        walletId: data.walletId,
+        categoryId,
+        amount: String(data.amount),
+        type: data.type,
+        note: data.note,
+        displayDate: data.date,
+        source: 'manual',
+      });
+      trackEvent('transaction_create', {
+        source: 'quick_add_modal',
+        transaction_type: data.type,
+        has_note: Boolean(data.note),
+      });
+      setIsQuickAddOpen(false);
+    } catch (error) {
+      trackEvent('transaction_create_failed', {
+        source: 'quick_add_modal',
+        transaction_type: data.type,
+      });
+      throw error;
+    }
   };
 
   return (
@@ -98,7 +112,10 @@ export default function DashboardLayout({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 md:ml-[72px] lg:ml-[240px] transition-all duration-300">
-        <Header onQuickAddClick={() => setIsQuickAddOpen(true)} />
+        <Header onQuickAddClick={() => {
+          trackEvent('quick_add_open', { source: 'header' });
+          setIsQuickAddOpen(true);
+        }} />
 
         <main className="flex-1 overflow-y-auto">
           <ErrorBoundary>

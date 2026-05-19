@@ -1,10 +1,26 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { WalletProvider } from './context/WalletContext';
 import { AuthProvider } from './context/AuthProvider';
+import { pageview } from '@/_lib/gtag';
+
+function AnalyticsTracker() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (!pathname) return;
+    const query = searchParams?.toString();
+    const url = query ? `${pathname}?${query}` : pathname;
+    pageview(url);
+  }, [pathname, searchParams]);
+
+  return null;
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -43,6 +59,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <WalletProvider>
+          <Suspense fallback={null}>
+            <AnalyticsTracker />
+          </Suspense>
           {children}
         </WalletProvider>
       </AuthProvider>

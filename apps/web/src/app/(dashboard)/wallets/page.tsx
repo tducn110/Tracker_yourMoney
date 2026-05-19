@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { useWallet, WalletType, walletTypeLabel } from '@/app/context/WalletContext';
 import { useTransfer } from '@/_lib/hooks/finance';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { parseCurrencyInput } from '@/_lib/utils/currency-input';
 import { formatCurrency, type Wallet } from '@finance/api-client';
 import { toast } from 'sonner';
 import { Decimal } from 'decimal.js';
@@ -83,7 +85,7 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
       ? {
           name: editWallet.name,
           type: editWallet.type,
-          balance: String(editWallet.balance),
+          balance: parseCurrencyInput(editWallet.balance),
           icon: editWallet.icon,
           color: editWallet.color,
           accountNumber: editWallet.accountNumber ?? '',
@@ -100,18 +102,12 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
       toast.error('Vui lòng nhập tên ví');
       return;
     }
-    const balNum = parseFloat(form.balance.replace(/\./g, '').replace(/,/g, ''));
+    const balNum = Number(form.balance || '0');
     if (isNaN(balNum) || balNum < 0) {
       toast.error('Số dư không hợp lệ');
       return;
     }
     onSave(form);
-  };
-
-  const formatBalanceInput = (val: string) => {
-    const digits = val.replace(/\D/g, '');
-    if (!digits) return '';
-    return new Intl.NumberFormat('vi-VN').format(parseInt(digits, 10));
   };
 
   const TypeIcon = WALLET_TYPE_ICONS[form.type];
@@ -199,17 +195,13 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
             <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider mb-1.5">
               Số dư hiện tại
             </label>
-            <div className="relative">
-              <input
-                type="text"
-                inputMode="numeric"
-                value={form.balance}
-                onChange={(e) => setForm((f) => ({ ...f, balance: formatBalanceInput(e.target.value) }))}
-                placeholder="0"
-                className="w-full h-11 pl-4 pr-9 rounded-xl border border-gray-200 focus:border-blue-400 outline-none text-[13px] font-black text-gray-800 placeholder:font-normal placeholder:text-gray-400 bg-gray-50 focus:bg-white transition-all"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-bold text-gray-400">₫</span>
-            </div>
+            <CurrencyInput
+              value={form.balance}
+              onValueChange={(raw) => setForm((f) => ({ ...f, balance: raw }))}
+              placeholder="0"
+              suffix="₫"
+              className="h-11 rounded-xl border border-gray-200 focus:border-blue-400 outline-none text-[13px] font-black text-gray-800 placeholder:font-normal placeholder:text-gray-400 bg-gray-50 focus:bg-white transition-all"
+            />
           </div>
 
           {/* Account number (optional) */}
@@ -336,12 +328,6 @@ function TransferModal({ isOpen, wallets, onClose, onTransfer }: TransferModalPr
 
   if (!isOpen) return null;
 
-  const formatAmount = (val: string) => {
-    const digits = val.replace(/\D/g, '');
-    if (!digits) return '';
-    return new Intl.NumberFormat('vi-VN').format(parseInt(digits, 10));
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!fromId || !toId) {
@@ -352,7 +338,7 @@ function TransferModal({ isOpen, wallets, onClose, onTransfer }: TransferModalPr
       toast.error('Không thể chuyển vào cùng một ví');
       return;
     }
-    const raw = parseInt(amount.replace(/\./g, '').replace(/,/g, ''), 10);
+    const raw = Number(parseCurrencyInput(amount));
     if (!raw || raw <= 0) {
       toast.error('Số tiền không hợp lệ');
       return;
@@ -424,11 +410,9 @@ function TransferModal({ isOpen, wallets, onClose, onTransfer }: TransferModalPr
               Số tiền
             </label>
             <div className="relative">
-              <input
-                type="text"
-                inputMode="numeric"
+              <CurrencyInput
                 value={amount}
-                onChange={(e) => setAmount(formatAmount(e.target.value))}
+                onValueChange={setAmount}
                 placeholder="0"
                 className="w-full h-11 pl-4 pr-9 rounded-xl border border-gray-200 focus:border-violet-400 outline-none text-[15px] font-black text-gray-800 placeholder:font-normal placeholder:text-gray-400 bg-gray-50 focus:bg-white transition-all"
               />
@@ -581,7 +565,7 @@ export default function WalletsPage() {
     name: string; type: WalletType; balance: string; icon: string;
     color: string; accountNumber: string; isDefault: boolean;
   }) => {
-    const bal = data.balance.replace(/\./g, '').replace(/,/g, '');
+    const bal = parseCurrencyInput(data.balance);
     setIsMutating(true);
     try {
       if (editWallet) {

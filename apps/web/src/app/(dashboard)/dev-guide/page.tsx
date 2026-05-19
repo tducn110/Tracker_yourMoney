@@ -9,9 +9,15 @@
 import { useState } from 'react';
 import {
   Code2, Palette, Layout, Component, Plus, Check, Info,
-  TrendingUp, TrendingDown, Wallet, Target, Receipt,
+  TrendingUp, TrendingDown, Wallet, Target,
   ChevronRight, Layers, BarChart3, Copy,
 } from 'lucide-react';
+import {
+  GA_MEASUREMENT_ID,
+  clearDebugEvents,
+  event as trackEvent,
+  getDebugEvents,
+} from '@/_lib/gtag';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -58,6 +64,161 @@ function SectionTitle({ icon: Icon, title, subtitle }: { icon: React.ElementType
 
 function Divider() {
   return <div className="border-t border-gray-100 my-8" />;
+}
+
+function AnalyticsDebugCard() {
+  const [enabled, setEnabled] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('ga_debug') === '1';
+  });
+
+  const [events, setEvents] = useState(() => getDebugEvents().slice().reverse());
+
+  const refresh = () => {
+    setEvents(getDebugEvents().slice().reverse());
+  };
+
+  const toggle = () => {
+    if (typeof window === 'undefined') return;
+    const next = !enabled;
+    window.localStorage.setItem('ga_debug', next ? '1' : '0');
+    setEnabled(next);
+    refresh();
+  };
+
+  const clear = () => {
+    clearDebugEvents();
+    refresh();
+  };
+
+  const sendTestEvent = () => {
+    trackEvent('dev_analytics_test', {
+      source: 'dev_guide',
+      ts: Date.now(),
+    });
+    refresh();
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
+            <BarChart3 size={16} className="text-blue-600" />
+          </div>
+          <div>
+            <h2 className="text-[15px] font-black text-gray-900">Google Analytics Debug</h2>
+            <p className="text-[11px] font-bold text-gray-400 mt-0.5">
+              Bat debug de log pageview/event tai cho (phuc vu chup man hinh nghiem thu).
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={toggle}
+            className="px-3 py-2 rounded-xl text-[11px] font-black border transition-colors"
+            style={
+              enabled
+                ? { backgroundColor: '#ecfdf5', borderColor: '#a7f3d0', color: '#065f46' }
+                : { backgroundColor: '#f3f4f6', borderColor: '#e5e7eb', color: '#374151' }
+            }
+          >
+            {enabled ? 'Debug: ON' : 'Debug: OFF'}
+          </button>
+          <button
+            onClick={refresh}
+            className="px-3 py-2 rounded-xl text-[11px] font-black bg-white border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 transition-colors"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+          <p className="text-[10px] font-black text-gray-500 uppercase tracking-wider mb-1">
+            Measurement ID
+          </p>
+          <p className="text-[12px] font-black text-gray-900 break-all">
+            {GA_MEASUREMENT_ID || 'Chua set NEXT_PUBLIC_GA_MEASUREMENT_ID / NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID'}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-wider mb-1">
+              Quick Actions
+            </p>
+            <p className="text-[11px] font-bold text-gray-500">
+              Gui 1 event test vao log.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={sendTestEvent}
+              className="px-3 py-2 rounded-xl text-[11px] font-black text-white active:scale-95 transition-all"
+              style={{ backgroundColor: '#4361ee', boxShadow: '0 4px 12px #4361ee40' }}
+            >
+              Send test
+            </button>
+            <button
+              onClick={clear}
+              className="px-3 py-2 rounded-xl text-[11px] font-black bg-white border border-gray-200 text-gray-700 hover:border-red-300 hover:text-red-600 transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[12px] font-black text-gray-900">
+            Recent events ({events.length})
+          </p>
+          <p className="text-[10px] font-bold text-gray-400">
+            Luu trong localStorage (toi da 80 entries)
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 overflow-hidden">
+          <div className="max-h-[220px] overflow-auto">
+            {events.length === 0 ? (
+              <div className="p-4 text-[12px] font-bold text-gray-500">
+                Chua co log. Bat Debug ON, di chuyen qua lai cac trang hoac bam Send test.
+              </div>
+            ) : (
+              <table className="w-full text-left">
+                <thead className="sticky top-0 bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="px-3 py-2 text-[10px] font-black text-gray-500 uppercase tracking-wider">Time</th>
+                    <th className="px-3 py-2 text-[10px] font-black text-gray-500 uppercase tracking-wider">Kind</th>
+                    <th className="px-3 py-2 text-[10px] font-black text-gray-500 uppercase tracking-wider">Payload</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {events.map((e, idx) => (
+                    <tr key={`${e.ts}-${idx}`} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                      <td className="px-3 py-2 text-[11px] font-bold text-gray-700 whitespace-nowrap">
+                        {new Date(e.ts).toLocaleTimeString('vi-VN')}
+                      </td>
+                      <td className="px-3 py-2 text-[11px] font-black text-gray-900 whitespace-nowrap">
+                        {e.kind}
+                      </td>
+                      <td className="px-3 py-2 text-[11px] font-mono text-gray-700 break-all">
+                        {JSON.stringify(e.payload)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Color Palette ─────────────────────────────────────────────────────────────
@@ -377,6 +538,8 @@ export default function DevGuidePage() {
       {/* ─── Tab: Tổng quan ─── */}
       {activeTab === 'overview' && (
         <div className="space-y-8">
+
+          <AnalyticsDebugCard />
 
           {/* Tech stack */}
           <div>

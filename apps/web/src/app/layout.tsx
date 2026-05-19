@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Providers } from './providers';
 import { GoogleAnalytics } from '../components/GoogleAnalytics';
-import '../styles/tailwind.css';
+import '../styles/index.css';
 
 export const metadata: Metadata = {
   title: 'Finance Tracker V3',

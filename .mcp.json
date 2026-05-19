@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "gitnexus": {
-      "command": "npx",
-      "args": ["gitnexus@latest", "mcp"]
+      "command": "./node_modules/.bin/gitnexus",
+      "args": ["mcp"]
     }
   }
 }

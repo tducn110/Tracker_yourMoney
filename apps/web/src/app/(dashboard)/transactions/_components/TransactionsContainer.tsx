@@ -1,11 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useTransactions, useWallets } from '@/_lib/hooks/finance';
-import { transactionsAPI } from '@finance/api-client';
+import { useTransactions } from '@/_lib/hooks/finance';
 import { Transaction } from '@finance/api-client';
-import { toast } from 'sonner';
 import Decimal from 'decimal.js';
 import { TransactionsView, FilterType, SortOrder } from './TransactionsView';
 
@@ -16,7 +13,6 @@ export function TransactionsContainer() {
   const [filter, setFilter] = useState<FilterType>('all');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [offset, setOffset] = useState(0);
-  const queryClient = useQueryClient();
 
   // Fetch transactions from API with server-side search and filters
   const { data: apiResponse, isLoading } = useTransactions({
@@ -27,13 +23,6 @@ export function TransactionsContainer() {
   });
   const apiTransactions: Transaction[] = (apiResponse as any)?.transactions ?? [];
   const totalFromServer: number = (apiResponse as any)?.total ?? 0;
-
-  // Get default wallet ID for CSV import
-  const { data: wallets = [] } = useWallets();
-  const defaultWalletId = useMemo(() => {
-    const def = wallets.find((w: any) => Boolean(w.isDefault));
-    return def?.id ?? wallets[0]?.id ?? null;
-  }, [wallets]);
 
   const filtered = useMemo(() => {
     let list = apiTransactions.filter((tx: Transaction) => {
@@ -106,43 +95,6 @@ export function TransactionsContainer() {
     URL.revokeObjectURL(url);
   };
 
-  const handleImportCSV = async (file: File): Promise<void> => {
-    if (!defaultWalletId) {
-      toast.error('Vui lòng tạo ví trước khi import');
-      return;
-    }
-
-    const idempotencyKey = crypto.randomUUID();
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('walletId', defaultWalletId);
-
-    try {
-      const result = await transactionsAPI.importCSV(formData, idempotencyKey);
-      toast.success(
-        `Import thành công: ${result.imported} giao dịch` +
-        (result.skipped > 0 ? `, bỏ qua ${result.skipped}` : '')
-      );
-      if (result.errors?.length > 0) {
-        const maxErrors = 3;
-        const msg = result.errors.slice(0, maxErrors).join('\n');
-        if (result.errors.length > maxErrors) {
-          toast.error(`${msg}\n...và ${result.errors.length - maxErrors} lỗi khác`);
-        } else {
-          toast.error(msg);
-        }
-      }
-      // Force instant refetch of all related data
-      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      await queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
-      await queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
-      await queryClient.refetchQueries({ queryKey: ['transactions'] });
-      setOffset(0);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error?.message || err?.message || 'Import thất bại');
-    }
-  };
-
   return (
     <TransactionsView
       isLoading={isLoading}
@@ -156,7 +108,6 @@ export function TransactionsContainer() {
       sortOrder={sortOrder}
       onSortChange={setSortOrder}
       onExportCSV={handleExportCSV}
-      onImportCSV={handleImportCSV}
       onLoadMore={handleLoadMore}
       hasMore={filtered.length === PAGE_SIZE}
       offset={offset}
