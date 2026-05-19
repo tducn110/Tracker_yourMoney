@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Providers } from './providers';
-import { GoogleAnalytics } from '../components/GoogleAnalytics';
+import { GoogleAnalyticsLoader } from '../components/GoogleAnalyticsLoader';
 import '../styles/index.css';
 
 export const metadata: Metadata = {
@@ -16,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body suppressHydrationWarning>
-        <GoogleAnalytics />
+        <GoogleAnalyticsLoader />
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -11,15 +11,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
     "@finance/api": "workspace:*",
     "@finance/api-client": "workspace:*",
     "@finance/shared-schemas": "workspace:*",
     "@hono/zod-validator": "^0.7.6",
     "@hookform/resolvers": "^5.2.2",
-    "@mui/icons-material": "^9.0.0",
-    "@mui/material": "^9.0.0",
     "@next/third-parties": "^16.2.6",
     "@popperjs/core": "^2.11.8",
     "@radix-ui/react-accordion": "^1.2.12",
