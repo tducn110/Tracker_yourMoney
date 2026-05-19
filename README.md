@@ -23,11 +23,11 @@
 
 The individual self-report files are included as separate pages and linked here for direct access from the group report.
 
-| Team Member      | Student ID | Self-Report                                                     |
-| ---------------- | ---------- | --------------------------------------------------------------- |
-| Nguyen Tam Duc   | 24020005   | [Nguyen Tam Duc self-report](doc/self-reports/self-report-24020005.md) |
+| Team Member      | Student ID | Self-Report                                                              |
+| ---------------- | ---------- | ------------------------------------------------------------------------ |
+| Nguyen Tam Duc   | 24020005   | [Nguyen Tam Duc self-report](doc/self-reports/self-report-24020005.md)   |
 | Tran Vo Ba Vuong | 24020008   | [Tran Vo Ba Vuong self-report](doc/self-reports/self-report-24020008.md) |
-| Chau Tuan Kiet   | 24020010   | [Chau Tuan Kiet self-report](doc/self-reports/self-report-24020010.md) |
+| Chau Tuan Kiet   | 24020010   | [Chau Tuan Kiet self-report](doc/self-reports/self-report-24020010.md)   |
 
 ## Project Overview & Technologies Used
 
@@ -45,6 +45,8 @@ Finance Tracker V3 is a personal finance management application following the **
 | Auth     | Firebase Authentication (Google)                                                                                                                      |
 | Monorepo | Turborepo + pnpm Workspace (`apps/api`, `apps/web`, `apps/worker`, `packages/db`, `packages/api-client`, `packages/shared-schemas`, `packages/cache`) |
 | Deploy   | Vercel                                                                                                                                                |
+
+![System Architecture](doc/screenshots/SysArchitect.png)
 
 ### Key Features
 
@@ -123,20 +125,18 @@ pnpm build
   - [x] Settings (categories, profile)
   - [x] Onboarding (4-step wizard)
 
-> **TODO:** Chèn ảnh wireframe export từ Figma cho từng trang.
-
 ### (c) Project Plan — Milestones
 
-| Milestone                                             | Deadline   | Status  | Người phụ trách chính                             |
-| ----------------------------------------------------- | ---------- | ------- | ------------------------------------------------ |
-| Complete wireframe & Figma design                     | 10/04/2026 | On time | Chau Tuan Kiet (thiết kế), Nguyen Tam Duc (review) |
-| Setup GitHub, Monorepo & Database Schema              | 15/04/2026 | On time | Nguyen Tam Duc (monorepo, schema, ERD)            |
-| Complete Authentication (Firebase + JWT)              | 20/04/2026 | On time | Nguyen Tam Duc (API), Tran Vo Ba Vuong (fixes)    |
-| Basic UI (Dashboard, Transactions, Wallets)           | 22/04/2026 | On time | Chau Tuan Kiet (UI), Nguyen Tam Duc (API)         |
-| Database integration & full CRUD API                  | 28/04/2026 | On time | Nguyen Tam Duc (API, schema), Tran Vo Ba Vuong (devops) |
-| AI Quick Add, Analytics, Bills, Goals                 | 05/05/2026 | On time | Nguyen Tam Duc (AI, Analytics), Chau Tuan Kiet (UI) |
-| Onboarding Wizard, Optimization & Peer Review         | 12/05/2026 | On time | Chau Tuan Kiet (onboarding), Tran Vo Ba Vuong (optimization) |
-| Submission                                            | 15/05/2026 | On time | Cả nhóm                                          |
+| Milestone                                     | Deadline   | Status  | Người phụ trách chính                                        |
+| --------------------------------------------- | ---------- | ------- | ------------------------------------------------------------ |
+| Complete wireframe & Figma design             | 10/04/2026 | On time | Chau Tuan Kiet (thiết kế), Nguyen Tam Duc (review)           |
+| Setup GitHub, Monorepo & Database Schema      | 15/04/2026 | On time | Nguyen Tam Duc (monorepo, schema, ERD)                       |
+| Complete Authentication (Firebase + JWT)      | 20/04/2026 | On time | Nguyen Tam Duc (API), Tran Vo Ba Vuong (fixes)               |
+| Basic UI (Dashboard, Transactions, Wallets)   | 22/04/2026 | On time | Chau Tuan Kiet (UI), Nguyen Tam Duc (API)                    |
+| Database integration & full CRUD API          | 28/04/2026 | On time | Nguyen Tam Duc (API, schema), Tran Vo Ba Vuong (devops)      |
+| AI Quick Add, Analytics, Bills, Goals         | 05/05/2026 | On time | Nguyen Tam Duc (AI, Analytics), Chau Tuan Kiet (UI)          |
+| Onboarding Wizard, Optimization & Peer Review | 12/05/2026 | On time | Chau Tuan Kiet (onboarding), Tran Vo Ba Vuong (optimization) |
+| Submission                                    | 15/05/2026 | On time | Cả nhóm                                                      |
 
 ### (d) GitHub Repository
 
@@ -156,7 +156,7 @@ The team uses Git Flow with `main` branch and feature branches. Each feature is 
 | `docs:`     | Documentation updates                  |
 | `refactor:` | Code restructuring                     |
 
-> **TODO:** Chèn ảnh chụp màn hình danh sách commits hoặc một Pull Request tiêu biểu.
+![example ](doc/screenshots/example.png)
 
 ## Task 2 — Implement User Interface
 
@@ -166,7 +166,7 @@ The team uses Git Flow with `main` branch and feature branches. Each feature is 
 | ------------ | --------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------- |
 | Dashboard    | `/`             | Budget-First overview: Safe-to-Spend, ring chart, goals, upcoming bills | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API/S2S Engine)       |
 | Transactions | `/transactions` | Transaction list with search, filter, import/export, full CRUD          | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API)                  |
-| Wallets      | `/wallets`      | Multi-wallet management                                                | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API)                  |
+| Wallets      | `/wallets`      | Multi-wallet management                                                 | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API)                  |
 | Budgets      | `/budgets`      | Set category budgets, track spending percentages                        | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API/S2S Engine)       |
 | Goals        | `/goals`        | Savings goals with deadlines and progress tracking                      | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API)                  |
 | Bills        | `/bills`        | Manage recurring bills, payment history                                 | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API)                  |
@@ -350,18 +350,18 @@ Ran Lighthouse before and after optimization. Score improved from **75 → 92**.
 
 **Code references (file + commit):**
 
-| Issue | File(s) Changed | Commit |
-|-------|----------------|--------|
-| SQL N+1 queries | `apps/api/src/repositories/budget.repository.ts` | `f650aed` |
-| Floating-point via Decimal.js | `packages/shared-schemas/src/transaction.schema.ts` | `d17a5ae` |
-| Idempotency Keys | `packages/db/src/schema/idempotency-keys.ts` | `97b4f4d` |
-| Sentry + Pino integration | `apps/api/src/index.ts`, `apps/web/next.config.ts` | `4e629b1` |
-| Rate limiting | `apps/api/src/index.ts` (Hono rate-limiter middleware) | `64cbe5d` |
+| Issue                             | File(s) Changed                                              | Commit    |
+| --------------------------------- | ------------------------------------------------------------ | --------- |
+| SQL N+1 queries                   | `apps/api/src/repositories/budget.repository.ts`             | `f650aed` |
+| Floating-point via Decimal.js     | `packages/shared-schemas/src/transaction.schema.ts`          | `d17a5ae` |
+| Idempotency Keys                  | `packages/db/src/schema/idempotency-keys.ts`                 | `97b4f4d` |
+| Sentry + Pino integration         | `apps/api/src/index.ts`, `apps/web/next.config.ts`           | `4e629b1` |
+| Rate limiting                     | `apps/api/src/index.ts` (Hono rate-limiter middleware)       | `64cbe5d` |
 | TanStack Query cache invalidation | `apps/web/src/app/(dashboard)/**/_components/*Container.tsx` | `2a9423d` |
-| Shared Zod schemas | `packages/shared-schemas/src/*.ts` | `c193b16` |
-| AuthProvider race condition | `apps/web/src/contexts/AuthProvider.tsx` | `1cf5543` |
-| Console.* → Pino | `apps/api/src/**/*.ts`, `apps/web/src/**/*.ts` | `4e629b1` |
-| Cold start optimization | `apps/api/src/index.ts` | `eb079e8` |
+| Shared Zod schemas                | `packages/shared-schemas/src/*.ts`                           | `c193b16` |
+| AuthProvider race condition       | `apps/web/src/contexts/AuthProvider.tsx`                     | `1cf5543` |
+| Console.\* → Pino                 | `apps/api/src/**/*.ts`, `apps/web/src/**/*.ts`               | `4e629b1` |
+| Cold start optimization           | `apps/api/src/index.ts`                                      | `eb079e8` |
 
 ### (c) Error Monitoring & User Analytics
 
@@ -403,12 +403,12 @@ Sentry was integrated at two levels for full-stack error visibility:
 - **Team / Project:** Calorie Web — Calorie Tracking Application
 - **Repository:** [github.com/nguyenduythaibao1611-eng/calorie-web.github.io](https://github.com/nguyenduythaibao1611-eng/calorie-web.github.io)
 
-| Khía cạnh        | Điểm mạnh                                                                             | Gợi ý cải thiện                                                                                                                                                                      |
-| ---------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Usability        | Complete calorie tracking flow: diary, search, stats, TDEE calculator, water tracking | [PR #78 — Fix streak persistence](https://github.com/nguyenduythaibao1611-eng/calorie-web.github.io/issues/78): streak resets to 0 on page reload; needs to persist streak to profile |
-| Usability        | Local storage architecture for offline-first experience                               | [PR #79 — Fix timezone bug](https://github.com/nguyenduythaibao1611-eng/calorie-web.github.io/issues/79): `toISOString()` uses UTC, causing a 1-day streak offset for UTC+7 timezone  |
-| Aesthetics       | Clean dashboard design, responsive layout, animated stats page                        | Could improve with dark mode                                                                              |
-| User-Friendliness | —                                                                                     | Accessibility labels for screen readers needed                                                                                                              |
+| Khía cạnh         | Điểm mạnh                                                                             | Gợi ý cải thiện                                                                                                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Usability         | Complete calorie tracking flow: diary, search, stats, TDEE calculator, water tracking | [PR #78 — Fix streak persistence](https://github.com/nguyenduythaibao1611-eng/calorie-web.github.io/issues/78): streak resets to 0 on page reload; needs to persist streak to profile |
+| Usability         | Local storage architecture for offline-first experience                               | [PR #79 — Fix timezone bug](https://github.com/nguyenduythaibao1611-eng/calorie-web.github.io/issues/79): `toISOString()` uses UTC, causing a 1-day streak offset for UTC+7 timezone  |
+| Aesthetics        | Clean dashboard design, responsive layout, animated stats page                        | Could improve with dark mode                                                                                                                                                          |
+| User-Friendliness | —                                                                                     | Accessibility labels for screen readers needed                                                                                                                                        |
 
 **Reviewed Team: QuickTodo**
 
@@ -429,11 +429,6 @@ Sentry was integrated at two levels for full-stack error visibility:
 | ------------------------------------------------------------------------------------------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | AI Quick Add with Gemini is a highlight — should be featured more prominently in the report | Teacher | Accepted | Integrated Gemini NLP adapter into Hono API route `/api/ai/quick-add`, supporting natural language transaction input — `8b3ca4b`               |
 | 4-step Onboarding Wizard is great for UX — should be mentioned in self-report               | Teacher | Accepted | Built 4-step onboarding wizard (personal info → wallet → budget → first transaction) with local state persistence and skip support — `fff7e94` |
-
-![Teacher feedback — AI Quick Add](doc/screenshots/Screenshot%20from%202026-05-17%2021-28-54.png)
-![Teacher feedback — Onboarding Wizard](doc/screenshots/Screenshot%20from%202026-05-17%2021-29-59.png)
-
-> **TODO:** Chèn ảnh trước/sau của những thay đổi đã implement từ feedback (nếu có thay đổi UI rõ rệt).
 
 ## Deliverables Checklist
 
@@ -617,8 +612,8 @@ df74302 Merge PR #10: feature/issue-5-aesthetics                                
 
 Each member committed a self-report file to `doc/self-reports/self-report-[StudentID].md` in the repository.
 
-| Full Name        | Student ID | Self-Report Link                                                  |
-| ---------------- | ---------- | ----------------------------------------------------------------- |
+| Full Name        | Student ID | Self-Report Link                                                    |
+| ---------------- | ---------- | ------------------------------------------------------------------- |
 | Nguyen Tam Duc   | 24020005   | [self-report-24020005.md](doc/self-reports/self-report-24020005.md) |
 | Tran Vo Ba Vuong | 24020008   | [self-report-24020008.md](doc/self-reports/self-report-24020008.md) |
 | Chau Tuan Kiet   | 24020010   | [self-report-24020010.md](doc/self-reports/self-report-24020010.md) |
