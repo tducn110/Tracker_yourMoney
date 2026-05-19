@@ -52,11 +52,25 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const { data: walletsData, isLoading, refetch: refreshWallets } = useWallets();
 
+  // Sync wallets from TanStack Query cache
   useEffect(() => {
     if (walletsData) {
       setWallets(walletsData);
     }
   }, [walletsData]);
+
+  // Auto-refresh when any component invalidates ['wallets']
+  useEffect(() => {
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (
+        event.type === 'updated' &&
+        event.query.queryKey[0] === 'wallets'
+      ) {
+        refreshWallets();
+      }
+    });
+    return () => unsubscribe();
+  }, [queryClient, refreshWallets]);
 
   const totalBalance = useMemo(() => {
     return wallets.reduce((sum, wallet) => {
