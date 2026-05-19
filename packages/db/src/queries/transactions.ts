@@ -33,7 +33,7 @@ export async function getTransactionsPaginated(
   opts: {
     month?: string;
     categoryId?: number;
-    type?: "income" | "expense" | "transfer";
+    type?: "income" | "expense";
     search?: string;
     dateFrom?: string;
     dateTo?: string;
