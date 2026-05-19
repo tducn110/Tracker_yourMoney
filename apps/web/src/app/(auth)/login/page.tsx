@@ -32,7 +32,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex relative bg-slate-50 overflow-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="min-h-screen flex relative bg-slate-50 overflow-hidden">
       {/* Ambient background blur blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-400/10 blur-[100px] pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[20%] w-[30%] h-[30%] rounded-full bg-indigo-400/10 blur-[100px] pointer-events-none" />
