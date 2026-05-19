@@ -340,7 +340,7 @@ export function SimpleQuickInput() {
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !amount}
-          className="h-10 px-6 rounded-xl font-black text-[13px] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 active:scale-95"
+          className="h-10 px-6 rounded-xl font-black text-[13px] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 active:scale-95 min-w-[80px] justify-center"
           style={{
             backgroundColor: amount ? activeType.colorActive : '#ffffff',
             color: amount ? '#ffffff' : '#9ca3af',
@@ -348,8 +348,12 @@ export function SimpleQuickInput() {
             boxShadow: amount ? `0 4px 12px ${activeType.colorActive}40` : 'none',
           }}
         >
-          <Plus size={15} />
-          Lưu
+          {isSubmitting ? (
+            <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <Plus size={15} />
+          )}
+          {isSubmitting ? 'Đang lưu...' : 'Lưu'}
         </button>
       </div>
 

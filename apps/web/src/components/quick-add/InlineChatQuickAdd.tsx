@@ -141,6 +141,7 @@ export function InlineChatQuickAdd() {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [mode, setMode] = useState<'chat' | 'suggest'>('chat');
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -221,9 +222,13 @@ export function InlineChatQuickAdd() {
         };
         setMessages(prev => [...prev, successMsg]);
         queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        queryClient.refetchQueries({ queryKey: ['transactions'] });
         queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
+        queryClient.refetchQueries({ queryKey: ['budgets', 'summary'] });
         queryClient.invalidateQueries({ queryKey: ['analytics'] });
+        queryClient.refetchQueries({ queryKey: ['analytics'] });
         queryClient.invalidateQueries({ queryKey: ['wallets'] });
+        queryClient.refetchQueries({ queryKey: ['wallets'] });
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
         queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
       } catch (err: any) {
@@ -279,6 +284,7 @@ export function InlineChatQuickAdd() {
     }
 
     // Optimistic UI: mark as confirmed immediately
+    setIsSaving(true);
     setMessages(prev =>
       prev.map(m => m.id === msg.id ? { ...m, confirmed: true } : m)
     );
@@ -303,17 +309,23 @@ export function InlineChatQuickAdd() {
         icon: <Sparkles className="text-blue-500" />,
       });
 
-      // Invalidate queries to refresh budget summary and transactions
+      // Invalidate + refetch queries to refresh budget summary and transactions
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.refetchQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
+      queryClient.refetchQueries({ queryKey: ['budgets', 'summary'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      queryClient.refetchQueries({ queryKey: ['analytics'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
+      queryClient.refetchQueries({ queryKey: ['wallet', 'cash'] });
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      queryClient.refetchQueries({ queryKey: ['wallets'] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
     } catch (err: any) {
       Sentry.captureException(err, { tags: { feature: 'inline_chat_confirm' } });
       // Rollback optimistic UI
+      setIsSaving(false);
       setMessages(prev =>
         prev.map(m => m.id === msg.id ? { ...m, confirmed: false } : m)
       );
@@ -331,6 +343,8 @@ export function InlineChatQuickAdd() {
         error: true,
       };
       setMessages(prev => [...prev, errMsg]);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -419,10 +433,15 @@ export function InlineChatQuickAdd() {
                   >
                     <button
                       onClick={() => handleConfirm(msg)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[12px] font-black shadow-md shadow-emerald-500/20 transition-all hover:scale-105"
+                      disabled={isSaving}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[12px] font-black shadow-md shadow-emerald-500/20 transition-all hover:scale-105 disabled:opacity-50"
                     >
-                      <CheckCircle2 size={13} />
-                      Lưu ngay
+                      {isSaving ? (
+                        <span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <CheckCircle2 size={13} />
+                      )}
+                      {isSaving ? 'Đang lưu...' : 'Lưu ngay'}
                     </button>
                     <button
                       onClick={() => handleDiscard(msg.id)}

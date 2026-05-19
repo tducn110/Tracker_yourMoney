@@ -54,15 +54,23 @@ export function useQuickAdd() {
         queryClient.invalidateQueries({ queryKey: ['transactions'] });
         queryClient.refetchQueries({ queryKey: ['transactions'] });
         queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
+        queryClient.refetchQueries({ queryKey: ['budgets', 'summary'] });
         queryClient.invalidateQueries({ queryKey: ['analytics'] });
+        queryClient.refetchQueries({ queryKey: ['analytics'] });
         queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
+        queryClient.refetchQueries({ queryKey: ['wallet', 'cash'] });
+        queryClient.invalidateQueries({ queryKey: ['wallets'] });
+        queryClient.refetchQueries({ queryKey: ['wallets'] });
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
         queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
       } else if (result.type === 'wallet') {
         queryClient.invalidateQueries({ queryKey: ['wallets'] });
+        queryClient.refetchQueries({ queryKey: ['wallets'] });
         queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
+        queryClient.refetchQueries({ queryKey: ['wallet', 'cash'] });
       } else if (result.type === 'category') {
         queryClient.invalidateQueries({ queryKey: ['categories'] });
+        queryClient.refetchQueries({ queryKey: ['categories'] });
       }
       
       if (result.message) {
