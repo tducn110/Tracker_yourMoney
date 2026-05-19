@@ -68,6 +68,15 @@ export default function LoginPage() {
                 {loading === 'google' ? 'Đang kết nối...' : 'Tiếp tục với Google'}
               </span>
             </button>
+
+            <button
+              onClick={() => {
+                throw new Error("Sentry Test Error from Finance Tracker V3 frontend!");
+              }}
+              className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-red-200 bg-red-50 text-red-700 transition-all hover:bg-red-100 font-semibold text-[15px]"
+            >
+              ⚠️ Trigger Sentry Error
+            </button>
             
             <p className="text-[13px] text-center leading-relaxed text-slate-400 mt-6">
               Bằng cách đăng nhập, bạn đồng ý với <a href="#" className="underline hover:text-blue-600 transition-colors">Điều khoản dịch vụ</a> và <a href="#" className="underline hover:text-blue-600 transition-colors">Chính sách bảo mật</a> của chúng tôi.
