@@ -11,6 +11,7 @@ import { useCreateTransaction, useCategories } from '@/_lib/hooks/finance';
 import { resolveCategoryId } from '@/_lib/category-map';
 import { event as trackEvent } from '@/_lib/gtag';
 import { transactionsAPI, goalsAPI, billsAPI, budgetAPI, walletAPI } from '@finance/api-client';
+import { AuthGuard } from '@/components/layout/AuthGuard';
 
 /**
  * Prefetch dashboard data so cards render instantly from cache.
@@ -106,8 +107,9 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar - Desktop */}
+    <AuthGuard>
+      <div className="flex min-h-screen bg-gray-50">
+        {/* Sidebar - Desktop */}
       <Sidebar />
 
       {/* Main Content Area */}
@@ -136,5 +138,6 @@ export default function DashboardLayout({
 
       <Toaster position="top-right" richColors />
     </div>
+    </AuthGuard>
   );
 }
