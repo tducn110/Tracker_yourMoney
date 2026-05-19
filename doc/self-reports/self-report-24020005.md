@@ -4,22 +4,20 @@
 |---|---|
 | **Full Name** | Nguyen Tam Duc |
 | **Student ID** | 24020005 |
-| **Team** | Antigravity |
+| **Team** | proPlayer |
 | **Role in Team** | Team lead / Architecture / Backend / Database / Deployment integration |
-
-The timeline below follows the original team plan. GitHub issues, PRs, and commits are used as contribution evidence, not as a replacement for the planned task schedule.
 
 ---
 
 ## Task 1 — Planning & Setup
 
-**Week:** Planning phase, 10/04/2026 - 18/04/2026
+**Week:** Planning phase, 10/04/2026 – 18/04/2026
 
 **Work completed:**
 
 - Defined the Budget-First architecture direction and organized the monorepo into `apps/web`, `apps/api`, `apps/worker`, `packages/db`, `packages/api-client`, `packages/shared-schemas`, and `packages/cache`.
-- Created and managed the early foundation issues such as `#2` Budget-First core, `#3` Multi-Wallet, `#4` Quick Add, `#5` UI reframing, `#11` Firebase session cookie migration, `#17` unused table cleanup, and `#24` backend error handling.
-- Established the branch naming convention using `feature/issue-*` and `fix/*`, and maintained a PR-based workflow into `main` or `dev`.
+- Created and managed the early foundation issues: `#2` Budget-First core, `#3` Multi-Wallet, `#4` Quick Add, `#5` UI reframing, `#11` Firebase session cookie migration, `#17` unused table cleanup, and `#24` backend error handling.
+- Established the branch naming convention `feature/issue-*` and `fix/*`, and maintained a PR-based workflow into `main` or `dev`.
 - Reorganized project documentation so the team had a shared source of truth during development and final submission.
 
 **Contribution evidence:**
@@ -30,19 +28,19 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 - PR `#9` `feature/issue-4-quick-add` merged 25/04/2026.
 - PR `#10` `feature/issue-5-aesthetics` merged 25/04/2026.
 - PR `#12` `feature/issue-101-reorganize-docs` merged 26/04/2026.
-- Git identities visible in the repository: `tducn`, `tdu._cn`, `tducn110`.
+- Git identities: `tducn`, `tdu._cn`, `tducn110`.
 
 **Difficulties encountered:**
 
-- Early project documentation and active code were not fully aligned, so I had to standardize structure while still keeping the team unblocked on schema and contract work.
+- Early project documentation and active code were not fully aligned, so I had to standardize structure while keeping the team unblocked on schema and contract work.
 
-**Self-evaluation:** 9/10
+**Self-evaluation:** 10/10
 
 ---
 
 ## Task 2 — UI Implementation
 
-**Week:** UI implementation phase, 18/04/2026 - 05/05/2026
+**Week:** UI implementation phase, 18/04/2026 – 05/05/2026
 
 **Work completed:**
 
@@ -61,13 +59,13 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - The UI could not be treated separately from the backend because financial widgets depended on budget summaries, wallet state, and API response shapes; I had to adjust both interfaces and contracts together.
 
-**Self-evaluation:** 8.5/10
+**Self-evaluation:** 10/10
 
 ---
 
 ## Task 3 — Database Integration
 
-**Week:** Database integration phase, 15/04/2026 - 05/05/2026
+**Week:** Database integration phase, 15/04/2026 – 05/05/2026
 
 **Work completed:**
 
@@ -87,13 +85,13 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - The hardest part was keeping financial logic, auth flow, and deployment strategy consistent while the active codebase had already shifted to PostgreSQL-oriented Drizzle and some older documents still described a different stack.
 
-**Self-evaluation:** 9/10
+**Self-evaluation:** 10/10
 
 ---
 
 ## Task 4 — Optimization
 
-**Week:** Optimization and deployment phase, 05/05/2026 - 15/05/2026
+**Week:** Optimization and deployment phase, 05/05/2026 – 15/05/2026
 
 **Work completed:**
 
@@ -112,13 +110,13 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - End-phase optimization was not just about fixing isolated bugs; I also had to absorb diverged branches, check side effects, and merge in the right order.
 
-**Self-evaluation:** 8.5/10
+**Self-evaluation:** 10/10
 
 ---
 
 ## Task 5 — Peer Review
 
-**Week:** Review and final integration phase, 12/05/2026 - 15/05/2026
+**Week:** Review and final integration phase, 12/05/2026 – 15/05/2026
 
 **Work completed:**
 
@@ -136,7 +134,7 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - GitHub history contains review requests but almost no formal review comments, so tracking feedback required reading PR chains, follow-up commits, and merge timing.
 
-**Self-evaluation:** 8.5/10
+**Self-evaluation:** 10/10
 
 ---
 
@@ -148,4 +146,4 @@ I was responsible for the overall architecture and for the integration points be
 
 **Estimated contribution compared to the whole team:** ~35%
 
-**Overall self-evaluation:** 8.8/10
+**Overall self-evaluation:** 10/10

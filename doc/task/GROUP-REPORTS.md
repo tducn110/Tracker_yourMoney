@@ -6,7 +6,7 @@
 
 | Field | Value |
 | --- | --- |
-| **Team Name** | Antigravity |
+| **Team Name** | proPlayer |
 | **Project Name** | Finance Tracker V3 — Personal Finance Management Application |
 | **GitHub Repository** | https://github.com/tducn110/Tracker_yourMoney |
 | **Primary Deploy Evidence** | Latest successful Vercel Production deployment on 16/05/2026: `https://finance-for-me-local-n2q6yvmiw-ntduc011006dn-3691s-projects.vercel.app` |

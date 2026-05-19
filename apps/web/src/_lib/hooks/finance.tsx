@@ -426,26 +426,6 @@ export function useUpdateCashWallet() {
 }
 
 /**
- * Mutation: Internal Transfer (Wallet → Wallet)
- */
-export function useTransfer() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: { fromWalletId: string; toWalletId: string; amount: string; note?: string }) => {
-      const idempotencyKey = crypto.randomUUID();
-      return walletAPI.transfer(data, idempotencyKey);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wallets'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-    },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || err?.message || 'Không thể chuyển tiền');
-    },
-  });
-}
-
-/**
  * Hook: Category Spending Analytics
  */
 export function useCategorySpending(month?: string, date?: string) {

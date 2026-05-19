@@ -43,6 +43,7 @@ Thumbs.db
 .claude/
 .antigravity/
 .agent/
+.deepseek/
 .gitnexus/
 !.gitnexus/config.json
 .codersinflow/

@@ -1,7 +1,7 @@
 // apps/api/src/routes/wallet.ts
 import { Hono } from "hono";
 import { zValidator } from "../lib/validator";
-import { quickSyncWalletSchema, transferSchema } from "@finance/shared-schemas";
+import { quickSyncWalletSchema } from "@finance/shared-schemas";
 import { walletService } from "../services/container";
 import { ok, err } from "../lib/response";
 
@@ -47,24 +47,6 @@ export const walletRoutes = new Hono<{ Variables: { userId: string } }>()
     const body = await c.req.json();
     const wallet = await walletService.createWallet(userId, body);
     return ok(c, wallet);
-  })
-
-  .post("/transfer", zValidator("json", transferSchema), async (c) => {
-    const userId = c.get("userId");
-    const body = c.req.valid("json");
-    const idempotencyKey = c.req.header("Idempotency-Key");
-
-    try {
-      const result = await walletService.transfer(userId, {
-        ...body,
-        idempotencyKey: idempotencyKey || undefined,
-      });
-      return ok(c, result);
-    } catch (e: any) {
-      if (e.code === "BAD_REQUEST") return err(c, 400, "BAD_REQUEST", e.message);
-      if (e.code === "NOT_FOUND") return err(c, 404, "NOT_FOUND", e.message);
-      throw e;
-    }
   })
 
   .put("/:id", async (c) => {

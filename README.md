@@ -1,18 +1,10 @@
-Dưới đây là nội dung file `README.md` đã được chuyển đổi sang định dạng **Markdown chuẩn**, loại bỏ các thuộc tính React/JSX (như `style`, `className`), thay thế checklist bằng `- [x]` và các badge bằng văn bản thuần. Bạn có thể lưu nội dung này thành file `.md`.
-
-````markdown
----
-title: Group Report
-description: Final project report for Finance Tracker V3.
----
-
 # Finance Tracker V3 — Final Project Report
 
 ## Team Information
 
-| Field                 | Value                                                                                  |
+| ID                    | Content                                                                                |
 | --------------------- | -------------------------------------------------------------------------------------- |
-| **Team Name**         | Antigravity                                                                            |
+| **Team Name**         | proPlayer                                                                              |
 | **Project Name**      | Finance Tracker V3 — Personal Finance Management App                                   |
 | **GitHub Repository** | [github.com/tducn110/Tracker_yourMoney](https://github.com/tducn110/Tracker_yourMoney) |
 | **Demo Deploy**       | [finance-for-me-local.vercel.app](https://finance-for-me-local.vercel.app)             |
@@ -29,23 +21,13 @@ description: Final project report for Finance Tracker V3.
 
 ## Individual Self-Reports
 
-The individual self-reports are included as separate pages and linked here for direct access from the group report.
-
-<<<<<<< HEAD
-| Team Member      | Student ID | Self-Report                                                     |
-| ---------------- | ---------- | --------------------------------------------------------------- |
-| Nguyen Tam Duc   | 24020005   | [Nguyen Tam Duc self-report](/self-reports/nguyen-tam-duc/)     |
-| Tran Vo Ba Vuong | 24020008   | [Tran Vo Ba Vuong self-report](/self-reports/tran-vo-ba-vuong/) |
-| Chau Tuan Kiet   | 24020010   | [Chau Tuan Kiet self-report](/self-reports/chau-tuan-kiet/)     |
-=======
 The individual self-report files are included as separate pages and linked here for direct access from the group report.
 
-| Team Member | Student ID | Self-Report |
-| --- | --- | --- |
-| Nguyen Tam Duc | 24020005 | [Nguyen Tam Duc self-report](doc/self-report/self-report-24020005.md) |
-| Tran Vo Ba Vuong | 24020008 | [Tran Vo Ba Vuong self-report](doc/self-report/self-report-24020008.md) |
-| Chau Tuan Kiet | 24020010 | [Chau Tuan Kiet self-report](doc/self-report/self-report-24020010.md) |
->>>>>>> f2306a3 (docs: link self reports to repo files)
+| Team Member      | Student ID | Self-Report                                                     |
+| ---------------- | ---------- | --------------------------------------------------------------- |
+| Nguyen Tam Duc   | 24020005   | [Nguyen Tam Duc self-report](doc/self-reports/self-report-24020005.md) |
+| Tran Vo Ba Vuong | 24020008   | [Tran Vo Ba Vuong self-report](doc/self-reports/self-report-24020008.md) |
+| Chau Tuan Kiet   | 24020010   | [Chau Tuan Kiet self-report](doc/self-reports/self-report-24020010.md) |
 
 ## Project Overview & Technologies Used
 
@@ -59,14 +41,14 @@ Finance Tracker V3 is a personal finance management application following the **
 | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Frontend | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Radix UI, shadcn/ui, TanStack Query, Recharts, Motion                                 |
 | Backend  | Hono API (Node.js), TypeScript, Zod, Firebase Auth/Admin, JWT, Pino logging                                                                           |
-| Database | Supabase PostgreSQL, Drizzle ORM (14 tables)                                                                                                          |
-| Auth     | Firebase Authentication (Google, Facebook, GitHub, Apple)                                                                                             |
+| Database | Supabase PostgreSQL, Drizzle ORM (13 tables)                                                                                                          |
+| Auth     | Firebase Authentication (Google)                                                                                                                      |
 | Monorepo | Turborepo + pnpm Workspace (`apps/api`, `apps/web`, `apps/worker`, `packages/db`, `packages/api-client`, `packages/shared-schemas`, `packages/cache`) |
 | Deploy   | Vercel                                                                                                                                                |
 
 ### Key Features
 
-- **Multi-Wallet:** Support for multiple wallets (cash, bank, credit card, e-wallet, investment) with inter-wallet transfers.
+- **Multi-Wallet:** Support for multiple wallets (cash, bank, credit card, e-wallet, investment).
 - **AI Quick Add:** Add transactions quickly using natural language such as `Breakfast 35k`, auto-detecting category and amount via Gemini AI.
 - **Budget Management:** Set category budgets, track spending percentages, and receive overspend alerts.
 - **Recurring Bills:** Track monthly, quarterly, and yearly bills, payment history, and reminders.
@@ -74,11 +56,11 @@ Finance Tracker V3 is a personal finance management application following the **
 
 #### Screenshots (Key Features)
 
-![Feature screenshot 1](/screenshots/Screenshot%20from%202026-05-17%2021-28-54.png)
-![Feature screenshot 2](/screenshots/Screenshot%20from%202026-05-17%2021-11-49.png)
-![Feature screenshot 3](/screenshots/Screenshot%20from%202026-05-17%2021-12-38.png)
-![Feature screenshot 4](/screenshots/Screenshot%20from%202026-05-17%2021-13-37.png)
-![Feature screenshot 5](/screenshots/Screenshot%20from%202026-05-17%2021-14-38.png)
+![AI Quick Add — natural language transaction input](doc/screenshots/Keyfeature-AIchat.png)
+![Bills — recurring bill management](doc/screenshots/Keyfeature-Bills.png)
+![Budget — category budget tracking](doc/screenshots/Keyfeature-Budget.png)
+![Goals — savings goals with progress](doc/screenshots/Keyfeature-Goals.png)
+![Wallets — multi-wallet](doc/screenshots/Keyfeature-Wallets.png)
 
 ## Setup & Installation Guide
 
@@ -115,47 +97,46 @@ pnpm dev
 # Production build
 pnpm build
 ```
-````
 
 ## Task 1 — Project Planning & Teamwork
 
 ### (a) Role Assignment & Contributions
 
-The team divided work by application layer, each member owning a core domain. All contributions are backed by Git evidence.
-
-| Member                                 | Role                  | Key Contributions (Backed by Git Evidence)                                                                                                                                                                                                                                                                                                                                                                              |
-| -------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Nguyen Tam Duc** (`tdu._cn`)         | `Team Lead` `Backend` | Led the team, defined the Budget-First vision, designed the monorepo structure, designed the 14-table PostgreSQL schema, created the ERD in `doc/wiki/erd.md`, designed the Hono API architecture, built the Safe-to-Spend engine, AI Quick Add with Gemini, wallet and analytics integration, shared Zod schemas, seed data, and reviewed/merged PRs `#156` and `#157`.                                                |
-| **Tran Vo Ba Vuong** (`ViccVuongVicc`) | `Backend` `DevOps`    | Fixed AuthProvider race conditions, added production debug tracking, fixed Vercel auth and API deployment with Next.js catch-all routing, added dynamic CORS for `*.vercel.app`, applied rate limiting and cold-start fixes, built `CategoryManager`, `CashWalletWidget`, `useMounted`, refactored UI and auth, migrated logging to Pino, added missing PostgreSQL migrations, and fixed budget/wallet/category issues. |
-| **Chau Tuan Kiet**                     | `Frontend` `UI/UX`    | Built the 4-step onboarding wizard, collaborated on onboarding actions, contributed 11 collaborative commits with Vuong, implemented dashboard and all main pages, social login UI, responsive design, TanStack Query data layer, and applied the Container/Presentational pattern.                                                                                                                                     |
+| Member                                  | Role                | Key Contributions (Backed by Git Evidence)                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Nguyen Tam Duc** (`tducn110`)         | Team Lead / Backend | Led the team, defined the Budget-First vision, designed the monorepo structure, designed the 13-table PostgreSQL schema, created the ERD in `doc/wiki/erd.md`, designed the Hono API architecture, built the Safe-to-Spend engine, AI Quick Add with Gemini, wallet and analytics integration, shared Zod schemas, seed data, and reviewed/merged PRs `#156` and `#157`.                                                |
+| **Tran Vo Ba Vuong** (`ViccVuongVicc`)  | Backend / DevOps    | Fixed AuthProvider race conditions, added production debug tracking, fixed Vercel auth and API deployment with Next.js catch-all routing, added dynamic CORS for `*.vercel.app`, applied rate limiting and cold-start fixes, built `CategoryManager`, `CashWalletWidget`, `useMounted`, refactored UI and auth, migrated logging to Pino, added missing PostgreSQL migrations, and fixed budget/wallet/category issues. |
+| **Chau Tuan Kiet** (`kiet00394-collab`) | Frontend / UI-UX    | Built the 4-step onboarding wizard, collaborated on onboarding actions, contributed collaborative commits with Vuong, implemented dashboard and all main pages, social login UI, responsive design, TanStack Query data layer, Sentry integration, AuthGuard, and applied the Container/Presentational pattern.                                                                                                         |
 
 ### (b) Wireframe
 
 - **Tool used:** Figma
+- **Link Figma:** https://www.figma.com/make/ui7EMsUQkDe4AXHTDgQ3uq/Finance-Tracker-Design--Copy-?t=YpikTMxUmKGEP7Vk-1
 - **Pages designed:**
+  - [x] Dashboard (Budget-First overview)
+  - [x] Transactions (list, filter, add/edit/delete)
+  - [x] Wallets (multi-wallet management)
+  - [x] Budgets (setup & tracking)
+  - [x] Goals (savings targets)
+  - [x] Bills (recurring bills)
+  - [x] Analytics (spending charts)
+  - [x] Settings (categories, profile)
+  - [x] Onboarding (4-step wizard)
 
-- [x] Dashboard (Budget-First overview)
-- [x] Transactions (list, filter, add/edit/delete)
-- [x] Wallets (multi-wallet management, transfers)
-- [x] Budgets (setup & tracking)
-- [x] Goals (savings targets)
-- [x] Bills (recurring bills)
-- [x] Analytics (spending charts)
-- [x] Settings (categories, profile)
-- [x] Onboarding (4-step wizard)
+> **TODO:** Chèn ảnh wireframe export từ Figma cho từng trang.
 
 ### (c) Project Plan — Milestones
 
-| Milestone                                     | Deadline   | Status  |
-| --------------------------------------------- | ---------- | ------- |
-| Complete wireframe & Figma design             | 10/04/2026 | On time |
-| Setup GitHub, Monorepo & Database Schema      | 15/04/2026 | On time |
-| Complete Authentication (Firebase + JWT)      | 18/04/2026 | On time |
-| Basic UI (Dashboard, Transactions, Wallets)   | 22/04/2026 | On time |
-| Database integration & full CRUD API          | 28/04/2026 | On time |
-| AI Quick Add, Analytics, Bills, Goals         | 05/05/2026 | On time |
-| Onboarding Wizard, Optimization & Peer Review | 12/05/2026 | On time |
-| Submission                                    | 15/05/2026 | On time |
+| Milestone                                             | Deadline   | Status  | Người phụ trách chính                             |
+| ----------------------------------------------------- | ---------- | ------- | ------------------------------------------------ |
+| Complete wireframe & Figma design                     | 10/04/2026 | On time | Chau Tuan Kiet (thiết kế), Nguyen Tam Duc (review) |
+| Setup GitHub, Monorepo & Database Schema              | 15/04/2026 | On time | Nguyen Tam Duc (monorepo, schema, ERD)            |
+| Complete Authentication (Firebase + JWT)              | 20/04/2026 | On time | Nguyen Tam Duc (API), Tran Vo Ba Vuong (fixes)    |
+| Basic UI (Dashboard, Transactions, Wallets)           | 22/04/2026 | On time | Chau Tuan Kiet (UI), Nguyen Tam Duc (API)         |
+| Database integration & full CRUD API                  | 28/04/2026 | On time | Nguyen Tam Duc (API, schema), Tran Vo Ba Vuong (devops) |
+| AI Quick Add, Analytics, Bills, Goals                 | 05/05/2026 | On time | Nguyen Tam Duc (AI, Analytics), Chau Tuan Kiet (UI) |
+| Onboarding Wizard, Optimization & Peer Review         | 12/05/2026 | On time | Chau Tuan Kiet (onboarding), Tran Vo Ba Vuong (optimization) |
+| Submission                                            | 15/05/2026 | On time | Cả nhóm                                          |
 
 ### (d) GitHub Repository
 
@@ -167,35 +148,15 @@ The team uses Git Flow with `main` branch and feature branches. Each feature is 
 
 **Commit convention:**
 
-```text
-feat:     New feature
-fix:      Bug fix
-chore:    Maintenance work (update deps, config)
-docs:     Documentation updates
-refactor: Code restructuring
-```
+| Type        | Description                            |
+| ----------- | -------------------------------------- |
+| `feat:`     | New feature                            |
+| `fix:`      | Bug fix                                |
+| `chore:`    | Maintenance work (update deps, config) |
+| `docs:`     | Documentation updates                  |
+| `refactor:` | Code restructuring                     |
 
-**Representative commit messages:**
-
-```text
-fff7e94 feat: onboarding wizard 4 buoc - info, wallet, budget, transaction  (Chau Tuan Kiet)
-1439c58 feat(web): enhance wallet integration and analytics (#154)         (Nguyen Tam Duc)
-f650aed feat(api,web): refactor dashboard and S2S engine (#152)            (Nguyen Tam Duc)
-8b3ca4b feat(api,web): implement AI Quick Add with Gemini (#150)           (Nguyen Tam Duc)
-613a823 feat(system): comprehensive UI refactor and auth (#129-#136)       (Tran Vo Ba Vuong)
-fa1a282 fix(vercel): fix auth and api deployment as Next.js route (#144)   (Tran Vo Ba Vuong)
-4e629b1 refactor(api,db): eliminate magic strings, migrate to pino         (Tran Vo Ba Vuong)
-d17a5ae fix(web): resolve type errors and normalize currency formatting     (Tran Vo Ba Vuong)
-1cf5543 fix(web): race condition guard in AuthProvider (#101)              (Tran Vo Ba Vuong)
-
-Collaborative (kiet00394-collab: Chau Tuan Kiet & Tran Vo Ba Vuong)
-2a9423d feat: frontend refactor, react-query, optimistic updates (Phases 6-8)
-b4e8551 feat(web): enhance login UI with premium background (Phase 9)
-59af0c5 feat: backend scale & performance phase 11-15, ui tailwind v4 fixes
-fa7319a feat(ui): tailwind v4 migration and frontend fixes (#87)
-97b4f4d fix: financial logic integrity — wallet OCC, PostgreSQL compat
-da139ec feat(automation): add recurring bills worker, notifications & settings UI
-```
+> **TODO:** Chèn ảnh chụp màn hình danh sách commits hoặc một Pull Request tiêu biểu.
 
 ## Task 2 — Implement User Interface
 
@@ -205,7 +166,7 @@ da139ec feat(automation): add recurring bills worker, notifications & settings U
 | ------------ | --------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------- |
 | Dashboard    | `/`             | Budget-First overview: Safe-to-Spend, ring chart, goals, upcoming bills | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API/S2S Engine)       |
 | Transactions | `/transactions` | Transaction list with search, filter, import/export, full CRUD          | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API)                  |
-| Wallets      | `/wallets`      | Multi-wallet management with inter-wallet transfers                     | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API)                  |
+| Wallets      | `/wallets`      | Multi-wallet management                                                | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API)                  |
 | Budgets      | `/budgets`      | Set category budgets, track spending percentages                        | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API/S2S Engine)       |
 | Goals        | `/goals`        | Savings goals with deadlines and progress tracking                      | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API)                  |
 | Bills        | `/bills`        | Manage recurring bills, payment history                                 | Chau Tuan Kiet (UI) + Nguyen Tam Duc (API)                  |
@@ -215,32 +176,15 @@ da139ec feat(automation): add recurring bills worker, notifications & settings U
 
 #### Screenshots — Main Pages
 
-![Dashboard](/screenshots/Screenshot%202026-05-17%20at%2014.47.07.png)  
-_Dashboard_
-
-![Transactions](/screenshots/Screenshot%202026-05-17%20at%2014.49.23.png)  
-_Transactions_
-
-![Wallets](/screenshots/Screenshot%202026-05-17%20at%2014.49.35.png)  
-_Wallets_
-
-![Budgets](/screenshots/Screenshot%202026-05-17%20at%2014.49.45.png)  
-_Budgets_
-
-![Goals](/screenshots/Screenshot%202026-05-17%20at%2014.49.57.png)  
-_Goals_
-
-![Bills](/screenshots/Screenshot%202026-05-17%20at%2014.50.12.png)  
-_Bills_
-
-![Analytics](/screenshots/Screenshot%202026-05-17%20at%2014.50.27.png)  
-_Analytics_
-
-![Settings](/screenshots/Screenshot%20from%202026-05-17%2020-58-31.png)  
-_Settings_
-
-![Onboarding](/screenshots/Screenshot%20from%202026-05-17%2020-59-39.png)  
-_Onboarding_
+![Dashboard — Budget-First overview](doc/screenshots/UI_dashboard.png)
+![Transactions — list, search, filter, CRUD](doc/screenshots/UI_transaction.png)
+![Wallets — balance](doc/screenshots/UI_wallets.png)
+![Budgets — spending tracking](doc/screenshots/UI_Budgets.png)
+![Goals — savings progress](doc/screenshots/UI_Goals.png)
+![Bills — recurring bills](doc/screenshots/UI_Bills.png)
+![Analytics — spending charts](doc/screenshots/UI_Analytics.png)
+![Settings — categories & profile](doc/screenshots/UI_Settings.png)
+![Onboarding — 4-step wizard](doc/screenshots/UI_onboarding.png)
 
 ### (b) Tailwind CSS Usage
 
@@ -256,17 +200,33 @@ The entire UI is built with **Tailwind CSS v4** combined with **shadcn/ui** (Rad
 
 ### (c) Interactive Features
 
-| Feature            | Description                                                        | File / Component              | Implemented By                             |
-| ------------------ | ------------------------------------------------------------------ | ----------------------------- | ------------------------------------------ |
-| Quick Add Modal    | Add transactions via natural language with AI parsing              | `QuickAddModal`, `AIQuickAdd` | Nguyen Tam Duc (API) + Chau Tuan Kiet (UI) |
-| Form Validation    | Zod schema validation across frontend and backend                  | Shared schemas package        | Nguyen Tam Duc                             |
-| Search & Filter    | Transaction search/filter by category, date, amount                | `TransactionsContainer`       | Chau Tuan Kiet                             |
-| Charts             | Ring chart, bar chart, line chart via Recharts                     | Dashboard, Analytics pages    | Chau Tuan Kiet                             |
-| Social Login       | Google, Facebook, GitHub, Apple login UI with race condition guard | `AuthProvider`, `LoginPage`   | Chau Tuan Kiet + Tran Vo Ba Vuong          |
-| Onboarding Wizard  | Multi-step form for new users                                      | `OnboardingWizard`            | Chau Tuan Kiet                             |
-| Loading Skeletons  | Skeleton placeholders while data loads                             | `Skeleton` components         | Chau Tuan Kiet                             |
-| Category Manager   | CRUD for user categories                                           | `CategoryManager`             | Tran Vo Ba Vuong                           |
-| Cash Wallet Widget | Wallet balance display widget                                      | `CashWalletWidget`            | Tran Vo Ba Vuong                           |
+| Feature            | Description                                           | File / Component              | Implemented By                             |
+| ------------------ | ----------------------------------------------------- | ----------------------------- | ------------------------------------------ |
+| Quick Add Modal    | Add transactions via natural language with AI parsing | `QuickAddModal`, `AIQuickAdd` | Nguyen Tam Duc (API) + Chau Tuan Kiet (UI) |
+| Form Validation    | Zod schema validation across frontend and backend     | Shared schemas package        | Nguyen Tam Duc                             |
+| Search & Filter    | Transaction search/filter by category, date, amount   | `TransactionsContainer`       | Chau Tuan Kiet                             |
+| Charts             | Ring chart, bar chart, line chart via Recharts        | Dashboard, Analytics pages    | Chau Tuan Kiet                             |
+| Social Login       | Google with race condition guard                      | `AuthProvider`, `LoginPage`   | Chau Tuan Kiet + Tran Vo Ba Vuong          |
+| Onboarding Wizard  | Multi-step form for new users                         | `OnboardingWizard`            | Chau Tuan Kiet                             |
+| Loading Skeletons  | Skeleton placeholders while data loads                | `Skeleton` components         | Chau Tuan Kiet                             |
+| Category Manager   | CRUD for user categories                              | `CategoryManager`             | Tran Vo Ba Vuong                           |
+| Cash Wallet Widget | Wallet balance display widget                         | `CashWalletWidget`            | Tran Vo Ba Vuong                           |
+| AuthGuard          | Redirect unauthenticated users to login page          | `AuthGuard`                   | Chau Tuan Kiet                             |
+
+**How to test interactive elements:**
+
+| Feature            | Test steps                                                                                                                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Quick Add Modal    | Open Quick Add, enter natural text such as “ăn trưa 50k hôm nay”, verify AI fills amount, category, and date correctly, then submit and confirm the transaction appears in the list. |
+| Form Validation    | Submit forms with missing or invalid values such as negative amount, empty date, or missing category; verify frontend errors appear and invalid backend requests are rejected.        |
+| Search & Filter    | Search by keyword and apply category, date, or amount filters; verify only matching transactions are shown and reset returns the full list.                                           |
+| Charts             | Add transactions across different categories and dates, then check that ring, bar, and line charts update correctly and tooltips appear on hover.                                    |
+| Social Login       | Sign in with Google, refresh the page, log out, and sign in again; verify session state is stable with no duplicate redirects or duplicate sessions.                                 |
+| Onboarding Wizard  | Complete each onboarding step, test next/back navigation and required-field validation, then verify completion saves data and redirects to the dashboard.                            |
+| Loading Skeletons  | Reload pages or simulate slow API responses; verify skeleton placeholders appear while loading and disappear after data is rendered.                                                  |
+| Category Manager   | Create, edit, and delete categories; verify new categories appear in transaction forms and existing transactions still display category data correctly.                               |
+| Cash Wallet Widget | Add income and expense transactions; verify wallet balance updates immediately and remains correct after refresh.                                                                     |
+| AuthGuard          | Open a protected route while logged out and verify redirect to login; after login, verify the same route loads successfully.                                                          |
 
 ### (d) Responsive Design
 
@@ -276,13 +236,17 @@ The entire UI is built with **Tailwind CSS v4** combined with **shadcn/ui** (Rad
 
 All pages were tested via Chrome DevTools Device Mode and work correctly at every breakpoint.
 
+![Desktop — widescreen layout](doc/screenshots/Desktop.png)
+![Tablet — 2-column grid](doc/screenshots/Tablet.png)
+![Mobile — single column](doc/screenshots/Mobile.png)
+
 ## Task 3 — Database Integration & Dynamic Content
 
 ### (a) Database Design
 
 - **Database system:** Supabase PostgreSQL (TiDB Serverless compatible)
 - **ORM:** Drizzle ORM
-- **Number of tables:** 14
+- **Number of tables:** 13
 
 **Table list:**
 
@@ -300,12 +264,11 @@ All pages were tested via Chrome DevTools Device Mode and work correctly at ever
 | refresh_tokens   | JWT refresh tokens                   | `id`, `user_id`, `token_hash`, `expires_at`                            |
 | user_settings    | User preferences                     | `id`, `user_id`, `language`, `currency`, `theme`                       |
 | idempotency_keys | Duplicate transaction prevention     | `key`, `user_id`, `created_at`                                         |
-| wallet_transfers | Inter-wallet transfer history        | `id`, `user_id`, `from_wallet`, `to_wallet`, `amount`                  |
 | bill_payments    | Bill payment history                 | `id`, `bill_id`, `amount`, `paid_at`                                   |
 
 _Database designed by: Nguyen Tam Duc_
 
-![ER Diagram — Finance Tracker V3](/screenshots/Screenshot%20from%202026-05-18%2012-04-38.png)
+![ER Diagram — 14 tables](doc/screenshots/erd.png)
 
 ### (b) Database Connection
 
@@ -331,10 +294,16 @@ Connection architecture: **Next.js (App Router) → Hono API → Drizzle ORM →
 | Goals        | Goals, progress                                  | `GET /api/v1/goals`               | Nguyen Tam Duc |
 | Analytics    | Income/expense charts, category breakdown        | `GET /api/v1/analytics`           | Nguyen Tam Duc |
 
-![Dynamic data page 1](/screenshots/Screenshot%20from%202026-05-17%2022-20-28.png)
-![Dynamic data page 2](/screenshots/Screenshot%20from%202026-05-17%2022-21-00.png)
-![Dynamic data page 3](/screenshots/Screenshot%20from%202026-05-17%2022-21-05.png)
-![Dynamic data page 4](/screenshots/Screenshot%20from%202026-05-17%2022-21-08.png)
+**Data Flow Architecture:**
+
+1. **User Action** → Frontend (Next.js App Router) dispatches request via TanStack Query (`useQuery` / `useMutation`)
+2. **API Client** (`packages/api-client`) sends typed HTTP request with JWT `Authorization: Bearer <token>` header
+3. **Hono API** (`apps/api/src/index.ts`) receives request at catch-all route `/api/[[...route]]/route.ts`, validates payload via Zod middleware, extracts `userId` from JWT
+4. **Repository Layer** (`apps/api/src/repositories/`) builds Drizzle ORM queries with mandatory user-scoping (`WHERE user_id = ?`) — all queries are tenant-isolated
+5. **PostgreSQL** (Supabase) executes query, returns rows
+6. **Response** flows back: Repository → Hono route → JSON response → TanStack Query cache → React component re-render
+
+All monetary amounts are transmitted as **strings** (Decimal.js) to avoid IEEE 754 floating-point errors. Idempotency keys (`UNIQUE` constraint) prevent duplicate transactions on network retry.
 
 ## Task 4 — Optimization
 
@@ -344,6 +313,8 @@ Ran Lighthouse before and after optimization. Score improved from **75 → 92**.
 
 #### Before Optimization
 
+![Lighthouse — before optimization](doc/screenshots/lighthouse-before.jpeg)
+
 | Metric         | Score |
 | -------------- | ----- |
 | Performance    | 75    |
@@ -351,9 +322,9 @@ Ran Lighthouse before and after optimization. Score improved from **75 → 92**.
 | Best Practices | 90    |
 | SEO            | 82    |
 
-![Lighthouse before optimization — Score 75](/screenshots/lighthouse-before.jpeg)
-
 #### After Optimization
+
+![Lighthouse — after optimization](doc/screenshots/lighthouse-after.jpg)
 
 | Metric         | Score |
 | -------------- | ----- |
@@ -361,8 +332,6 @@ Ran Lighthouse before and after optimization. Score improved from **75 → 92**.
 | Accessibility  | 95    |
 | Best Practices | 96    |
 | SEO            | 90    |
-
-![Lighthouse after optimization — Score 92](/screenshots/lighthouse-after.jpg)
 
 ### (b) Optimizations Applied
 
@@ -379,13 +348,36 @@ Ran Lighthouse before and after optimization. Score improved from **75 → 92**.
 | Console.\* in production                       | Replaced all console.\* with Pino structured logging — `4e629b1`                   | Tran Vo Ba Vuong |
 | Cold start performance                         | Removed dead imports and redundant env initialization — `eb079e8`                  | Tran Vo Ba Vuong |
 
+**Code references (file + commit):**
+
+| Issue | File(s) Changed | Commit |
+|-------|----------------|--------|
+| SQL N+1 queries | `apps/api/src/repositories/budget.repository.ts` | `f650aed` |
+| Floating-point via Decimal.js | `packages/shared-schemas/src/transaction.schema.ts` | `d17a5ae` |
+| Idempotency Keys | `packages/db/src/schema/idempotency-keys.ts` | `97b4f4d` |
+| Sentry + Pino integration | `apps/api/src/index.ts`, `apps/web/next.config.ts` | `4e629b1` |
+| Rate limiting | `apps/api/src/index.ts` (Hono rate-limiter middleware) | `64cbe5d` |
+| TanStack Query cache invalidation | `apps/web/src/app/(dashboard)/**/_components/*Container.tsx` | `2a9423d` |
+| Shared Zod schemas | `packages/shared-schemas/src/*.ts` | `c193b16` |
+| AuthProvider race condition | `apps/web/src/contexts/AuthProvider.tsx` | `1cf5543` |
+| Console.* → Pino | `apps/api/src/**/*.ts`, `apps/web/src/**/*.ts` | `4e629b1` |
+| Cold start optimization | `apps/api/src/index.ts` | `eb079e8` |
+
 ### (c) Error Monitoring & User Analytics
 
 **Sentry:**
 
+Sentry was integrated at two levels for full-stack error visibility:
+
+- **Backend (API):** `@sentry/node` initialized in `apps/api/src/index.ts` with `Sentry.init({ dsn: process.env.SENTRY_DSN })`. Captures unhandled exceptions, API route errors (4xx/5xx), database connection failures, and validation errors. Environment and release tags are set from `VERCEL_ENV` and `VERCEL_GIT_COMMIT_SHA`.
+- **Frontend (Web):** `@sentry/nextjs` wraps Next.js config via `withSentryConfig(nextConfig)` in `apps/web/next.config.ts`. Captures client-side errors, unhandled promise rejections, and React error boundaries. Source maps are auto-uploaded during Vercel build for readable stack traces in production.
+
 - [x] Sentry Node SDK integrated
 - Monitored errors: API errors, database connection failures, auth failures, validation errors
-- Implemented by: Tran Vo Ba Vuong
+- Implemented by: Tran Vo Ba Vuong & Chau Tuan Kiet
+
+![Sentry — Backend error monitoring](doc/screenshots/BackendSentry.png)
+![Sentry — Frontend error tracking](doc/screenshots/FrontendSentry.png)
 
 **Logging (Pino):**
 
@@ -393,21 +385,30 @@ Ran Lighthouse before and after optimization. Score improved from **75 → 92**.
 - JSON log format for easy analysis
 - Implemented by: Tran Vo Ba Vuong
 
+**Google Analytics:**
+
+- [x] Google Analytics integrated
+- Tracking: page views, events, user engagement, conversion tracking
+- Implemented by: Chau Tuan Kiet
+
+![Google Analytics — dashboard](doc/screenshots/GoogleAnalytics.png)
+
 ## Task 5 — UI/UX Peer Review & Evaluation
 
 ### (a) Feedback for Other Teams
 
+**Feedback by: Chau Tuan Kiet**
 **Reviewed Team: Calorie Web**
 
 - **Team / Project:** Calorie Web — Calorie Tracking Application
 - **Repository:** [github.com/nguyenduythaibao1611-eng/calorie-web.github.io](https://github.com/nguyenduythaibao1611-eng/calorie-web.github.io)
-- **Feedback Issues:** [GitHub Issues](https://github.com/nguyenduythaibao1611-eng/calorie-web.github.io/issues)
 
-| Aspect         | Strengths                                                                             | Improvement Suggestions                                                                                                                                                              |
-| -------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Functionality  | Complete calorie tracking flow: diary, search, stats, TDEE calculator, water tracking | [PR #1 — Fix streak persistence](https://github.com/nguyenduythaibao1611-eng/calorie-web.github.io/issues/78): streak resets to 0 on page reload; needs to persist streak to profile |
-| Data Integrity | Local storage architecture for offline-first experience                               | [PR #2 — Fix timezone bug](https://github.com/nguyenduythaibao1611-eng/calorie-web.github.io/issues/79): `toISOString()` uses UTC, causing a 1-day streak offset for UTC+7 timezone  |
-| UI/UX          | Clean dashboard design, responsive layout, animated stats page                        | Could improve with dark mode and accessibility labels for screen readers                                                                                                             |
+| Khía cạnh        | Điểm mạnh                                                                             | Gợi ý cải thiện                                                                                                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Usability        | Complete calorie tracking flow: diary, search, stats, TDEE calculator, water tracking | [PR #78 — Fix streak persistence](https://github.com/nguyenduythaibao1611-eng/calorie-web.github.io/issues/78): streak resets to 0 on page reload; needs to persist streak to profile |
+| Usability        | Local storage architecture for offline-first experience                               | [PR #79 — Fix timezone bug](https://github.com/nguyenduythaibao1611-eng/calorie-web.github.io/issues/79): `toISOString()` uses UTC, causing a 1-day streak offset for UTC+7 timezone  |
+| Aesthetics       | Clean dashboard design, responsive layout, animated stats page                        | Could improve with dark mode                                                                              |
+| User-Friendliness | —                                                                                     | Accessibility labels for screen readers needed                                                                                                              |
 
 **Reviewed Team: QuickTodo**
 
@@ -416,10 +417,11 @@ Ran Lighthouse before and after optimization. Score improved from **75 → 92**.
 - **Feedback by:** Tran Vo Ba Vuong (ViccVuongVicc)
 - **Issue:** [#30 — Guest mode: Cannot add subtask — error message lacks clear login guidance](https://github.com/hothong3k/QuickTodo/issues/30)
 
-| Aspect         | Strengths                                                                | Improvement Suggestions                                                                                                                                  |
-| -------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Usability      | Guest mode allows trying the app without sign-up, lowering entry barrier | When guest tries to add subtask, the error message should include a "Log in" button; alternatively save subtasks to localStorage and offer sync on login |
-| Error Handling | App detects unauthorized actions and shows error messages                | Error messages lack actionable guidance — user sees "You must be logged in" but has no path to resolve it                                                |
+| Khía cạnh         | Điểm mạnh                                                                | Gợi ý cải thiện                                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Usability         | Guest mode allows trying the app without sign-up, lowering entry barrier | When guest tries to add subtask, the error message should include a "Log in" button; alternatively save subtasks to localStorage and offer sync on login |
+| User-Friendliness | App detects unauthorized actions and shows error messages                | Error messages lack actionable guidance — user sees "You must be logged in" but has no path to resolve it                                                |
+| Aesthetics        | —                                                                        | —                                                                                                                                                        |
 
 ### (b) Feedback Received (Teacher Review)
 
@@ -428,8 +430,10 @@ Ran Lighthouse before and after optimization. Score improved from **75 → 92**.
 | AI Quick Add with Gemini is a highlight — should be featured more prominently in the report | Teacher | Accepted | Integrated Gemini NLP adapter into Hono API route `/api/ai/quick-add`, supporting natural language transaction input — `8b3ca4b`               |
 | 4-step Onboarding Wizard is great for UX — should be mentioned in self-report               | Teacher | Accepted | Built 4-step onboarding wizard (personal info → wallet → budget → first transaction) with local state persistence and skip support — `fff7e94` |
 
-![Teacher feedback — AI Quick Add](/screenshots/Screenshot%20from%202026-05-17%2021-28-54.png)
-![Teacher feedback — Onboarding Wizard](/screenshots/Screenshot%20from%202026-05-17%2021-29-59.png)
+![Teacher feedback — AI Quick Add](doc/screenshots/Screenshot%20from%202026-05-17%2021-28-54.png)
+![Teacher feedback — Onboarding Wizard](doc/screenshots/Screenshot%20from%202026-05-17%2021-29-59.png)
+
+> **TODO:** Chèn ảnh trước/sau của những thay đổi đã implement từ feedback (nếu có thay đổi UI rõ rệt).
 
 ## Deliverables Checklist
 
@@ -447,7 +451,6 @@ Ran Lighthouse before and after optimization. Score improved from **75 → 92**.
 | Field            | Value                                                                                  |
 | ---------------- | -------------------------------------------------------------------------------------- |
 | **Repo indexed** | Tracker_yourMoney                                                                      |
-| **Path**         | /home/tducn/finance-for-me-local                                                       |
 | **Remote**       | [github.com/tducn110/Tracker_yourMoney](https://github.com/tducn110/Tracker_yourMoney) |
 | **Stats**        | 308 files, 3660 symbols, 5963 relationships, 115 execution flows                       |
 
@@ -457,7 +460,7 @@ UI, Services, Repositories, Quick-add, Dashboard, Routes, Budgets, Hooks, Contex
 
 ### Main API Route Map
 
-```text
+```
 /api/auth           /api/v1/wallet        /api/v1/analytics
 /api/v1/transactions  /api/v1/bills          /api/v1/categories
 /api/v1/goals         /api/v1/budgets        /api/v1/user
@@ -478,45 +481,94 @@ UI, Services, Repositories, Quick-add, Dashboard, Routes, Budgets, Hooks, Contex
 | `packages/db/src/schema/*.ts`                                                     | Drizzle database schema                       |
 | `packages/shared-schemas/src/*.ts`                                                | Zod validation schemas                        |
 | `doc/wiki/erd.md`                                                                 | ERD Mermaid                                   |
-| `vercel_deploy_2.log`                                                             | Evidence of successful deploy                 |
 
-### Full Commit History (Last 80 Commits with Authors)
+### Closed Pull Requests
 
-```text
-Recent (May 2026)
-fff7e94 feat: onboarding wizard 4 buoc - info, wallet, budget, transaction  (Chau Tuan Kiet)
+| PR #      | Title                                                                    | Author           | Status |
+| --------- | ------------------------------------------------------------------------ | ---------------- | ------ |
+| #185      | chore(web): remove sentry test error button                              | kiet00394-collab | Merged |
+| #184      | feat(web): add sentry test trigger button                                | kiet00394-collab | Merged |
+| #183      | feat(web): add AuthGuard to redirect unauthenticated users to login page | kiet00394-collab | Merged |
+| #157      | fix/update-lockfile                                                      | tducn110         | Merged |
+| #156      | fix/issue-155-type-errors                                                | tducn110         | Merged |
+| #154      | feat(web): enhance wallet integration and analytics                      | Nguyen Tam Duc   | Merged |
+| #152      | feat(api,web): refactor dashboard and S2S engine                         | Nguyen Tam Duc   | Merged |
+| #150      | feat(api,web): implement AI Quick Add with Gemini                        | Nguyen Tam Duc   | Merged |
+| #144      | fix(vercel): fix auth and api deployment as Next.js route                | Tran Vo Ba Vuong | Merged |
+| #139      | feat(web): implement useMounted hook for client-side rendering           | Tran Vo Ba Vuong | Merged |
+| #129-#136 | feat(system): comprehensive UI refactor and auth optimization            | Tran Vo Ba Vuong | Merged |
+| #116      | fix/102                                                                  | Tran Vo Ba Vuong | Merged |
+| #102      | fix(web): parse JSON error responses and display detailed errors         | Tran Vo Ba Vuong | Merged |
+| #101      | fix(web): race condition guard in AuthProvider social login              | Tran Vo Ba Vuong | Merged |
+| #100      | fix(api): add success:false to 429 rate limit error response             | Tran Vo Ba Vuong | Merged |
+| #99       | fix(api): raise auth route rate limit from 10 to 30 req/min              | Tran Vo Ba Vuong | Merged |
+| #98       | fix(api): step tracking to /api/auth/social for debug                    | Tran Vo Ba Vuong | Merged |
+| #97       | fix(api): remove dead imports for cold start optimization                | Tran Vo Ba Vuong | Merged |
+| #96       | fix(api): dynamic CORS origin support for \*.vercel.app                  | Tran Vo Ba Vuong | Merged |
+| #87       | feat(ui): tailwind v4 migration and frontend fixes                       | kiet00394-collab | Merged |
+| #89       | fix: wire QuickAddModal and SimpleQuickInput to real API calls           | kiet00394-collab | Merged |
+| #78       | feat(web): complete phase 3 dashboard localization refactor              | kiet00394-collab | Merged |
+| #33       | Release: dev to main (Phase 1 + Phase 2)                                 | Tran Vo Ba Vuong | Merged |
+| #17       | chore(db): remove unused budget_wallets table                            | Nguyen Tam Duc   | Merged |
+| #15       | chore: cleanup legacy UI components and JS schemas                       | Nguyen Tam Duc   | Merged |
+| #10       | feature/issue-5-aesthetics                                               | Nguyen Tam Duc   | Merged |
+| #9        | feature/issue-4-quick-add                                                | Nguyen Tam Duc   | Merged |
+| #8        | feature/issue-3-multi-wallet                                             | Nguyen Tam Duc   | Merged |
+| #7        | implement budget-first UI and API services                               | Nguyen Tam Duc   | Merged |
+| #6        | feature/issue-2-budget-core                                              | Nguyen Tam Duc   | Merged |
+| #5        | feat(ui): implement global UI design reframing v3 aesthetics             | Nguyen Tam Duc   | Merged |
+| #4        | feat(quick-add): enhanced quick-add components with NLP and Simple modes | Nguyen Tam Duc   | Merged |
+| #3        | feat(wallet): implement multi-wallet management and sync UI              | Nguyen Tam Duc   | Merged |
+| #2        | feat(budget): implement core budget-first infrastructure                 | Nguyen Tam Duc   | Merged |
+
+### Full Commit History (Last 80+ Commits with Authors)
+
+```
+─── May 19, 2026 (Post-Submission) ───
+0bf3ebb chore(web): remove sentry test error button (#185)                      (Chau Tuan Kiet)
+5de4950 feat(web): add sentry test trigger button (#184)                        (Chau Tuan Kiet)
+a1aff22 feat(web): add AuthGuard to redirect unauthenticated users to login page (#183) (Chau Tuan Kiet)
+78c2c2a feat(api,web): use monthlyExpense for QuickStats and fix analyticsAPI syntax (Chau Tuan Kiet)
+6242da1 chore: sync remaining changes for analytics, notifications, and loading features (Chau Tuan Kiet)
+1f296c0 feat(analytics): add daily summary + filters; create transaction notifications (Chau Tuan Kiet)
+
+─── May 18, 2026 ───
+064ac44 docs: link self reports to repo files                                (Tran Vo Ba Vuong)
+
+─── May 2026 (Pre-Submission) ───
+fff7e94 feat: onboarding wizard 4 buoc - info, wallet, budget, transaction   (Chau Tuan Kiet)
 a152b3b feat: integrate local onboarding wizard actions and deepseek mcp skills (Tran Vo Ba Vuong)
-46ada24 Merge pull request #157 from tducn110/fix/update-lockfile              (Nguyen Tam Duc)
-55beb49 chore: update pnpm-lock.yaml                                           (Tran Vo Ba Vuong)
-5448dc9 Merge pull request #156 from tducn110/fix/issue-155-type-errors        (Nguyen Tam Duc)
-d17a5ae fix(web): resolve type errors and normalize currency formatting         (Tran Vo Ba Vuong)
-1439c58 feat(web): enhance wallet integration and analytics (#154)             (Nguyen Tam Duc)
-f650aed feat(api,web): refactor dashboard and S2S engine (#152)                (Nguyen Tam Duc)
-8b3ca4b feat(api,web): implement AI Quick Add with Gemini integration (#150)   (Nguyen Tam Duc)
-7090921 fix: seed default categories for all users on login                    (Tran Vo Ba Vuong)
-c92cfb9 fix: budget form shows only expense categories + auto-seed defaults    (Tran Vo Ba Vuong)
-77b9634 fix: sync lockfile, refactor API routing for Vercel compatibility      (Tran Vo Ba Vuong)
-fa1a282 fix(vercel): fix auth and api deployment as Next.js route (#144)       (Tran Vo Ba Vuong)
-08d5053 feat(web): implement useMounted hook for client-side rendering (#139)  (Tran Vo Ba Vuong)
-1013b1f feat(web): implement CategoryManager component                          (Tran Vo Ba Vuong)
-4898849 feat(web): implement CashWalletWidget component                         (Tran Vo Ba Vuong)
-613a823 feat(system): comprehensive UI refactor and auth optimization           (Tran Vo Ba Vuong)
-a1847d3 Merge PR #116 from tducn110 (fix/102) — PR by Nguyen Tam Duc           (merged by Tran Vo Ba Vuong)
-75928c3 fix(vercel): remove broken ignoreCommand                                (Tran Vo Ba Vuong)
+46ada24 Merge pull request #157 from tducn110/fix/update-lockfile            (Nguyen Tam Duc)
+55beb49 chore: update pnpm-lock.yaml                                         (Tran Vo Ba Vuong)
+5448dc9 Merge pull request #156 from tducn110/fix/issue-155-type-errors      (Nguyen Tam Duc)
+d17a5ae fix(web): resolve type errors and normalize currency formatting       (Tran Vo Ba Vuong)
+1439c58 feat(web): enhance wallet integration and analytics (#154)           (Nguyen Tam Duc)
+f650aed feat(api,web): refactor dashboard and S2S engine (#152)              (Nguyen Tam Duc)
+8b3ca4b feat(api,web): implement AI Quick Add with Gemini integration (#150) (Nguyen Tam Duc)
+7090921 fix: seed default categories for all users on login                   (Tran Vo Ba Vuong)
+c92cfb9 fix: budget form shows only expense categories + auto-seed defaults   (Tran Vo Ba Vuong)
+77b9634 fix: sync lockfile, refactor API routing for Vercel compatibility     (Tran Vo Ba Vuong)
+fa1a282 fix(vercel): fix auth and api deployment as Next.js route (#144)      (Tran Vo Ba Vuong)
+08d5053 feat(web): implement useMounted hook for client-side rendering (#139) (Tran Vo Ba Vuong)
+1013b1f feat(web): implement CategoryManager component                        (Tran Vo Ba Vuong)
+4898849 feat(web): implement CashWalletWidget component                       (Tran Vo Ba Vuong)
+613a823 feat(system): comprehensive UI refactor and auth optimization (#129-#136) (Tran Vo Ba Vuong)
+a1847d3 Merge PR #116 from tducn110 (fix/102)                                (Tran Vo Ba Vuong)
+75928c3 fix(vercel): remove broken ignoreCommand                              (Tran Vo Ba Vuong)
 804e27f fix(web): parse JSON error responses and display detailed errors (#102) (Tran Vo Ba Vuong)
-1cf5543 fix(web): race condition guard in AuthProvider social login (#101)      (Tran Vo Ba Vuong)
-64cbe5d fix(api): add success:false to 429 rate limit error response (#100)     (Tran Vo Ba Vuong)
-a0e01a8 fix(api): raise auth route rate limit from 10 to 30 req/min (#99)       (Tran Vo Ba Vuong)
-99d7143 fix(api): step tracking to /api/auth/social for debug (#98)             (Tran Vo Ba Vuong)
-eb079e8 fix(api): remove dead imports for cold start optimization (#97)          (Tran Vo Ba Vuong)
-1b9f7be fix(api): dynamic CORS origin support for *.vercel.app (#96)            (Tran Vo Ba Vuong)
+1cf5543 fix(web): race condition guard in AuthProvider social login (#101)    (Tran Vo Ba Vuong)
+64cbe5d fix(api): add success:false to 429 rate limit error response (#100)   (Tran Vo Ba Vuong)
+a0e01a8 fix(api): raise auth route rate limit from 10 to 30 req/min (#99)     (Tran Vo Ba Vuong)
+99d7143 fix(api): step tracking to /api/auth/social for debug (#98)           (Tran Vo Ba Vuong)
+eb079e8 fix(api): remove dead imports for cold start optimization (#97)        (Tran Vo Ba Vuong)
+1b9f7be fix(api): dynamic CORS origin support for *.vercel.app (#96)          (Tran Vo Ba Vuong)
 48aed12 fix(web): parse JSON error responses and display detailed errors (#102) (Tran Vo Ba Vuong)
-bfa1c11 docs: update implementation plan and backlog tasks                      (Tran Vo Ba Vuong)
-c66de08 fix(db): add missing migrations for PostgreSQL and bigint IDs           (Tran Vo Ba Vuong)
-4e629b1 refactor(api,db): eliminate magic strings, migrate console.* to pino    (Tran Vo Ba Vuong)
-c110ddb fix: Vercel API routing, deployment prep, and debug endpoints           (Tran Vo Ba Vuong)
+bfa1c11 docs: update implementation plan and backlog tasks                    (Tran Vo Ba Vuong)
+c66de08 fix(db): add missing migrations for PostgreSQL and bigint IDs         (Tran Vo Ba Vuong)
+4e629b1 refactor(api,db): eliminate magic strings, migrate console.* to pino  (Tran Vo Ba Vuong)
+c110ddb fix: Vercel API routing, deployment prep, and debug endpoints         (Tran Vo Ba Vuong)
 
-Collaborative (kiet00394-collab: Chau Tuan Kiet & Tran Vo Ba Vuong)
+─── Collaborative (Chau Tuan Kiet & Tran Vo Ba Vuong) ───
 97b4f4d fix(api,worker,web,db): financial logic integrity — wallet OCC, PostgreSQL compat
 ecd5fb0 fix(worker,web,api): worker DB env, Firebase SSR crash, API/DB/UI updates
 fa7319a feat(ui): tailwind v4 migration and frontend fixes (#87)
@@ -529,58 +581,48 @@ b4e8551 feat(web): enhance login UI with premium background (Phase 9) & fix work
 2a9423d feat: frontend refactor, react-query, optimistic updates (Phases 6-8)
 6c6cdd7 feat(web): complete phase 3 dashboard localization refactor (#78)
 
-Nguyen Tam Duc — Phase 3-5 (AI-assisted)
-a5c79b9 feat: complete feature gaps — transfer, categories, empty states (Phase 5)    (Nguyen Tam Duc + AI)
-e510915 feat: wire frontend to real APIs (Phase 4)                                     (Nguyen Tam Duc + AI)
-c193b16 fix(db): add walletId to transaction schemas and fix type errors (Phase 3)     (Nguyen Tam Duc + AI)
-cdd727c docs: add Phase 2 completion report                                            (Nguyen Tam Duc + AI)
-af1542e feat(db): sync database schema to ERD (migration 0012)                         (Nguyen Tam Duc + AI)
+─── Nguyen Tam Duc — Phase 3-5 (AI-assisted) ───
+a5c79b9 feat: complete feature gaps — transfer, categories, empty states (Phase 5) (Nguyen Tam Duc)
+e510915 feat: wire frontend to real APIs (Phase 4)                                  (Nguyen Tam Duc)
+c193b16 fix(db): add walletId to transaction schemas and fix type errors (Phase 3)  (Nguyen Tam Duc)
+cdd727c docs: add Phase 2 completion report                                         (Nguyen Tam Duc)
+af1542e feat(db): sync database schema to ERD (migration 0012)                      (Nguyen Tam Duc)
 
-Mid-Phase Cleanup & Refactor
-034fab6 Release: dev to main (Phase 1 + Phase 2) (#33)                                 (Tran Vo Ba Vuong)
-9637add chore(db): remove unused budget_wallets table (#17)                            (Nguyen Tam Duc)
-4d4aa58 chore: cleanup legacy UI components and JS schemas (#15)                       (Nguyen Tam Duc)
-32a91f4 feat(ui): refactor dashboard pages to container-presentational pattern          (Nguyen Tam Duc)
-9fd9950 chore: add clean mcp_config.json                                               (Nguyen Tam Duc)
-60e3945 docs: reorganize documentation and add repomix-output.xml                      (Nguyen Tam Duc)
-3904c75 fix(api): correct project_id casing in firebase auth init                      (Nguyen Tam Duc)
-d1974e2 chore: clean up remaining AI tool directories                                  (Nguyen Tam Duc)
-4340af4 feat(doc): finalize documentation reorganization and gitignore update          (Nguyen Tam Duc)
+─── Mid-Phase Cleanup & Refactor ───
+034fab6 Release: dev to main (Phase 1 + Phase 2) (#33)                              (Tran Vo Ba Vuong)
+9637add chore(db): remove unused budget_wallets table (#17)                         (Nguyen Tam Duc)
+4d4aa58 chore: cleanup legacy UI components and JS schemas (#15)                    (Nguyen Tam Duc)
+32a91f4 feat(ui): refactor dashboard pages to container-presentational pattern       (Nguyen Tam Duc)
+9fd9950 chore: add clean mcp_config.json                                            (Nguyen Tam Duc)
+60e3945 docs: reorganize documentation and add repomix-output.xml                   (Nguyen Tam Duc)
+3904c75 fix(api): correct project_id casing in firebase auth init                   (Nguyen Tam Duc)
+d1974e2 chore: clean up remaining AI tool directories                               (Nguyen Tam Duc)
+4340af4 feat(doc): finalize documentation reorganization and gitignore update       (Nguyen Tam Duc)
 
-Nguyen Tam Duc — Early Phase (Foundation)
-c5bc5ef Merge PR #7: implement budget-first UI and API services                        (Nguyen Tam Duc)
-df74302 Merge PR #10: feature/issue-5-aesthetics                                       (Nguyen Tam Duc)
-15b0798 Merge PR #9: feature/issue-4-quick-add                                         (Nguyen Tam Duc)
-28f459f Merge PR #8: feature/issue-3-multi-wallet                                      (Nguyen Tam Duc)
-91b63c4 Merge PR #6: feature/issue-2-budget-core                                       (Nguyen Tam Duc)
-3749f98 feat(ui): implement global UI design reframing v3 aesthetics (#5)              (Nguyen Tam Duc)
-3b1395d feat(quick-add): enhanced quick-add components with NLP and Simple modes (#4)  (Nguyen Tam Duc)
-180fd8a feat(wallet): implement multi-wallet management and sync UI (#3)               (Nguyen Tam Duc)
-10dd3c3 feat(budget): implement core budget-first infrastructure (#2)                  (Nguyen Tam Duc)
-5ee3de2 feat(auth): complete migration to Firebase Social Login and Session Cookies    (Nguyen Tam Duc)
-2dd223e chore: initial framework structure                                             (Nguyen Tam Duc)
+─── Nguyen Tam Duc — Early Phase (Foundation) ───
+c5bc5ef Merge PR #7: implement budget-first UI and API services                     (Nguyen Tam Duc)
+df74302 Merge PR #10: feature/issue-5-aesthetics                                    (Nguyen Tam Duc)
+15b0798 Merge PR #9: feature/issue-4-quick-add                                      (Nguyen Tam Duc)
+28f459f Merge PR #8: feature/issue-3-multi-wallet                                   (Nguyen Tam Duc)
+91b63c4 Merge PR #6: feature/issue-2-budget-core                                    (Nguyen Tam Duc)
+3749f98 feat(ui): implement global UI design reframing v3 aesthetics (#5)           (Nguyen Tam Duc)
+3b1395d feat(quick-add): enhanced quick-add components with NLP and Simple modes (#4) (Nguyen Tam Duc)
+180fd8a feat(wallet): implement multi-wallet management and sync UI (#3)            (Nguyen Tam Duc)
+10dd3c3 feat(budget): implement core budget-first infrastructure (#2)               (Nguyen Tam Duc)
+5ee3de2 feat(auth): complete migration to Firebase Social Login and Session Cookies (Nguyen Tam Duc)
+2dd223e chore: initial framework structure                                          (Nguyen Tam Duc)
 ```
 
 ## Self-Reports
 
-Each member committed a self-report file to `docs/self-reports/self-report-[StudentID].md` in the repository.
+Each member committed a self-report file to `doc/self-reports/self-report-[StudentID].md` in the repository.
 
-<<<<<<< HEAD
 | Full Name        | Student ID | Self-Report Link                                                  |
 | ---------------- | ---------- | ----------------------------------------------------------------- |
-| Nguyen Tam Duc   | 24020005   | [/self-reports/nguyen-tam-duc](/self-reports/nguyen-tam-duc/)     |
-| Tran Vo Ba Vuong | 24020008   | [/self-reports/tran-vo-ba-vuong](/self-reports/tran-vo-ba-vuong/) |
-| Chau Tuan Kiet   | 24020010   | [/self-reports/chau-tuan-kiet](/self-reports/chau-tuan-kiet/)     |
-=======
-| Full Name | Student ID | Self-Report Link |
-| --- | --- | --- |
-| Nguyen Tam Duc | 24020005 | [doc/self-report/self-report-24020005.md](doc/self-report/self-report-24020005.md) |
-| Tran Vo Ba Vuong | 24020008 | [doc/self-report/self-report-24020008.md](doc/self-report/self-report-24020008.md) |
-| Chau Tuan Kiet | 24020010 | [doc/self-report/self-report-24020010.md](doc/self-report/self-report-24020010.md) |
->>>>>>> f2306a3 (docs: link self reports to repo files)
+| Nguyen Tam Duc   | 24020005   | [self-report-24020005.md](doc/self-reports/self-report-24020005.md) |
+| Tran Vo Ba Vuong | 24020008   | [self-report-24020008.md](doc/self-reports/self-report-24020008.md) |
+| Chau Tuan Kiet   | 24020010   | [self-report-24020010.md](doc/self-reports/self-report-24020010.md) |
 
-Final Project Report — Finance Tracker V3 | Team Antigravity | Submission Date: 15/05/2026
+---
 
-```
-
-```
+**Final Project Report — Finance Tracker V3 | Team proPlayer | Submission Date: 15/05/2026**

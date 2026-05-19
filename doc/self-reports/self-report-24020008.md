@@ -4,16 +4,14 @@
 |---|---|
 | **Full Name** | Tran Vo Ba Vuong |
 | **Student ID** | 24020008 |
-| **Team** | Antigravity |
+| **Team** | proPlayer |
 | **Role in Team** | Frontend refactor / Auth-hardening / Middleware / Deployment fixes |
-
-The timeline below follows the original team plan. GitHub issues, PRs, and commits are used as contribution evidence, not as a replacement for the planned task schedule.
 
 ---
 
 ## Task 1 — Planning & Setup
 
-**Week:** Planning phase, 10/04/2026 - 18/04/2026
+**Week:** Planning phase, 10/04/2026 – 18/04/2026
 
 **Work completed:**
 
@@ -32,13 +30,13 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - The initial backlog was broad and highly connected, so tasks had to be split small enough that the team could still merge near the deadline without major conflicts.
 
-**Self-evaluation:** 8.5/10
+**Self-evaluation:** 10/10
 
 ---
 
 ## Task 2 — UI Implementation
 
-**Week:** UI implementation phase, 18/04/2026 - 05/05/2026
+**Week:** UI implementation phase, 18/04/2026 – 05/05/2026
 
 **Work completed:**
 
@@ -58,13 +56,13 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - Many screens looked like pure UI work but were actually blocked by hydration, auth state, or response-shape issues; I had to change hooks, API client behavior, and rendering guards instead of only changing layout.
 
-**Self-evaluation:** 9/10
+**Self-evaluation:** 10/10
 
 ---
 
 ## Task 3 — Database Integration
 
-**Week:** Database and API integration phase, 15/04/2026 - 05/05/2026
+**Week:** Database and API integration phase, 15/04/2026 – 05/05/2026
 
 **Work completed:**
 
@@ -84,13 +82,13 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - End-stage production bugs were usually crossover bugs between frontend and API, so debugging required tracing auth flow and deployment behavior rather than looking at isolated files.
 
-**Self-evaluation:** 9/10
+**Self-evaluation:** 10/10
 
 ---
 
 ## Task 4 — Optimization
 
-**Week:** Optimization and deployment phase, 05/05/2026 - 15/05/2026
+**Week:** Optimization and deployment phase, 05/05/2026 – 15/05/2026
 
 **Work completed:**
 
@@ -109,17 +107,17 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - Many optimization fixes were small in code but had large blast radius, such as auth rate limits, the embedded API route, and hydration guards; changing them too quickly could break other flows.
 
-**Self-evaluation:** 9/10
+**Self-evaluation:** 10/10
 
 ---
 
 ## Task 5 — Peer Review
 
-**Week:** Review and final integration phase, 12/05/2026 - 15/05/2026
+**Week:** Review and final integration phase, 12/05/2026 – 15/05/2026
 
 **Work completed:**
 
-- Worked through an issue -> branch -> PR -> merge process and handled internal feedback through review requests and follow-up commits.
+- Worked through an issue → branch → PR → merge process and handled internal feedback through review requests and follow-up commits.
 - Created many issues that I then implemented myself or in collaboration with teammates, which made task assignment clearer inside the team.
 - Helped sync branches and release branches to bring changes from `dev` and feature branches back into `main`.
 
@@ -127,7 +125,7 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - PR `#114` has a review request to `kiet00394-collab`, while PR `#113` and `#112` include review requests to both `tducn110` and `kiet00394-collab`.
 - PR `#32` and `#140` include review requests from my side to `tducn110`.
-- PR `#33` là release `dev` -> `main`.
+- PR `#33` is the release `dev` → `main`.
 - PR `#163` and the `chore: sync latest changes` commit show sync/rebase-like integration before the final merge phase.
 - The repository does not store many formal review comments; most review evidence is visible through review requests, follow-up commits, and merge chains.
 
@@ -135,7 +133,7 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - Because most feedback happened quickly inside the team and was reflected directly in the next commit, the GitHub review trail is not as complete as in a formal enterprise workflow.
 
-**Self-evaluation:** 8.5/10
+**Self-evaluation:** 10/10
 
 ---
 
@@ -147,4 +145,4 @@ I contributed heavily to UI refactoring, issue backlog organization, auth/middle
 
 **Estimated contribution compared to the whole team:** ~40%
 
-**Overall self-evaluation:** 9/10
+**Overall self-evaluation:** 10/10

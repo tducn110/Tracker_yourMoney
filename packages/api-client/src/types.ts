@@ -77,7 +77,7 @@ export interface Transaction {
   userId: string;
   categoryId: number;
   amount: string;
-  type: 'income' | 'expense' | 'transfer';
+  type: 'income' | 'expense';
   note: string;
   displayDate: string;
   icon?: string;
