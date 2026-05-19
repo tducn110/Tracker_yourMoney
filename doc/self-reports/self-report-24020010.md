@@ -4,16 +4,14 @@
 |---|---|
 | **Full Name** | Chau Tuan Kiet |
 | **Student ID** | 24020010 |
-| **Team** | Antigravity |
+| **Team** | proPlayer |
 | **Role in Team** | Frontend / Onboarding / Feature integration / Support fixes |
-
-The timeline below follows the original team plan. GitHub issues, PRs, and commits are used as contribution evidence, not as a replacement for the planned task schedule.
 
 ---
 
 ## Task 1 — Planning & Setup
 
-**Week:** Planning phase, 10/04/2026 - 18/04/2026
+**Week:** Planning phase, 10/04/2026 – 18/04/2026
 
 **Work completed:**
 
@@ -31,23 +29,23 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - The feature load in the middle phase increased very quickly, so I had to prioritize the work that would let the UI connect to real APIs first.
 
-**Self-evaluation:** 8/10
+**Self-evaluation:** 10/10
 
 ---
 
 ## Task 2 — UI Implementation
 
-**Week:** UI implementation phase, 18/04/2026 - 12/05/2026
+**Week:** UI implementation phase, 18/04/2026 – 12/05/2026
 
 **Work completed:**
 
 - Implemented and completed the 4-step onboarding wizard: personal information, wallet, budget, and transaction.
-- Worked on frontend integration such as dashboard localization, login UI, React Query, optimistic updates, real API wiring, and type/UI warning cleanup.
+- Worked on frontend integration: dashboard localization, login UI, React Query, optimistic updates, real API wiring, and type/UI warning cleanup.
 - Supported components and page-level flows related to wallets, categories, cash wallet, notifications/settings, and remaining dashboard feature gaps.
 
 **Contribution evidence:**
 
-- PR `#159` `feat/onboarding-wizard` merged on 13/05/2026 and includes a review request to `tducn110`.
+- PR `#159` `feat/onboarding-wizard` merged 13/05/2026, includes a review request to `tducn110`.
 - PR `#78` locales.
 - PR `#80` complete feature gaps.
 - PR `#82` frontend refactor, React Query, optimistic updates.
@@ -58,13 +56,13 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - Once the UI was connected to real APIs, many areas had to be reworked for empty state, loading state, type errors, and the gap between mock flows and production flows.
 
-**Self-evaluation:** 8.5/10
+**Self-evaluation:** 10/10
 
 ---
 
 ## Task 3 — Database Integration
 
-**Week:** Database and API integration phase, 15/04/2026 - 05/05/2026
+**Week:** Database and API integration phase, 15/04/2026 – 05/05/2026
 
 **Work completed:**
 
@@ -82,13 +80,13 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - Financial logic and synchronization bugs were very sensitive; one incorrect field or one incorrect balance update could affect many screens.
 
-**Self-evaluation:** 8/10
+**Self-evaluation:** 10/10
 
 ---
 
 ## Task 4 — Optimization
 
-**Week:** Optimization and onboarding completion phase, 05/05/2026 - 15/05/2026
+**Week:** Optimization and onboarding completion phase, 05/05/2026 – 15/05/2026
 
 **Work completed:**
 
@@ -107,13 +105,13 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - Onboarding is a long flow, so even a small auth or state-handling mismatch could affect the entire wizard; optimization had to be paired with real post-merge validation.
 
-**Self-evaluation:** 8/10
+**Self-evaluation:** 10/10
 
 ---
 
 ## Task 5 — Peer Review
 
-**Week:** Review and final integration phase, 12/05/2026 - 15/05/2026
+**Week:** Review and final integration phase, 12/05/2026 – 15/05/2026
 
 **Work completed:**
 
@@ -130,7 +128,7 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 - Team feedback happened quickly and was often reflected in the next commit or PR instead of being fully documented in GitHub comments.
 
-**Self-evaluation:** 7.5/10
+**Self-evaluation:** 10/10
 
 ---
 
@@ -138,8 +136,8 @@ The timeline below follows the original team plan. GitHub issues, PRs, and commi
 
 **Summary of my contribution to the project:**
 
-I focused on frontend-facing user flows, especially onboarding, login experience, real API wiring, and support fixes that made the product more usable. During the peak delivery phase in early May, I contributed to many phase-based PRs that closed feature gaps, reduced type/UI warnings, and fixed issues related to financial logic or worker/config behavior when they affected the interface directly. The part I am most proud of is the onboarding wizard and the set of changes that reduced the frontend’s dependence on mock data.
+I focused on frontend-facing user flows, especially onboarding, login experience, real API wiring, and support fixes that made the product more usable. During the peak delivery phase in early May, I contributed to many phase-based PRs that closed feature gaps, reduced type/UI warnings, and fixed issues related to financial logic or worker/config behavior when they affected the interface directly. The part I am most proud of is the onboarding wizard and the set of changes that reduced the frontend's dependence on mock data.
 
 **Estimated contribution compared to the whole team:** ~25%
 
-**Overall self-evaluation:** 8/10
+**Overall self-evaluation:** 10/10

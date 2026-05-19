@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 
 // Self-host Be Vietnam Pro via next/font — eliminates render-blocking
 // Google Fonts @import, and provides better Vietnamese character rendering.
+
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ['vietnamese', 'latin'],
   weight: ['300', '400', '500', '600', '700', '800'],

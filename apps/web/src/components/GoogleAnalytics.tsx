@@ -15,4 +15,5 @@ export function GoogleAnalytics() {
   }
 
   return <NextGoogleAnalytics gaId={GA_ID} />;
+
 }

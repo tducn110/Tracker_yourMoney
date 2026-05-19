@@ -12,7 +12,7 @@ import { logger } from "../lib/logger";
 const querySchema = z.object({
   month:       z.string().regex(/^\d{4}-\d{2}$/).optional(),
   categoryId: z.coerce.number().optional(),
-  type:        z.enum(["income", "expense", "transfer"]).optional(),
+  type:        z.enum(["income", "expense"]).optional(),
   search:      z.string().optional(),
   dateFrom:    z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   dateTo:      z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),

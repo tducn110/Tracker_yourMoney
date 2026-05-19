@@ -85,69 +85,6 @@ describe('WalletService', () => {
     });
   });
 
-  describe('transfer validation', () => {
-    beforeEach(() => {
-      // Default mock that tests can override
-      vi.spyOn(service, 'getWallet').mockResolvedValue({
-        id: 'wallet-1',
-        userId: 'user-1',
-        name: 'Tiền mặt',
-        type: 'cash' as const,
-        balance: '5000000',
-        initialBalance: '0',
-        version: 0,
-        icon: '💵',
-        color: '#6B7280',
-        isDefault: 1,
-        netChange: '5000000',
-      } as any);
-    });
-
-    it('should reject same-wallet transfer', async () => {
-      await expect(
-        service.transfer('user-1', {
-          fromWalletId: 'wallet-1',
-          toWalletId: 'wallet-1',
-          amount: '100000',
-        })
-      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
-    });
-
-    it('should reject zero amount', async () => {
-      await expect(
-        service.transfer('user-1', {
-          fromWalletId: 'wallet-1',
-          toWalletId: 'wallet-2',
-          amount: '0',
-        })
-      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
-    });
-
-    it('should reject negative amount', async () => {
-      await expect(
-        service.transfer('user-1', {
-          fromWalletId: 'wallet-1',
-          toWalletId: 'wallet-2',
-          amount: '-50000',
-        })
-      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
-    });
-
-    it('should reject insufficient balance', async () => {
-      vi.spyOn(service, 'getWallet').mockImplementation(async (_uid, wid) => {
-        if (wid === 'wallet-1') return { id: 'wallet-1', name: 'Nguồn', balance: '10000', version: 0 } as any;
-        return { id: 'wallet-2', name: 'Đích', balance: '5000000', version: 0 } as any;
-      });
-      await expect(
-        service.transfer('user-1', {
-          fromWalletId: 'wallet-1',
-          toWalletId: 'wallet-2',
-          amount: '100000',
-        })
-      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
-    });
-  });
-
   describe('deleteWallet', () => {
     it('should soft-delete a wallet', async () => {
       vi.spyOn(service, 'getWallet').mockResolvedValue({

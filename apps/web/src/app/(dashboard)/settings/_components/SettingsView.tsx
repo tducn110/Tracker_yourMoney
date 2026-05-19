@@ -395,7 +395,7 @@ function FinancialPanel({
           Ngân sách tháng
           <input
             type="text"
-            value={monthlyBudget ? formatCurrency(monthlyBudget, 'vi-VN') : ''}
+            value={monthlyBudget}
             onChange={(e) => {
               const digits = e.target.value.replace(/\D/g, '');
               setMonthlyBudget(digits || '0');
@@ -403,7 +403,9 @@ function FinancialPanel({
             placeholder="0"
             className="h-11 rounded-lg border border-gray-200 px-4 text-gray-900 outline-none transition-colors focus:border-blue-500"
           />
-          <span className="text-xs font-normal text-gray-500">Hạn mức chi tiêu mặc định mỗi tháng.</span>
+          <span className="text-xs font-normal text-gray-500">
+            {monthlyBudget && Number(monthlyBudget) > 0 ? formatCurrency(monthlyBudget, 'vi-VN') : ''} — Hạn mức chi tiêu mặc định mỗi tháng.
+          </span>
         </label>
 
         <label className="grid gap-2 text-sm font-medium text-gray-700">

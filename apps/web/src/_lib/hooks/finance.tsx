@@ -54,15 +54,23 @@ export function useQuickAdd() {
         queryClient.invalidateQueries({ queryKey: ['transactions'] });
         queryClient.refetchQueries({ queryKey: ['transactions'] });
         queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
+        queryClient.refetchQueries({ queryKey: ['budgets', 'summary'] });
         queryClient.invalidateQueries({ queryKey: ['analytics'] });
+        queryClient.refetchQueries({ queryKey: ['analytics'] });
         queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
+        queryClient.refetchQueries({ queryKey: ['wallet', 'cash'] });
+        queryClient.invalidateQueries({ queryKey: ['wallets'] });
+        queryClient.refetchQueries({ queryKey: ['wallets'] });
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
         queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
       } else if (result.type === 'wallet') {
         queryClient.invalidateQueries({ queryKey: ['wallets'] });
+        queryClient.refetchQueries({ queryKey: ['wallets'] });
         queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
+        queryClient.refetchQueries({ queryKey: ['wallet', 'cash'] });
       } else if (result.type === 'category') {
         queryClient.invalidateQueries({ queryKey: ['categories'] });
+        queryClient.refetchQueries({ queryKey: ['categories'] });
       }
       
       if (result.message) {
@@ -165,8 +173,13 @@ export function useCreateTransaction() {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.refetchQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
+      queryClient.refetchQueries({ queryKey: ['budgets', 'summary'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      queryClient.refetchQueries({ queryKey: ['analytics'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
+      queryClient.refetchQueries({ queryKey: ['wallet', 'cash'] });
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      queryClient.refetchQueries({ queryKey: ['wallets'] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
     },
@@ -197,7 +210,11 @@ export function useUpdateTransaction() {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.refetchQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
+      queryClient.refetchQueries({ queryKey: ['budgets', 'summary'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
+      queryClient.refetchQueries({ queryKey: ['wallet', 'cash'] });
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      queryClient.refetchQueries({ queryKey: ['wallets'] });
     },
   });
 }
@@ -421,26 +438,6 @@ export function useUpdateCashWallet() {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || err?.message || 'Không thể cập nhật số dư');
-    },
-  });
-}
-
-/**
- * Mutation: Internal Transfer (Wallet → Wallet)
- */
-export function useTransfer() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: { fromWalletId: string; toWalletId: string; amount: string; note?: string }) => {
-      const idempotencyKey = crypto.randomUUID();
-      return walletAPI.transfer(data, idempotencyKey);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wallets'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-    },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || err?.message || 'Không thể chuyển tiền');
     },
   });
 }

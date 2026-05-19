@@ -4,7 +4,7 @@ export interface NLPParsedResult {
   intent?: "transaction" | "create_wallet" | "create_category" | "command" | "unknown";
   amount?: string;
   note?: string;
-  type?: "income" | "expense" | "transfer";
+  type?: "income" | "expense";
   keyword?: string; // Hint for category matching
   walletName?: string; // Hint for wallet matching
   /** Human-readable suggestion returned when intent is "unknown" */
@@ -80,7 +80,7 @@ export class RegexNLPAdapter implements INLPAdapter {
     const note = notePart || "Quick add";
 
     // Basic heuristic for type and category keyword
-    let type: "expense" | "income" | "transfer" = "expense";
+    let type: "expense" | "income" = "expense";
     let keyword = "Khác";
 
     // Priority matching with word boundaries to avoid partial matches (e.g., "xăng" matching "ăn")

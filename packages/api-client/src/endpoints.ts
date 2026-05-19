@@ -130,10 +130,6 @@ export const walletAPI = {
     apiClient.put<Wallet>(`/api/v1/wallet/${id}`, data) as unknown as Promise<Wallet>,
   delete: (id: string) =>
     apiClient.delete(`/api/v1/wallet/${id}`) as unknown as Promise<void>,
-  transfer: (data: { fromWalletId: string; toWalletId: string; amount: string; note?: string }, idempotencyKey?: string) =>
-    apiClient.post<{ source: Wallet; target: Wallet }>('/api/v1/wallet/transfer', data, {
-      headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
-    }) as unknown as Promise<{ source: Wallet; target: Wallet }>,
 };
 
 export const notificationAPI = {

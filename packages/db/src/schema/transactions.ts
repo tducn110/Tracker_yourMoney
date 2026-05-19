@@ -3,7 +3,7 @@
 //
 // [v12.0-A] display_date DATE — ngày user tự chọn cho sổ cái, không có timezone confusion
 //           Budget Engine filters: WHERE display_date BETWEEN '2026-04-01' AND '2026-04-30'
-// [v12.0-C] type enum includes 'transfer' for wallet-to-wallet moves
+// type enum: income | expense
 //
 // ⚡ COMPOSITE INDEX (user_id, display_date) — CRITICAL for Budget Engine performance
 import {
@@ -16,7 +16,7 @@ import { categories } from "./categories";
 import { wallets } from "./wallet";
 import { goals } from "./goals";
 
-export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense", "transfer"]);
+export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense"]);
 export const transactionSourceEnum = pgEnum("transaction_source", ["manual", "quick_add", "ocr", "import", "recurring", "bill_payment", "goal_contribution"]);
 
 export const transactions = pgTable("transactions", {

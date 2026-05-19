@@ -25,20 +25,5 @@ export const walletResponseSchema = z.object({
   updatedAt:      z.coerce.date(),
 });
 
-// ── Internal Transfer ────────────────────────────────────────────────
-export const transferSchema = z.object({
-  fromWalletId: z.string(),
-  toWalletId:   z.string(),
-  amount:       z
-    .union([z.string(), z.number()])
-    .transform((val) => {
-      const n = typeof val === "number" ? val : parseFloat(val);
-      if (isNaN(n) || n <= 0) throw new Error("Số tiền phải lớn hơn 0");
-      return n.toFixed(2);
-    }),
-  note: z.string().max(255).optional(),
-});
-
 export type QuickSyncWallet  = z.infer<typeof quickSyncWalletSchema>;
 export type WalletResponse   = z.infer<typeof walletResponseSchema>;
-export type TransferInput    = z.infer<typeof transferSchema>;
