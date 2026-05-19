@@ -10,6 +10,13 @@ interface CategorySpending {
   color: string;
 }
 
+interface DailySummary {
+  date: string;
+  income: string;
+  expense: string;
+  savings: string;
+}
+
 function fmtDate(year: number, month: number, day: number): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
@@ -19,11 +26,11 @@ function fmtDate(year: number, month: number, day: number): string {
  * Calculates spending by category and monthly trends.
  */
 export class AnalyticsService {
-  async getCategorySpending(userId: string, month: string): Promise<CategorySpending[]> {
+  async getCategorySpending(userId: string, month: string, date?: string): Promise<CategorySpending[]> {
     const [year, mon] = month.split("-").map(Number);
-    const startDate = fmtDate(year, mon, 1);
+    const startDate = date ?? fmtDate(year, mon, 1);
     const lastDay = new Date(year, mon, 0).getDate();
-    const endDate = fmtDate(year, mon, lastDay);
+    const endDate = date ?? fmtDate(year, mon, lastDay);
 
     const rows = await (db as any)
       .select({
@@ -55,15 +62,49 @@ export class AnalyticsService {
     }));
   }
 
-  async getMonthlyTrend(userId: string, numMonths: number = 6) {
-    const now = new Date();
-    const year = now.getFullYear();
-    const mon = now.getMonth() + 1; // 1-12
+  async getDailySummary(userId: string, date: string): Promise<DailySummary> {
+    const rows = await (db as any)
+      .select({
+        type: transactions.type,
+        total: sum(transactions.amount),
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId as any),
+          gte(transactions.displayDate, date),
+          lte(transactions.displayDate, date),
+        )
+      )
+      .groupBy(transactions.type);
 
-    // N-th month ago start date
-    const startDate = fmtDate(year, mon, 1); // simplified start
-    const lastDay = new Date(year, mon, 0).getDate();
-    const endDate = fmtDate(year, mon, lastDay);
+    let income = new Decimal(0);
+    let expense = new Decimal(0);
+
+    for (const row of rows as any[]) {
+      if (row.type === "income") income = income.plus(row.total ?? "0");
+      if (row.type === "expense") expense = expense.plus(row.total ?? "0");
+    }
+
+    return {
+      date,
+      income: income.toFixed(2),
+      expense: expense.toFixed(2),
+      savings: income.minus(expense).toFixed(2),
+    };
+  }
+
+  async getMonthlyTrend(userId: string, numMonths: number = 6, endMonth?: string) {
+    const now = new Date();
+    const [anchorYear, anchorMonth] = endMonth
+      ? endMonth.split("-").map(Number)
+      : [now.getFullYear(), now.getMonth() + 1];
+    const anchorDate = new Date(anchorYear, anchorMonth - 1, 1);
+    const startAnchor = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - numMonths + 1, 1);
+
+    const startDate = fmtDate(startAnchor.getFullYear(), startAnchor.getMonth() + 1, 1);
+    const lastDay = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 0).getDate();
+    const endDate = fmtDate(anchorDate.getFullYear(), anchorDate.getMonth() + 1, lastDay);
 
     const rows = await (db as any)
       .select({
@@ -84,7 +125,7 @@ export class AnalyticsService {
     const result: Record<string, { month: string, income: string, expense: string }> = {};
 
     for (let i = 0; i < numMonths; i++) {
-      const d = new Date(year, mon - numMonths + i, 1);
+      const d = new Date(startAnchor.getFullYear(), startAnchor.getMonth() + i, 1);
       const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       result[mStr] = { month: mStr, income: "0.00", expense: "0.00" };
     }

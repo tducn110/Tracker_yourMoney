@@ -15,6 +15,7 @@ import { formatVND, Transaction } from '@finance/api-client';
 import Decimal from 'decimal.js';
 
 import { useTranslations } from '@/locales';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type FilterType = 'all' | 'income' | 'expense';
 
@@ -134,7 +135,7 @@ export function RecentTransactionsCard() {
   const { t } = useTranslations();
   const [filter, setFilter] = useState<FilterType>('all');
   
-  const { data: transactionsData } = useTransactions({ limit: DISPLAY_LIMIT * 2 });
+  const { data: transactionsData, isLoading } = useTransactions({ limit: DISPLAY_LIMIT * 2 });
   
   const allTransactions = useMemo((): Transaction[] => {
     if (!transactionsData) return [];
@@ -192,16 +193,36 @@ export function RecentTransactionsCard() {
 
         {/* Mini summary */}
         {filter === 'all' && (
-          <div className="flex items-center gap-3 text-[10px] font-bold">
-            <span className="text-emerald-600">+{formatVND(totalIncome)}</span>
-            <span className="text-red-500">−{formatVND(totalExpense)}</span>
-          </div>
+          isLoading ? (
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-3 w-16 bg-gray-200" />
+              <Skeleton className="h-3 w-16 bg-gray-200" />
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 text-[10px] font-bold">
+              <span className="text-emerald-600">+{formatVND(totalIncome)}</span>
+              <span className="text-red-500">−{formatVND(totalExpense)}</span>
+            </div>
+          )
         )}
       </div>
 
       {/* Transaction list */}
       <div className="p-2">
-        {groupedEntries.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-2 p-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="flex items-center gap-3 rounded-xl px-2 py-2">
+                <Skeleton className="h-9 w-9 rounded-xl bg-gray-100" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3.5 w-40 bg-gray-100" />
+                  <Skeleton className="h-3 w-28 bg-gray-100" />
+                </div>
+                <Skeleton className="h-4 w-20 bg-gray-100" />
+              </div>
+            ))}
+          </div>
+        ) : groupedEntries.length === 0 ? (
           <div className="py-12 text-center">
             <p className="text-[13px] font-bold text-gray-400">{t('dashboard.transactions.noTransactions')}</p>
           </div>

@@ -10,11 +10,13 @@ import type {
   BudgetDetail,
   CategorySpending, 
   MonthlyTrend,
+  DailySummary,
   LoginCredentials,
   RegisterData,
   AuthResponse,
   Wallet,
   OnboardingStatus,
+  CompleteOnboardingRequest,
 } from './types';
 
 /**
@@ -44,7 +46,7 @@ export const userAPI = {
     apiClient.put('/api/v1/user/settings', data) as unknown as Promise<any>,
   onboardingStatus: () =>
     apiClient.get<OnboardingStatus>('/api/v1/user/onboarding/status') as unknown as Promise<OnboardingStatus>,
-  completeOnboarding: (data: { seedSamplePack: boolean }) =>
+  completeOnboarding: (data: CompleteOnboardingRequest) =>
     (
       apiClient.post<{ success: boolean; hasOnboarded: boolean; samplePackSeeded: boolean }>(
         '/api/v1/user/onboarding/complete',
@@ -76,13 +78,6 @@ export const transactionsAPI = {
     ) as unknown as Promise<any>,
   update: (id: string, data: Partial<Transaction>) =>
     apiClient.put<Transaction>(`/api/v1/transactions/${id}`, data) as unknown as Promise<Transaction>,
-  importCSV: (formData: FormData, idempotencyKey?: string) =>
-    apiClient.post<{ imported: number; skipped: number; errors: string[] }>('/api/v1/transactions/import', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
-      },
-    }) as unknown as Promise<{ imported: number; skipped: number; errors: string[] }>,
 };
 
 export const goalsAPI = {
@@ -114,10 +109,12 @@ export const billsAPI = {
 };
 
 export const analyticsAPI = {
-  categorySpending: (month?: string) => 
-    apiClient.get<CategorySpending[]>('/api/v1/analytics/category-spending', { params: { month } }) as unknown as Promise<CategorySpending[]>,
-  monthlyTrend: (months: number = 6) => 
-    apiClient.get<MonthlyTrend[]>('/api/v1/analytics/monthly-trend', { params: { months } }) as unknown as Promise<MonthlyTrend[]>,
+  
+    apiClient.get<CategorySpending[]>('/api/v1/analytics/category-spending', { params: { month, date } }) as unknown as Promise<CategorySpending[]>,
+  dailySummary: (date?: string) =>
+    apiClient.get<DailySummary>('/api/v1/analytics/daily-summary', { params: { date } }) as unknown as Promise<DailySummary>,
+  
+    apiClient.get<MonthlyTrend[]>('/api/v1/analytics/monthly-trend', { params: { months, endMonth } }) as unknown as Promise<MonthlyTrend[]>,
 };
 
 export const walletAPI = {

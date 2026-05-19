@@ -8,11 +8,12 @@
 
 import { useMemo } from 'react';
 import { TrendingUp, TrendingDown, Wallet, ChevronRight } from 'lucide-react';
-import { useBudgetSummary } from '@/_lib/hooks/use-budgets';
+import { useMonthlyTrend } from '@/_lib/hooks/finance';
 import { formatVND } from '@finance/api-client';
 import { useWallet } from '@/app/context/WalletContext';
 import Link from 'next/link';
 import { useTranslations } from '@/locales';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface StatConfig {
   icon: React.ReactNode;
@@ -24,9 +25,10 @@ interface StatConfig {
   colorBorder: string;
   badge?: { text: string; color: string; bg: string };
   href?: string;
+  loading?: boolean;
 }
 
-function StatCell({ icon, label, value, sublabel, colorText, colorBg, colorBorder, badge, href }: StatConfig) {
+function StatCell({ icon, label, value, sublabel, colorText, colorBg, colorBorder, badge, href, loading }: StatConfig) {
   const inner = (
     <div
       className="flex-1 p-4 rounded-2xl border transition-all duration-200"
@@ -44,7 +46,7 @@ function StatCell({ icon, label, value, sublabel, colorText, colorBg, colorBorde
         <p className="text-[10px] font-black uppercase tracking-wider truncate" style={{ color: colorText }}>
           {label}
         </p>
-        {badge && (
+        {!loading && badge && (
           <span
             className="ml-auto text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0"
             style={{ backgroundColor: badge.bg, color: badge.color }}
@@ -52,18 +54,26 @@ function StatCell({ icon, label, value, sublabel, colorText, colorBg, colorBorde
             {badge.text}
           </span>
         )}
-        {href && !badge && (
+        {href && !loading && !badge && (
           <ChevronRight size={11} className="ml-auto shrink-0" style={{ color: colorText }} />
         )}
       </div>
 
       {/* Value */}
-      <p className="text-[18px] font-black leading-none truncate" style={{ color: colorText }}>
-        {value}
-      </p>
+      {loading ? (
+        <Skeleton className="h-[18px] w-24 bg-black/10" />
+      ) : (
+        <p className="text-[18px] font-black leading-none truncate" style={{ color: colorText }}>
+          {value}
+        </p>
+      )}
 
       {/* Sublabel */}
-      <p className="text-[10px] font-bold text-gray-500 mt-1.5">{sublabel}</p>
+      {loading ? (
+        <Skeleton className="mt-2 h-3 w-20 bg-black/10" />
+      ) : (
+        <p className="text-[10px] font-bold text-gray-500 mt-1.5">{sublabel}</p>
+      )}
     </div>
   );
 
@@ -73,11 +83,12 @@ function StatCell({ icon, label, value, sublabel, colorText, colorBg, colorBorde
 
 export function OverviewSummaryCard() {
   const { t } = useTranslations();
-  const { data: budgetData } = useBudgetSummary();
-  const total_income = budgetData?.totalIncome ?? '0';
-  const total_expense = budgetData?.totalSpent ?? '0';
+  const { data: trends, isLoading: isTrendsLoading } = useMonthlyTrend(1);
+  const currentMonth = trends?.[0];
+  const total_income = currentMonth?.income ?? '0';
+  const total_expense = currentMonth?.expense ?? '0';
   
-  const { wallets, totalBalance } = useWallet();
+  const { wallets, totalBalance, isLoading: isWalletLoading } = useWallet();
   const walletCount = wallets.length;
 
   const stats: StatConfig[] = useMemo(() => [
@@ -90,6 +101,7 @@ export function OverviewSummaryCard() {
       colorBg: '#ecfdf5',
       colorBorder: '#a7f3d0',
       badge: { text: '+4.0%', color: '#059669', bg: '#d1fae5' },
+      loading: isTrendsLoading,
     },
     {
       icon: <TrendingDown size={13} className="text-red-500" />,
@@ -99,6 +111,7 @@ export function OverviewSummaryCard() {
       colorText: '#dc2626',
       colorBg: '#fef2f2',
       colorBorder: '#fecaca',
+      loading: isTrendsLoading,
     },
     {
       icon: <Wallet size={13} className="text-blue-600" />,
@@ -109,8 +122,9 @@ export function OverviewSummaryCard() {
       colorBg: '#eff6ff',
       colorBorder: '#bfdbfe',
       href: '/wallets',
+      loading: isWalletLoading,
     },
-  ], [total_income, total_expense, totalBalance, walletCount, t]);
+  ], [total_income, total_expense, totalBalance, walletCount, t, isTrendsLoading, isWalletLoading]);
 
   return (
     <div className="space-y-2">

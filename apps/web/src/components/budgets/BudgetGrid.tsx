@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useBudgets, useBudgetSummary } from '@/_lib/hooks/use-budgets';
 import { formatVND, Budget } from '@finance/api-client';
 import Decimal from 'decimal.js';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -269,7 +270,7 @@ function BudgetCreateCTA() {
 
 export function BudgetGrid() {
   const router = useRouter();
-  const { data: budgetsData } = useBudgets();
+  const { data: budgetsData, isLoading } = useBudgets();
   const budgets = budgetsData || [];
 
   const activeBudgets = budgets.filter((b) => b.status === 'active');
@@ -299,8 +300,13 @@ export function BudgetGrid() {
       {/* Summary Banner */}
       <BudgetSummaryBanner />
 
-      {/* Featured Budget + CTA, or just CTA if no budgets */}
-      {hasAnyBudget ? (
+      {/* Featured Budget + CTA, or loading skeleton */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 items-stretch">
+          <Skeleton className="h-[132px] rounded-2xl bg-gray-100" />
+          <Skeleton className="h-[132px] rounded-2xl bg-gray-100" />
+        </div>
+      ) : hasAnyBudget ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 items-stretch">
           {latestBudget && <FeaturedBudgetCard budget={latestBudget} />}
           <BudgetCreateCTA />

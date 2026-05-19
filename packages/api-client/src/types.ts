@@ -154,8 +154,16 @@ export interface CategorySpending {
   categoryName: string;
   icon: string;
   color: string;
+  amount?: string;
   totalSpent: string;
   transactionCount: number;
+}
+
+export interface DailySummary {
+  date: string;
+  income: string;
+  expense: string;
+  savings: string;
 }
 
 export interface MonthlyTrend {
