@@ -18,7 +18,7 @@ export function GoogleAnalytics() {
       {/* Load gtag.js library */}
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-        strategy="afterInteractive"
+        strategy="lazyOnload"
       />
       {/* Initialise gtag with your Measurement ID */}
       <Script id="gtag-init" strategy="afterInteractive">
