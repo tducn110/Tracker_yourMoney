@@ -8,7 +8,7 @@
  * - Không dùng motion/react — CSS transitions thuần
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Plus, Star, Trash2, Pencil, Wallet as WalletIcon,
   CreditCard, Banknote, PiggyBank, CheckCircle2, X, RefreshCw,
@@ -76,9 +76,10 @@ interface AddWalletModalProps {
   editWallet?: Wallet | null;
   onClose: () => void;
   onSave: (data: WalletFormData) => void;
+  isMutating: boolean;
 }
 
-function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalProps) {
+function AddWalletModal({ isOpen, editWallet, onClose, onSave, isMutating }: AddWalletModalProps) {
   const [form, setForm] = useState<WalletFormData>(
     editWallet
       ? {
@@ -93,10 +94,22 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
       : defaultForm
   );
 
+  // Guard against double-click within the same event loop (before parent's
+  // setIsMutating(true) triggers a re-render with isMutating=true).
+  const submittingRef = useRef(false);
+
+  // Reset local guard when parent signals mutation completed.
+  useEffect(() => {
+    if (!isMutating) submittingRef.current = false;
+  }, [isMutating]);
+
   if (!isOpen) return null;
+
+  const isSubmitting = submittingRef.current || isMutating;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!form.name.trim()) {
       toast.error('Vui lòng nhập tên ví');
       return;
@@ -106,6 +119,7 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
       toast.error('Số dư không hợp lệ');
       return;
     }
+    submittingRef.current = true;
     onSave(form);
   };
 
@@ -113,10 +127,10 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
 
   return (
     <div className="fixed inset-0 z-60 flex items-end sm:items-center justify-center p-4">
-      {/* Backdrop */}
+      {/* Backdrop — blocked during mutation to prevent accidental close */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={isSubmitting ? undefined : onClose}
       />
 
       {/* Sheet */}
@@ -139,7 +153,8 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
+            disabled={isSubmitting}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <X size={16} />
           </button>
@@ -292,16 +307,18 @@ function AddWalletModal({ isOpen, editWallet, onClose, onSave }: AddWalletModalP
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-11 rounded-xl border border-gray-200 text-[13px] font-black text-gray-600 hover:bg-gray-50 transition-colors"
+              disabled={isSubmitting}
+              className="flex-1 h-11 rounded-xl border border-gray-200 text-[13px] font-black text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Huỷ
             </button>
             <button
               type="submit"
-              className="flex-1 h-11 rounded-xl text-[13px] font-black text-white transition-all active:scale-95"
+              disabled={isSubmitting}
+              className="flex-1 h-11 rounded-xl text-[13px] font-black text-white transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ backgroundColor: form.color, boxShadow: `0 4px 14px ${form.color}40` }}
             >
-              {editWallet ? 'Cập nhật' : 'Thêm ví'}
+              {isSubmitting ? 'Đang lưu...' : editWallet ? 'Cập nhật' : 'Thêm ví'}
             </button>
           </div>
         </form>
@@ -587,6 +604,7 @@ export default function WalletsPage() {
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         onSave={handleSave}
+        isMutating={isMutating}
       />
 
       {/* Edit Wallet Modal */}
@@ -599,6 +617,7 @@ export default function WalletsPage() {
             handleSave(data);
             setEditWallet(null);
           }}
+          isMutating={isMutating}
         />
       )}
 

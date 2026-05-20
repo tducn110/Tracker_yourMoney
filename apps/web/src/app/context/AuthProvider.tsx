@@ -3,7 +3,9 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { 
   onAuthStateChanged, 
-  signInWithPopup, 
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut, 
   AuthProvider as FirebaseAuthProvider
 } from "firebase/auth";
@@ -37,58 +39,127 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const socialLoginInProgress = useRef(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        // Skip /auth/me check if social login is about to set the user from /auth/social response
-        if (socialLoginInProgress.current) {
-          // Small delay to ensure any concurrent state updates settle
-          setTimeout(() => setLoading(false), 500);
-          return;
+    let cancelled = false;
+    let unsub: (() => void) | undefined;
+
+    (async () => {
+      // 1. Process redirect result FIRST (mobile fallback returns here after signInWithRedirect).
+      //    Must run before onAuthStateChanged to avoid race between getRedirectResult and
+      //    the auth-state listener firing for the same user.
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && !cancelled) {
+          socialLoginInProgress.current = true;
+          setLoading(true);
+
+          try {
+            const idToken = await result.user.getIdToken();
+            const response = await fetch("/api/auth/social", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ idToken }),
+              credentials: "include",
+            });
+
+            if (response.ok && !cancelled) {
+              const data = await response.json();
+              setUser(data.data.user);
+              toast.success("Đăng nhập thành công");
+              router.push(data.data.user.hasOnboarded ? "/dashboard" : "/onboarding");
+            }
+          } catch (error) {
+            if (process.env.NODE_ENV !== "production") console.error("Redirect login error:", error);
+            toast.error("Đăng nhập thất bại");
+          } finally {
+            // Keep guard active briefly to prevent onAuthStateChanged race
+            setTimeout(() => { socialLoginInProgress.current = false; }, 1000);
+            if (!cancelled) setLoading(false);
+          }
+          return; // Redirect result processed — skip onAuthStateChanged subscriber
         }
-        try {
-          const response = await fetch("/api/auth/me", {
-            credentials: "include",
-          });
-          if (response.ok) {
-            const data = await response.json();
-            setUser(data.data);
-          } else if (response.status === 401) {
-            // Unauthenticated state is expected during app startup or after logout.
-            setUser(null);
-          } else {
-            // Token expired or invalid at backend
-            let errorMsg = "";
-            try {
-              const errorData = await response.json();
-              errorMsg = errorData.error?.message || "";
-            } catch {
-              // fallback to status text
+      } catch {
+        // No pending redirect — normal page load, continue below
+      }
+
+      if (cancelled) return;
+
+      // 2. Auth state listener (normal page loads & popup flows)
+      unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+          // Skip /auth/me check if social login is about to set the user from /auth/social response
+          if (socialLoginInProgress.current) {
+            // Small delay to ensure any concurrent state updates settle
+            setTimeout(() => setLoading(false), 500);
+            return;
+          }
+          try {
+            const response = await fetch("/api/auth/me", {
+              credentials: "include",
+            });
+            if (response.ok) {
+              const data = await response.json();
+              setUser(data.data);
+            } else if (response.status === 401) {
+              // Unauthenticated state is expected during app startup or after logout.
+              setUser(null);
+            } else {
+              // Token expired or invalid at backend
+              let errorMsg = "";
+              try {
+                const errorData = await response.json();
+                errorMsg = errorData.error?.message || "";
+              } catch {
+                // fallback to status text
+              }
+              if (process.env.NODE_ENV !== 'production') {
+                console.error(
+                  `Auth /me failed: HTTP ${response.status} ${response.statusText} ${errorMsg ? `— ${errorMsg}` : ""}`,
+                );
+              }
+              setUser(null);
             }
-            if (process.env.NODE_ENV !== 'production') {
-              console.error(
-                `Auth /me failed: HTTP ${response.status} ${response.statusText} ${errorMsg ? `— ${errorMsg}` : ""}`,
-              );
-            }
+          } catch (error) {
+            if (process.env.NODE_ENV !== 'production') console.error("Sync user error:", error);
             setUser(null);
           }
-        } catch (error) {
-          if (process.env.NODE_ENV !== 'production') console.error("Sync user error:", error);
+        } else {
           setUser(null);
         }
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
+        setLoading(false);
+      });
+    })();
 
-    return () => unsubscribe();
+    return () => {
+      cancelled = true;
+      unsub?.();
+    };
   }, []);
 
   const loginWithSocial = async (provider: FirebaseAuthProvider) => {
     socialLoginInProgress.current = true;
     try {
       setLoading(true);
-      const result = await signInWithPopup(auth, provider);
+
+      let result;
+      try {
+        result = await signInWithPopup(auth, provider);
+      } catch (popupError: any) {
+        // On mobile (iOS Safari / Android Chrome), popups are often blocked.
+        // Fall back to redirect — the useEffect above catches the result on return.
+        if (
+          popupError.code === "auth/popup-blocked" ||
+          popupError.code === "auth/popup-closed-by-user" ||
+          popupError.code === "auth/cancelled-popup-request"
+        ) {
+          await signInWithRedirect(auth, provider);
+          // Browser will redirect away — execution stops here.
+          // socialLoginInProgress stays true so onAuthStateChanged won't
+          // race when the redirect returns.
+          return;
+        }
+        throw popupError; // Re-throw unexpected errors
+      }
+
       const idToken = await result.user.getIdToken();
 
       const response = await fetch("/api/auth/social", {
