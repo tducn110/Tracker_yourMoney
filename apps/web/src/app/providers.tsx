@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { WalletProvider } from './context/WalletContext';
 import { AuthProvider } from './context/AuthProvider';
 import { pageview } from '@/_lib/gtag';
 
@@ -58,12 +57,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <WalletProvider>
-          <Suspense fallback={null}>
-            <AnalyticsTracker />
-          </Suspense>
-          {children}
-        </WalletProvider>
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
+        </Suspense>
+        {children}
       </AuthProvider>
     </QueryClientProvider>
   );

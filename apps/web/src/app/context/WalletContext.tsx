@@ -5,7 +5,7 @@
  * Uses TanStack Query hooks from @/_lib/hooks/finance for data fetching/mutations.
  */
 
-import { createContext, useContext, ReactNode, useMemo, useState, useCallback, useEffect } from 'react';
+import { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWallets } from '@/_lib/hooks/finance';
 import { walletAPI, Wallet } from '@finance/api-client';
@@ -59,19 +59,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, [walletsData]);
 
-  // Auto-refresh when any component invalidates ['wallets']
-  useEffect(() => {
-    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      if (
-        event.type === 'updated' &&
-        event.query.queryKey[0] === 'wallets'
-      ) {
-        refreshWallets();
-      }
-    });
-    return () => unsubscribe();
-  }, [queryClient, refreshWallets]);
-
   const totalBalance = useMemo(() => {
     return wallets.reduce((sum, wallet) => {
       return sum.plus(new Decimal(wallet.balance || '0'));
@@ -93,7 +80,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       });
       
       await refreshWallets();
-      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      await queryClient.invalidateQueries({ queryKey: ['wallets'] });
       toast.success('Đã thêm ví mới');
       return newWallet;
     } catch (error) {
@@ -107,7 +94,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     try {
       await walletAPI.update(id, updates);
       await refreshWallets();
-      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      await queryClient.invalidateQueries({ queryKey: ['wallets'] });
       toast.success('Đã cập nhật ví');
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') console.error('Error updating wallet:', error);
@@ -120,7 +107,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     try {
       await walletAPI.delete(id);
       await refreshWallets();
-      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      await queryClient.invalidateQueries({ queryKey: ['wallets'] });
       toast.success('Đã xóa ví');
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') console.error('Error deleting wallet:', error);
@@ -135,7 +122,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       // For now, let's just update the target wallet and refresh
       await walletAPI.update(id, { isDefault: true });
       await refreshWallets();
-      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      await queryClient.invalidateQueries({ queryKey: ['wallets'] });
       toast.success('Đã đặt làm ví mặc định');
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') console.error('Error setting default wallet:', error);

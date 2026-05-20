@@ -6,7 +6,7 @@ import {
 } from "@finance/db/src/schema/budgets";
 import { transactions } from "@finance/db/src/schema/transactions";
 import { categories } from "@finance/db/src/schema/categories";
-import { and, eq, sum, gte, lte, inArray, sql, desc } from "@finance/db";
+import { and, eq, gte, lte, inArray, sql, desc } from "@finance/db";
 import Decimal from "decimal.js";
 import { NotFoundError } from "../lib/errors";
 import type { InsertBudgetInput, UpdateBudgetInput } from "@finance/shared-schemas";
