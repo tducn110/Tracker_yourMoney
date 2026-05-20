@@ -271,11 +271,11 @@ export function useUpdateGoal() {
       return goalsAPI.update(id, data);
     },
     onError: (err: any) => {
-      const correlationId = err.data?.error?.correlationId;
+      const apiMessage = err?.message || err?.response?.data?.error?.message || '';
       toast.error(
         <div className="flex flex-col gap-1">
           <span className="font-semibold">Cập nhật mục tiêu thất bại</span>
-          <span className="text-xs opacity-80">Mã tham chiếu: {correlationId || 'N/A'}</span>
+          <span className="text-xs opacity-80">{apiMessage || 'Có lỗi xảy ra, vui lòng thử lại'}</span>
         </div>
       );
     },
@@ -318,11 +318,11 @@ export function useContributeGoal() {
       return goalsAPI.contribute(id, data, idempotencyKey);
     },
     onError: (err: any) => {
-      const correlationId = err.data?.error?.correlationId;
+      const apiMessage = err?.message || err?.response?.data?.error?.message || '';
       toast.error(
         <div className="flex flex-col gap-1">
           <span className="font-semibold">Đóng góp thất bại</span>
-          <span className="text-xs opacity-80">Mã tham chiếu: {correlationId || 'N/A'}</span>
+          <span className="text-xs opacity-80">{apiMessage || 'Có lỗi xảy ra, vui lòng thử lại'}</span>
         </div>
       );
     },

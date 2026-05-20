@@ -114,6 +114,7 @@ function AuthenticatedDashboardShell({
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const { mutateAsync: createTransaction } = useCreateTransaction();
   const { data: categories = [] } = useCategories();
+  const queryClient = useQueryClient();
 
   // Prefetch dashboard data so child cards render instantly
   useDashboardPrefetch();
@@ -142,6 +143,8 @@ function AuthenticatedDashboardShell({
         transaction_type: data.type,
         has_note: Boolean(data.note),
       });
+      // Đợi wallet refetch xong trước khi đóng modal để user thấy số dư tụt ngay
+      await queryClient.refetchQueries({ queryKey: ['wallets'] });
       setIsQuickAddOpen(false);
     } catch (error) {
       trackEvent('transaction_create_failed', {

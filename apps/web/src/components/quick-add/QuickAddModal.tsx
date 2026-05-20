@@ -162,9 +162,8 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
     setIsSubmitting(true);
     try {
       await onSubmit({ ...data, type, category: selectedCat, walletId: actualWalletId });
-      toast.success('Đã thêm giao dịch thành công!');
+      // layout.tsx handleQuickAdd giờ tự đóng modal sau khi wallet refetch xong
       reset();
-      onClose();
     } catch {
       toast.error('Có lỗi xảy ra khi thêm giao dịch.');
     } finally {
@@ -266,15 +265,15 @@ export function QuickAddModal({ isOpen, onClose, onSubmit }: QuickAddModalProps)
           {wallets.length > 0 && (
             <div className="space-y-2">
               <Label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Ví</Label>
-              <div className="flex flex-wrap gap-2">
-                {wallets.map((w) => {
+              <div className="flex gap-2 overflow-x-auto pb-1 max-w-full scrollbar-hide">
+                {wallets.slice(0, 5).map((w) => {
                   const isActive = actualWalletId === w.id;
                   return (
                     <button
                       key={w.id}
                       type="button"
                       onClick={() => setWallet(w.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all"
+                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all"
                       style={{
                         backgroundColor: isActive ? w.color : '#f3f4f6',
                         color: isActive ? '#fff' : '#6b7280',
