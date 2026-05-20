@@ -82,7 +82,7 @@ function BudgetSummaryBanner() {
           <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-0.5">
             Tổng quan ngân sách
           </p>
-          <p className="text-[28px] font-black text-white leading-none">
+          <p className="text-[22px] sm:text-[28px] font-black text-white leading-none truncate">
             {formatVND(numericLeft < 0 ? '0' : left)}{' '}
             <span className="text-[12px] font-bold text-blue-300">còn lại</span>
           </p>
@@ -99,12 +99,12 @@ function BudgetSummaryBanner() {
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="bg-white/10 rounded-xl px-4 py-3">
           <p className="text-[10px] font-bold text-blue-200 mb-1 uppercase tracking-wide">Hạn mức</p>
-          <p className="text-[20px] font-black text-white leading-none">{formatVND(totalLimit)}</p>
+          <p className="text-[16px] sm:text-[20px] font-black text-white leading-none truncate">{formatVND(totalLimit)}</p>
         </div>
         <div className="bg-white/10 rounded-xl px-4 py-3">
           <p className="text-[10px] font-bold text-blue-200 mb-1 uppercase tracking-wide">Đã chi</p>
           <p
-            className="text-[20px] font-black leading-none"
+            className="text-[16px] sm:text-[20px] font-black leading-none truncate"
             style={{ color: isOver ? '#fca5a1' : isWarn ? '#fde68a' : '#6ee7b7' }}
           >
             {formatVND(totalSpent)}
@@ -203,7 +203,7 @@ function FeaturedBudgetCard({ budget }: { budget: Budget }) {
         <div>
           <div className="flex items-baseline gap-1.5">
             <span
-              className="text-[32px] font-black leading-none"
+              className="text-[24px] sm:text-[32px] font-black leading-none truncate"
               style={{ color: amountColor }}
             >
               {numericLeft < 0 ? '−' : ''}{formatVND(left.abs())}

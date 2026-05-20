@@ -320,7 +320,7 @@ export function SimpleQuickInput() {
 
       {/* ── Row 3: Amount + Note + Submit ── */}
       <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-        <div className="relative shrink-0 w-[180px]">
+        <div className="relative shrink-0 w-[110px] sm:w-[180px]">
           <CurrencyInput
             value={amount}
             onValueChange={setAmount}

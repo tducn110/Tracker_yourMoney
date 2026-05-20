@@ -86,7 +86,7 @@ function GoalRow({ goal }: { goal: Goal }) {
           </span>
         </div>
 
-        <p className="text-[10px] font-bold text-gray-400 mb-1.5">
+        <p className="text-[10px] font-bold text-gray-400 mb-1.5 truncate">
           {formatVND(goal.currentSaved)} / {formatVND(goal.targetAmount)}
           {goal.deadline && (
             <span className="ml-1.5 text-gray-300">· {new Date(goal.deadline).toLocaleDateString('vi-VN')}</span>

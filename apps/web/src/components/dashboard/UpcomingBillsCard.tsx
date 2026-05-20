@@ -78,7 +78,7 @@ export function UpcomingBillsCard() {
                     {overdue ? t('dashboard.bills.overdue') : t('dashboard.bills.monthlyDue').replace('{{day}}', bill.dueDay.toString())}
                   </p>
                 </div>
-                <p className="text-[12px] font-black text-gray-800 shrink-0">
+                <p className="text-[12px] font-black text-gray-800 shrink-0 max-w-[85px] truncate sm:max-w-none">
                   {formatVND(bill.amount)}
                 </p>
               </div>
