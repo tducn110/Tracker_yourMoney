@@ -6,10 +6,13 @@ import {
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
+  signInWithCredential,
+  GoogleAuthProvider,
   signOut as firebaseSignOut, 
   AuthProvider as FirebaseAuthProvider
 } from "firebase/auth";
 import { auth, googleProvider } from "../../_lib/firebase";
+import { initiateGoogleOAuth, consumeGoogleOAuthState } from "../../_lib/google-oauth";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -43,9 +46,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let unsub: (() => void) | undefined;
 
     (async () => {
-      // 1. Process redirect result FIRST (mobile fallback returns here after signInWithRedirect).
-      //    Must run before onAuthStateChanged to avoid race between getRedirectResult and
-      //    the auth-state listener firing for the same user.
+      // 0. Process custom Google OAuth redirect (Safari-compatible — bypasses
+      //    Firebase's signInWithRedirect which relies on sessionStorage).
+      try {
+        const oauthResult = consumeGoogleOAuthState();
+        if (oauthResult && !cancelled) {
+          socialLoginInProgress.current = true;
+          setLoading(true);
+
+          try {
+            const credential = GoogleAuthProvider.credential(oauthResult.idToken);
+            const credResult = await signInWithCredential(auth, credential);
+            const idToken = await credResult.user.getIdToken();
+
+            const response = await fetch("/api/auth/social", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ idToken }),
+              credentials: "include",
+            });
+
+            if (response.ok && !cancelled) {
+              const data = await response.json();
+              setUser(data.data.user);
+              toast.success("Đăng nhập thành công");
+              router.push(data.data.user.hasOnboarded ? "/dashboard" : "/onboarding");
+            }
+          } catch (error) {
+            if (process.env.NODE_ENV !== "production") console.error("OAuth login error:", error);
+            toast.error("Đăng nhập thất bại");
+          } finally {
+            setTimeout(() => { socialLoginInProgress.current = false; }, 1000);
+            if (!cancelled) setLoading(false);
+          }
+          // Fall through to subscribe onAuthStateChanged
+        }
+      } catch {
+        // No pending OAuth redirect — continue below
+      }
+
+      // 1. Process Firebase redirect result (legacy mobile fallback).
+      //    Must run before onAuthStateChanged to avoid race.
       try {
         const result = await getRedirectResult(auth);
         if (result && !cancelled) {
@@ -172,10 +213,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           popupError.code === "auth/cancelled-popup-request" ||
           popupError.code === "auth/operation-not-supported-in-this-environment"
         ) {
-          await signInWithRedirect(auth, provider);
+          // Use custom OAuth redirect that stores state in localStorage
+          // instead of sessionStorage (Safari clears sessionStorage during
+          // cross-origin redirects, causing "missing initial state").
+          initiateGoogleOAuth();
           // Browser will redirect away — execution stops here.
-          // socialLoginInProgress stays true so onAuthStateChanged won't
-          // race when the redirect returns.
           return;
         }
         throw popupError; // Re-throw unexpected errors
