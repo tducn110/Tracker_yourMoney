@@ -132,8 +132,8 @@ function WalletSelector({ selectedId, onChange }: WalletSelectorProps) {
   return (
     <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-100 bg-white">
       <WalletIcon size={13} className="text-gray-400 shrink-0" />
-      <div className="flex items-center gap-2 overflow-x-auto">
-        {wallets.map((w) => {
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {wallets.slice(0, 5).map((w) => {
           const isActive = selectedId === w.id;
           return (
             <button
