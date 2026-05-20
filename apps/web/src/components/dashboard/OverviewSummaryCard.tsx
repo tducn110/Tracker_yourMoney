@@ -63,7 +63,7 @@ function StatCell({ icon, label, value, sublabel, colorText, colorBg, colorBorde
       {loading ? (
         <Skeleton className="h-[18px] w-24 bg-black/10" />
       ) : (
-        <p className="text-[18px] font-black leading-none truncate" style={{ color: colorText }}>
+        <p className="text-[15px] sm:text-[18px] font-black leading-none truncate" style={{ color: colorText }}>
           {value}
         </p>
       )}
@@ -77,8 +77,8 @@ function StatCell({ icon, label, value, sublabel, colorText, colorBg, colorBorde
     </div>
   );
 
-  if (href) return <Link href={href} className="flex-1 min-w-[130px] hover:opacity-90 transition-opacity">{inner}</Link>;
-  return <div className="flex-1 min-w-[130px]">{inner}</div>;
+  if (href) return <Link href={href} className="flex-1 sm:min-w-[130px] hover:opacity-90 transition-opacity">{inner}</Link>;
+  return <div className="flex-1 sm:min-w-[130px]">{inner}</div>;
 }
 
 export function OverviewSummaryCard() {
@@ -128,7 +128,7 @@ export function OverviewSummaryCard() {
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {stats.map((stat) => (
           <StatCell key={stat.label} {...stat} />
         ))}

@@ -89,7 +89,7 @@ function TransactionRow({ tx, t }: { tx: Transaction; t: TFunction }) {
 
       {/* Amount */}
       <p
-        className="text-[13px] font-black shrink-0"
+        className="text-[13px] font-black shrink-0 max-w-[90px] truncate sm:max-w-none"
         style={{ color: isIncome ? '#059669' : '#dc2626' }}
       >
         {isIncome ? '+' : '−'}
