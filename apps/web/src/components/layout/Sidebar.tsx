@@ -29,7 +29,7 @@ import { useTranslations } from '@/locales';
 // ─── Nav config ───────────────────────────────────────────────────────────────
 
 export const getNavItems = (t: (key: string) => string) => [
-  { path: '/',             icon: LayoutDashboard, label: t('nav.overview'),  exact: true,  color: '#4361ee' },
+  { path: '/dashboard', icon: LayoutDashboard, label: t('nav.overview'),  exact: true,  color: '#4361ee' },
   { path: '/transactions', icon: ListOrdered,      label: t('nav.transactions'),  exact: false, color: '#10b981' },
   { path: '/wallets',      icon: Wallet,           label: t('nav.wallets'),    exact: false, color: '#f59e0b' },
   { path: '/budgets',      icon: PiggyBank,        label: t('nav.budgets'),  exact: false, color: '#8b5cf6' },
