@@ -286,11 +286,8 @@ export function InlineChatQuickAdd() {
       return;
     }
 
-    // Optimistic UI: mark as confirmed immediately
     setIsSaving(true);
-    setMessages(prev =>
-      prev.map(m => m.id === msg.id ? { ...m, confirmed: true } : m)
-    );
+    // KHÔNG đánh dấu confirmed sớm — đợi wallet refetch xong mới hiện "Đã lưu"
 
     try {
       // Dùng data đã parse local (regex) — không gọi backend AI parse lại, tránh double parsing
@@ -298,7 +295,7 @@ export function InlineChatQuickAdd() {
       const categoryId = resolveCategoryId(parsed.category, parsed.type, categories);
       // Note: transactionsAPI.create type is Partial<Transaction> (no walletId),
       // but the actual API schema expects walletId. Cast to any.
-      const result = await (transactionsAPI as any).create({
+      await (transactionsAPI as any).create({
         walletId,
         categoryId,
         amount: String(parsed.amount),
@@ -310,19 +307,25 @@ export function InlineChatQuickAdd() {
       const savedNote = parsed.note;
       const savedAmount = parsed.amount;
 
-      const confirmMsg: Message = {
-        id: `confirm-${Date.now()}`,
-        role: 'bot',
-        content: `✅ Đã lưu: **${savedNote}** — **${formatVND(savedAmount)}** vào danh sách giao dịch!`,
-        timestamp: new Date(),
-        confirmed: true,
-      };
-      setMessages(prev => [...prev, confirmMsg]);
+      // Đợi wallet refetch xong → "Đã lưu" + số dư tụt hiện cùng lúc
+      await queryClient.refetchQueries({ queryKey: ['wallets'] });
+
+      setMessages(prev => {
+        const updated = prev.map(m => m.id === msg.id ? { ...m, confirmed: true } : m);
+        const confirmMsg: Message = {
+          id: `confirm-${Date.now()}`,
+          role: 'bot',
+          content: `✅ Đã lưu: **${savedNote}** — **${formatVND(savedAmount)}** vào danh sách giao dịch!`,
+          timestamp: new Date(),
+          confirmed: true,
+        };
+        return [...updated, confirmMsg];
+      });
       toast.success(`Đã ghi nhận: ${savedNote}`, {
         icon: <Sparkles className="text-blue-500" />,
       });
 
-      // Invalidate + refetch queries to refresh budget summary and transactions
+      // Các refetch còn lại chạy ngầm
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.refetchQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['budgets', 'summary'] });
@@ -331,17 +334,11 @@ export function InlineChatQuickAdd() {
       queryClient.refetchQueries({ queryKey: ['analytics'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', 'cash'] });
       queryClient.refetchQueries({ queryKey: ['wallet', 'cash'] });
-      queryClient.invalidateQueries({ queryKey: ['wallets'] });
-      queryClient.refetchQueries({ queryKey: ['wallets'] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
     } catch (err: any) {
       Sentry.captureException(err, { tags: { feature: 'inline_chat_confirm' } });
-      // Rollback optimistic UI
       setIsSaving(false);
-      setMessages(prev =>
-        prev.map(m => m.id === msg.id ? { ...m, confirmed: false } : m)
-      );
 
       const apiError = err?.response?.data?.error?.message || err?.message || '';
       const userMsg = apiError.includes('Không thể nhận diện')
