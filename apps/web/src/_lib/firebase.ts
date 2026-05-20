@@ -11,7 +11,13 @@
  */
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  browserLocalPersistence,
+  setPersistence,
+  type Auth,
+} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -33,8 +39,20 @@ function getFirebaseApp(): FirebaseApp {
   return getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 }
 
+let _auth: Auth | null = null;
+
 function getFirebaseAuth(): Auth {
-  return getAuth(getFirebaseApp());
+  if (!_auth) {
+    _auth = getAuth(getFirebaseApp());
+    // localStorage survives cross-origin redirects on mobile (Safari / Chrome);
+    // sessionStorage is often cleared, causing "missing initial state".
+    setPersistence(_auth, browserLocalPersistence).catch((err) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("Failed to set auth persistence:", err);
+      }
+    });
+  }
+  return _auth;
 }
 
 // Providers are stateless and safe to create eagerly
