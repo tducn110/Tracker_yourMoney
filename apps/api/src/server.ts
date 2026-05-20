@@ -4,9 +4,9 @@ import app from "./index.ts";
 
 import { logger } from "./lib/logger";
 
-const port = 8787;
+const port = Number(process.env.PORT) || 3001;
 
-logger.info({ event: 'SERVER_STARTUP', message: `Finance API (Node Fallback) is running on http://localhost:${port}`, port });
+logger.info({ event: 'SERVER_STARTUP', message: `Finance API is running on http://localhost:${port}`, port });
 
 serve({
   fetch: app.fetch,
