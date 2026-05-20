@@ -427,7 +427,7 @@ export function OnboardingWizard() {
         }
         markOnboarded();
         toast.success("Đã hoàn tất thiết lập tài khoản");
-        router.push("/");
+        router.push("/dashboard");
       }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || error?.message || "Không thể hoàn tất onboarding");
