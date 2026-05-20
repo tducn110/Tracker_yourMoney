@@ -14,12 +14,14 @@ import { logger } from "../../lib/logger";
  */
 export class GeminiNLPAdapter implements INLPAdapter {
   private readonly baseUrl: string;
-  private readonly apiKey: string;
+  private readonly apiKeys: string[];
   private readonly model: string;
   private readonly timeoutMs: number;
 
   constructor(opts?: { apiKey?: string; baseUrl?: string; model?: string; timeoutMs?: number }) {
-    this.apiKey = opts?.apiKey || process.env.AI_API_KEY || "";
+    const key1 = opts?.apiKey || process.env.AI_API_KEY || "";
+    const key2 = process.env.AI_API_KEY_2 || "";
+    this.apiKeys = [key1, key2].filter(Boolean);
     this.baseUrl = opts?.baseUrl || process.env.AI_BASE_URL || "https://openrouter.ai/api/v1";
     this.model = opts?.model || process.env.AI_MODEL || "meta-llama/llama-3.3-70b-instruct:free";
     this.timeoutMs = opts?.timeoutMs || 15000;
@@ -32,11 +34,36 @@ export class GeminiNLPAdapter implements INLPAdapter {
   }
 
   async parseAsync(text: string): Promise<NLPParsedResult> {
-    if (!this.apiKey) {
+    if (this.apiKeys.length === 0) {
       logger.warn({ event: "AI_NO_API_KEY" });
       throw new UnparseableInputError(text);
     }
 
+    let lastError: any;
+    for (let i = 0; i < this.apiKeys.length; i++) {
+      const apiKey = this.apiKeys[i];
+      const keyLabel = i === 0 ? "primary" : "fallback";
+      try {
+        const result = await this.tryParseWithKey(text, apiKey);
+        logger.info({ event: "AI_PARSE_SUCCESS", keyLabel, input: text });
+        return result;
+      } catch (e: any) {
+        lastError = e;
+        if (e instanceof UnparseableInputError && e.message.includes("401")) {
+          logger.warn({ event: "AI_KEY_EXPIRED", keyLabel });
+          continue; // Try next key
+        }
+        if (i < this.apiKeys.length - 1) {
+          logger.warn({ event: "AI_KEY_FAILED_TRYING_NEXT", keyLabel, error: e.message });
+          continue;
+        }
+      }
+    }
+
+    throw lastError || new UnparseableInputError(text);
+  }
+
+  private async tryParseWithKey(text: string, apiKey: string): Promise<NLPParsedResult> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -45,7 +72,7 @@ export class GeminiNLPAdapter implements INLPAdapter {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${this.apiKey}`,
+          "Authorization": `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           model: this.model,
@@ -91,7 +118,7 @@ Quy tắc:
       if (!response.ok) {
         const body = await response.text().catch(() => "");
         logger.warn({ event: "AI_API_ERROR", status: response.status, body: body.slice(0, 200) });
-        throw new UnparseableInputError(text);
+        throw new UnparseableInputError(`${response.status}: ${text}`);
       }
 
       const data = await response.json();

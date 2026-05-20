@@ -22,6 +22,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatVND } from '@finance/api-client';
 import { transactionsAPI } from '@finance/api-client';
 import { useWallet } from '@/app/context/WalletContext';
+import { useCategories } from '@/_lib/hooks/finance';
+import { resolveCategoryId } from '@/_lib/category-map';
 import { toast } from 'sonner';
 import * as Sentry from '@sentry/nextjs';
 
@@ -131,6 +133,7 @@ function parsePreview(input: string): ParsedTransaction {
 export function InlineChatQuickAdd() {
   const queryClient = useQueryClient();
   const { wallets, defaultWallet } = useWallet();
+  const { data: categories = [] } = useCategories();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -290,12 +293,22 @@ export function InlineChatQuickAdd() {
     );
 
     try {
-      // Send raw text to backend — AI re-parses and saves
-      const userInput = msg.originalInput || msg.data!.note;
-      const result = await transactionsAPI.quickAdd(userInput, { walletId });
-      const savedTransaction = result?.data ?? result?.transaction ?? result;
-      const savedNote = savedTransaction?.note || msg.data.note;
-      const savedAmount = Number(savedTransaction?.amount ?? msg.data.amount);
+      // Dùng data đã parse local (regex) — không gọi backend AI parse lại, tránh double parsing
+      const parsed = msg.data!;
+      const categoryId = resolveCategoryId(parsed.category, parsed.type, categories);
+      // Note: transactionsAPI.create type is Partial<Transaction> (no walletId),
+      // but the actual API schema expects walletId. Cast to any.
+      const result = await (transactionsAPI as any).create({
+        walletId,
+        categoryId,
+        amount: String(parsed.amount),
+        type: parsed.type,
+        note: parsed.note,
+        displayDate: parsed.date,
+        source: 'quick_add',
+      });
+      const savedNote = parsed.note;
+      const savedAmount = parsed.amount;
 
       const confirmMsg: Message = {
         id: `confirm-${Date.now()}`,

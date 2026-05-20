@@ -168,63 +168,63 @@ export class TransactionService {
   /**
    * High-level business logic for "Quick Add" via Natural Language.
    * 
-   * Uses a chain: Gemini AI → Regex fallback.
-   * If the primary adapter has an async parseAsync method, it uses that.
+   * Chain: Regex first (fast, reliable) → AI fallback (handles complex/unstructured input).
+   * AI adapter has 2 API key fallback (AI_API_KEY → AI_API_KEY_2).
    */
   async quickAdd(userId: string, text: string, options: { walletId?: string; categoryId?: number; idempotencyKey?: string } = {}): Promise<any> {
-    let parsed: NLPParsedResult;
+    let parsed: NLPParsedResult | undefined;
 
-    // ── Attempt 1: Try async AI adapter (Gemini) ──
-    try {
-      if (this.nlpAdapter instanceof GeminiNLPAdapter) {
-        parsed = await (this.nlpAdapter as GeminiNLPAdapter).parseAsync(text);
-        logger.info({ event: "QUICK_ADD_PARSED_BY_AI", input: text, intent: parsed.intent });
-      } else {
-        parsed = this.nlpAdapter.parse(text);
+    // ── Attempt 1: Regex parser (sync, fast, no API cost) ──
+    if (this.fallbackNLPAdapter) {
+      try {
+        parsed = this.fallbackNLPAdapter.parse(text);
+        logger.info({ event: "QUICK_ADD_PARSED_BY_REGEX", input: text, intent: parsed.intent });
+      } catch (_regexError: any) {
+        // Regex failed → fall through to AI
+        logger.info({ event: "QUICK_ADD_REGEX_FAILED", input: text, error: _regexError.message });
       }
-    } catch (e: any) {
-      // ── Attempt 2: Fallback to sync Regex adapter ──
-      const canFallback = this.fallbackNLPAdapter && !(e instanceof UnparseableInputError);
-      const isUnparseable = e instanceof UnparseableInputError;
-      
-      if (isUnparseable || canFallback) {
-        if (this.fallbackNLPAdapter) {
-          try {
-            parsed = this.fallbackNLPAdapter.parse(text);
-            logger.info({ event: "QUICK_ADD_FALLBACK_REGEX", input: text, intent: parsed.intent });
-          } catch (fbError: any) {
-            if (fbError instanceof UnparseableInputError) throw fbError;
-            throw new UnparseableInputError(text);
-          }
+    }
+
+    // ── Attempt 2: AI adapter (Gemini) with dual API key fallback ──
+    if (!parsed) {
+      try {
+        if (this.nlpAdapter instanceof GeminiNLPAdapter) {
+          parsed = await (this.nlpAdapter as GeminiNLPAdapter).parseAsync(text);
+          logger.info({ event: "QUICK_ADD_PARSED_BY_AI", input: text, intent: parsed.intent });
         } else {
-          throw e;
+          parsed = this.nlpAdapter.parse(text);
         }
-      } else {
-        throw e;
+      } catch (e: any) {
+        if (e instanceof UnparseableInputError) throw e;
+        throw new UnparseableInputError(text);
       }
+    }
+
+    if (!parsed) {
+      throw new UnparseableInputError(text);
     }
 
     // ── Handle Non-Transaction Intents ──
 
     // Unknown intent: AI couldn't identify a financial action
-    if (parsed!.intent === "unknown") {
+    if (parsed.intent === "unknown") {
       return {
         type: "unknown",
-        suggestion: parsed!.suggestion || "Mình chưa hiểu ý bạn 😊 Bạn có muốn ghi một khoản chi tiêu không? Ví dụ: 'ăn tối 80k' hoặc 'nhận lương 5tr'",
+        suggestion: parsed.suggestion || "Mình chưa hiểu ý bạn 😊 Bạn có muốn ghi một khoản chi tiêu không? Ví dụ: 'ăn tối 80k' hoặc 'nhận lương 5tr'",
       };
     }
 
-    if (parsed!.intent === "create_wallet") {
-      const walletName = parsed!.walletName || parsed!.keyword || "Ví mới";
-      const resolvedWalletId = await this.aiService.resolveOrCreateWallet(userId, walletName, parsed!.metadata);
+    if (parsed.intent === "create_wallet") {
+      const walletName = parsed.walletName || parsed.keyword || "Ví mới";
+      const resolvedWalletId = await this.aiService.resolveOrCreateWallet(userId, walletName, parsed.metadata);
       const [wallet] = await db.select().from(wallets).where(and(eq(wallets.id, resolvedWalletId as any), eq(wallets.userId, userId as any))).limit(1);
       return { type: "wallet", data: wallet };
     }
 
-    if (parsed!.intent === "create_category") {
-      const categoryName = parsed!.keyword || "Danh mục mới";
-      const type = (parsed!.type === "income" ? "income" : "expense") as "income" | "expense";
-      const resolvedCategoryId = await this.aiService.resolveOrCreateCategory(userId, categoryName, type, parsed!.metadata);
+    if (parsed.intent === "create_category") {
+      const categoryName = parsed.keyword || "Danh mục mới";
+      const type = (parsed.type === "income" ? "income" : "expense") as "income" | "expense";
+      const resolvedCategoryId = await this.aiService.resolveOrCreateCategory(userId, categoryName, type, parsed.metadata);
       const category = await this.categoryRepository.findById(resolvedCategoryId, userId);
       return { type: "category", data: category };
     }
@@ -232,21 +232,21 @@ export class TransactionService {
     let categoryId = options.categoryId;
 
     // If no category ID provided, use AI to resolve or auto-create
-    if (!categoryId && parsed!.keyword) {
+    if (!categoryId && parsed.keyword) {
       try {
-        const resolvedType = (parsed!.type === "income" ? "income" : "expense") as "income" | "expense";
+        const resolvedType = (parsed.type === "income" ? "income" : "expense") as "income" | "expense";
         categoryId = await this.aiService.resolveOrCreateCategory(
           userId,
-          parsed!.keyword,
+          parsed.keyword,
           resolvedType,
-          parsed!.metadata
+          parsed.metadata
         );
       } catch (e: any) {
-        logger.warn({ event: "AI_RESOLVE_CATEGORY_FAILED", keyword: parsed!.keyword, error: e.message });
+        logger.warn({ event: "AI_RESOLVE_CATEGORY_FAILED", keyword: parsed.keyword, error: e.message });
         // Fallback: try simple match
         const categories = await this.categoryRepository.findAll(userId);
         const matched = categories.find((c: any) =>
-          c.name.toLowerCase().includes(parsed!.keyword!.toLowerCase())
+          c.name.toLowerCase().includes(parsed.keyword!.toLowerCase())
         );
         categoryId = matched?.id;
       }
@@ -258,14 +258,14 @@ export class TransactionService {
     let walletId = options.walletId;
 
     // Resolve or auto-create wallet if hint exists
-    if (parsed!.walletName) {
+    if (parsed.walletName) {
       try {
-        const resolvedWalletId = await this.aiService.resolveOrCreateWallet(userId, parsed!.walletName, parsed!.metadata);
+        const resolvedWalletId = await this.aiService.resolveOrCreateWallet(userId, parsed.walletName, parsed.metadata);
         if (resolvedWalletId) {
           walletId = resolvedWalletId;
         }
       } catch (e: any) {
-        logger.warn({ event: "AI_RESOLVE_WALLET_FAILED", walletName: parsed!.walletName, error: e.message });
+        logger.warn({ event: "AI_RESOLVE_WALLET_FAILED", walletName: parsed.walletName, error: e.message });
       }
     }
 
@@ -280,16 +280,16 @@ export class TransactionService {
       }
     }
 
-    if (!parsed!.amount || !parsed!.type) {
+    if (!parsed.amount || !parsed.type) {
       throw new UnparseableInputError(text);
     }
 
     const transaction = await this.createTransaction(userId, {
       walletId: walletId!,
       categoryId,
-      amount: parsed!.amount,
-      type: parsed!.type,
-      note: parsed!.note,
+      amount: parsed.amount,
+      type: parsed.type,
+      note: parsed.note,
       displayDate: new Date().toISOString().split('T')[0] as any,
       source: 'quick_add',
       idempotencyKey: options.idempotencyKey,
