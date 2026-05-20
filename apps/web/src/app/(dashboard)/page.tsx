@@ -11,54 +11,16 @@
  *
  * Removed: MultiWalletStrip (ví lớn)
  *
- * All card components are code-split via next/dynamic to reduce the
- * initial JS bundle.  Each card shows in its own Suspense boundary
- * so a slow card never blocks a fast one.
+ * Cards render directly here; each card owns its own data loading state
+ * so dashboard hydration cannot get stuck on dynamic import fallbacks.
  */
 
-import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
-
-// ── Card skeleton ────────────────────────────────────────────────────
-function CardSkeleton() {
-  return (
-    <div className="animate-pulse rounded-xl border bg-white p-4 md:p-6">
-      <div className="h-5 w-1/3 rounded bg-gray-200" />
-      <div className="mt-3 h-8 w-1/2 rounded bg-gray-100" />
-    </div>
-  );
-}
-
-// ── Dynamic imports ──────────────────────────────────────────────────
-const QuickAddSection = dynamic(
-  () => import('@/components/quick-add/QuickAddSection').then((m) => ({ default: m.QuickAddSection })),
-  { ssr: false, loading: () => <CardSkeleton /> },
-);
-
-const OverviewSummaryCard = dynamic(
-  () => import('@/components/dashboard/OverviewSummaryCard').then((m) => ({ default: m.OverviewSummaryCard })),
-  { ssr: false, loading: () => <CardSkeleton /> },
-);
-
-const BudgetGrid = dynamic(
-  () => import('@/components/budgets/BudgetGrid').then((m) => ({ default: m.BudgetGrid })),
-  { ssr: false, loading: () => <CardSkeleton /> },
-);
-
-const DashboardGoalsCard = dynamic(
-  () => import('@/components/dashboard/DashboardGoalsCard').then((m) => ({ default: m.DashboardGoalsCard })),
-  { ssr: false, loading: () => <CardSkeleton /> },
-);
-
-const RecentTransactionsCard = dynamic(
-  () => import('@/components/dashboard/RecentTransactionsCard').then((m) => ({ default: m.RecentTransactionsCard })),
-  { ssr: false, loading: () => <CardSkeleton /> },
-);
-
-const UpcomingBillsCard = dynamic(
-  () => import('@/components/dashboard/UpcomingBillsCard').then((m) => ({ default: m.UpcomingBillsCard })),
-  { ssr: false, loading: () => <CardSkeleton /> },
-);
+import { QuickAddSection } from '@/components/quick-add/QuickAddSection';
+import { OverviewSummaryCard } from '@/components/dashboard/OverviewSummaryCard';
+import { BudgetGrid } from '@/components/budgets/BudgetGrid';
+import { DashboardGoalsCard } from '@/components/dashboard/DashboardGoalsCard';
+import { RecentTransactionsCard } from '@/components/dashboard/RecentTransactionsCard';
+import { UpcomingBillsCard } from '@/components/dashboard/UpcomingBillsCard';
 
 // ── Page ─────────────────────────────────────────────────────────────
 export default function DashboardPage() {

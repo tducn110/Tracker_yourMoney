@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "echo \"No build required for API\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

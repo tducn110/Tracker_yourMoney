@@ -11,7 +11,6 @@ import * as Sentry from '@sentry/node';
 
 // ── CORE IMPORTS ────────────────────────────────────────────────────
 import { Hono } from 'hono';
-import { serve } from '@hono/node-server';
 import { cors } from 'hono/cors';
 import { compress } from 'hono/compress';
 import type { Context } from 'hono';
@@ -256,23 +255,5 @@ app.onError((err, c) => {
     }
   }, 500);
 });
-
-// ── SERVER LIFECYCLE ──────────────────────────────────────────────
-if (process.env.NODE_ENV !== 'production') {
-  const port = Number(process.env.PORT) || 3001;
-  const server = serve({ fetch: app.fetch, port }, (info) => {
-    logger.info({ event: 'SERVER_READY', port: info.port });
-  });
-
-  const shutdown = (signal: string) => {
-    server.close(() => {
-      logger.info({ event: 'SERVER_SHUTDOWN_COMPLETE', signal });
-      process.exit(0);
-    });
-  };
-
-  process.on('SIGINT', () => shutdown('SIGINT'));
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-}
 
 export default app;
