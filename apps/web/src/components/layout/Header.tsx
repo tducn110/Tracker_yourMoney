@@ -16,7 +16,7 @@ import { useUnreadCount, useNotifications, useMarkRead, useMarkAllRead } from '@
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const getRouteTitles = (t: (key: string) => string): Record<string, string> => ({
-  '/':             t('nav.overview'),
+  '/dashboard':    t('nav.overview'),
   '/transactions': t('nav.transactions'),
   '/budgets':      t('nav.budgets'),
   '/goals':        t('nav.goals'),
@@ -135,7 +135,7 @@ export function Header({ onQuickAddClick }: HeaderProps) {
   const { user } = useAuth();
   const pathname = usePathname();
 
-  const isHome    = pathname === '/';
+  const isHome    = pathname === '/dashboard';
   const ROUTE_TITLES = getRouteTitles(t);
   const pageTitle = ROUTE_TITLES[pathname] ?? 'Finance Tracker';
 

@@ -121,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       setUser(data.data.user);
       toast.success("Đăng nhập thành công");
-      router.push(data.data.user.hasOnboarded ? "/" : "/onboarding");
+      router.push(data.data.user.hasOnboarded ? "/dashboard" : "/onboarding");
     } catch (error: any) {
       if (process.env.NODE_ENV !== 'production') console.error("Social login error:", error);
       toast.error(error.message || "Đăng nhập thất bại");

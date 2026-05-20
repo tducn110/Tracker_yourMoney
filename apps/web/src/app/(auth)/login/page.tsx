@@ -1,25 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthProvider';
 
 export default function LoginPage() {
-  const { 
-    user,
-    loginWithGoogle, 
-    loading: authLoading 
-  } = useAuth();
+  const { loginWithGoogle, loading: authLoading } = useAuth();
+
   const [loading, setLoading] = useState<string | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    if (user) {
-      router.push(user.hasOnboarded === false ? '/onboarding' : '/');
-    }
-  }, [user, router]);
-
   const handleLogin = async (provider: string, loginFn: () => Promise<void>) => {
     setLoading(provider);
     try {
