@@ -16,7 +16,7 @@ import { categories } from "./categories";
 import { wallets } from "./wallet";
 import { goals } from "./goals";
 
-export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense"]);
+export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense", "transfer"]);
 export const transactionSourceEnum = pgEnum("transaction_source", ["manual", "quick_add", "ocr", "import", "recurring", "bill_payment", "goal_contribution"]);
 
 export const transactions = pgTable("transactions", {

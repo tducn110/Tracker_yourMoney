@@ -29,7 +29,6 @@ export interface BudgetFormData {
   endDate: string;
   isAllCategories: boolean;
   categoryIds: number[];
-  walletScope: 'all' | 'specific';
 }
 
 const PERIODS: { value: BudgetPeriod; label: string }[] = [
@@ -103,7 +102,6 @@ export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData, isPend
   const [endDate, setEndDate] = useState('');
   const [isAllCategories, setIsAllCategories] = useState(false);
   const [selectedCats, setSelectedCats] = useState<number[]>([]);
-  const [walletScope, setWalletScope] = useState<'all' | 'specific'>('all');
   const [showValidationHint, setShowValidationHint] = useState(false);
 
   // Điền dữ liệu khi edit
@@ -119,7 +117,6 @@ export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData, isPend
         ? initialData.categories.map((c: any) => c.id)
         : (initialData.categoryIds || []);
       setSelectedCats(catIds);
-      setWalletScope(initialData.walletScope || initialData.wallet_scope || 'all');
     } else {
       setName('');
       setLimitInput('');
@@ -129,7 +126,6 @@ export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData, isPend
       setEndDate(dates.end);
       setIsAllCategories(false);
       setSelectedCats([]);
-      setWalletScope('all');
     }
     setShowValidationHint(false);
   }, [initialData, isOpen]);
@@ -172,7 +168,6 @@ export function BudgetFormModal({ isOpen, onClose, onSubmit, initialData, isPend
       endDate,
       isAllCategories,
       categoryIds: selectedCats,
-      walletScope,
     });
   };
 

@@ -23,7 +23,7 @@ export const insertTransactionSchema = z.object({
   // Transform -> chuẩn hóa thành string "YYYY-MM-DD" cho Drizzle DATE column
   // Tránh timezone confusion bằng cách ép dùng YYYY-MM-DD string thay vì khởi tạo Date()
   displayDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Ngày phải có định dạng YYYY-MM-DD" }),
-  source:      z.enum(["manual", "quick_add", "ocr", "import", "recurring"]).default("manual"),
+  source:      z.enum(["manual", "quick_add", "ocr", "import", "recurring", "bill_payment", "goal_contribution"]).default("manual"),
   receiptUrl:  z.string().url().optional(),
 });
 

@@ -402,6 +402,10 @@ export function useWallets() {
       return walletAPI.list();
     },
     staleTime: 60 * 1000,
+    retry: (failureCount, error: any) => {
+      if (error?.status === 401) return false;
+      return failureCount < 2;
+    },
   });
 }
 

@@ -10,6 +10,7 @@ import { resolveCategoryId } from '@/_lib/category-map';
 import { event as trackEvent } from '@/_lib/gtag';
 import { transactionsAPI, goalsAPI, billsAPI, budgetAPI, walletAPI } from '@finance/api-client';
 import { AuthGuard } from '@/components/layout/AuthGuard';
+import { WalletProvider } from '@/app/context/WalletContext';
 
 // ── Dynamic imports: code-split heavy components ─────────────────────
 // These are NOT needed for the initial auth check (AuthGuard only shows a
@@ -96,6 +97,20 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  return (
+    <AuthGuard>
+      <WalletProvider>
+        <AuthenticatedDashboardShell>{children}</AuthenticatedDashboardShell>
+      </WalletProvider>
+    </AuthGuard>
+  );
+}
+
+function AuthenticatedDashboardShell({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const { mutateAsync: createTransaction } = useCreateTransaction();
   const { data: categories = [] } = useCategories();
@@ -138,8 +153,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <AuthGuard>
-      <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50">
         {/* Sidebar - Desktop */}
         <Sidebar />
 
@@ -168,7 +182,6 @@ export default function DashboardLayout({
         />
 
         <Toaster position="top-right" richColors />
-      </div>
-    </AuthGuard>
+    </div>
   );
 }
