@@ -1,11 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-<<<<<<< HEAD
-This project is indexed by GitNexus as **Tracker_yourMoney** (3282 symbols, 5671 relationships, 119 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
-=======
-This project is indexed by GitNexus as **finance-for-me-local** (3035 symbols, 4891 relationships, 82 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
->>>>>>> f2306a3 (docs: link self reports to repo files)
+This project is indexed by GitNexus as **Tracker_yourMoney** (3456 symbols, 6085 relationships, 138 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
