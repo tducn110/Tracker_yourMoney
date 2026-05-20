@@ -435,7 +435,7 @@ Sentry was integrated at two levels for full-stack error visibility:
 - [x] **Source code on GitHub** — [github.com/tducn110/Tracker_yourMoney](https://github.com/tducn110/Tracker_yourMoney)
 - [x] **README.md** — Setup guide, project overview, feature list with screenshots, ERD
 - [x] **ARCHITECTURE.md** — Detailed system architecture documentation
-- [x] **Video demo** — [youtube.com/watch?v=zAD1gF02NrU](https://www.youtube.com/watch?v=zAD1gF02NrU)
+- [x] **Video demo** — [youtube.com/watch?v=zAD1gF02NrU](https://www.youtube.com/watch?v=R6N0wTBkIvc)
 - [x] **Self-Reports** — Each member committed file to `docs/self-reports/`
 - [x] **Vercel Deployment** — [finance-for-me-local.vercel.app](https://finance-for-me-local.vercel.app)
 
