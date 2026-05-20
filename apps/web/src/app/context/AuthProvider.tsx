@@ -35,6 +35,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function isSafariLikeBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+
+  const userAgent = navigator.userAgent;
+  return /Safari/i.test(userAgent) && !/Chrome|Chromium|CriOS|FxiOS|Edg/i.test(userAgent);
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -200,6 +207,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     socialLoginInProgress.current = true;
     try {
       setLoading(true);
+
+      if (isSafariLikeBrowser()) {
+        initiateGoogleOAuth();
+        return;
+      }
 
       let result;
       try {
