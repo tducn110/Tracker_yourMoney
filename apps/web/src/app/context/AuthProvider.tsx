@@ -73,7 +73,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               credentials: "include",
             });
 
-            if (response.ok && !cancelled) {
+            if (!response.ok) {
+              let errorMessage = "Xác thực backend thất bại (" + response.status + ")";
+              const contentType = response.headers.get("content-type");
+
+              if (contentType && contentType.includes("application/json")) {
+                const errorData = await response.json();
+                errorMessage = errorData?.error?.message || errorMessage;
+                const internalMessage = errorData?.error?.details?.internalMessage;
+                if (internalMessage && process.env.NODE_ENV !== "production") {
+                  console.error("[Auth] OAuth backend error details:", internalMessage);
+                }
+              }
+
+              throw new Error(errorMessage);
+            }
+
+            if (!cancelled) {
               const data = await response.json();
               setUser(data.data.user);
               toast.success("Đăng nhập thành công");
@@ -81,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
           } catch (error) {
             if (process.env.NODE_ENV !== "production") console.error("OAuth login error:", error);
-            toast.error("Đăng nhập thất bại");
+            toast.error(error instanceof Error ? error.message : "Đăng nhập thất bại");
           } finally {
             setTimeout(() => { socialLoginInProgress.current = false; }, 1000);
             if (!cancelled) setLoading(false);
