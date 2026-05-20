@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { toast } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import { AuthProvider } from './context/AuthProvider';
 import { pageview } from '@/_lib/gtag';
 
@@ -62,6 +62,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         </Suspense>
         {children}
       </AuthProvider>
+      <Toaster position="top-right" richColors />
     </QueryClientProvider>
   );
 }
