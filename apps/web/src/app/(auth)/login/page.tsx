@@ -8,18 +8,15 @@ export default function LoginPage() {
   const { loginWithGoogle, loading: authLoading } = useAuth();
 
   const [loading, setLoading] = useState<string | null>(null);
-  // NOT async — Safari consumes user activation on the first await, which
-  // blocks window.open() inside signInWithPopup. Calling loginFn() synchronously
-  // preserves the activation context so the popup can open.
-  const handleLogin = (provider: string, loginFn: () => Promise<void>) => {
+  const handleLogin = async (provider: string, loginFn: () => Promise<void>) => {
     setLoading(provider);
-    loginFn()
-      .catch((error) => {
-        console.error(error);
-      })
-      .finally(() => {
-        setLoading(null);
-      });
+    try {
+      await loginFn();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(null);
+    }
   };
 
   return (
