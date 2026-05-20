@@ -75,7 +75,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setTimeout(() => { socialLoginInProgress.current = false; }, 1000);
             if (!cancelled) setLoading(false);
           }
-          return; // Redirect result processed — skip onAuthStateChanged subscriber
+          // Fall through to subscribe onAuthStateChanged below; the
+          // socialLoginInProgress guard prevents a duplicate /auth/me call.
         }
       } catch {
         // No pending redirect — normal page load, continue below
@@ -100,7 +101,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               const data = await response.json();
               setUser(data.data);
             } else if (response.status === 401) {
-              // Unauthenticated state is expected during app startup or after logout.
+              // Backend session expired — try refreshing via Firebase idToken
+              try {
+                const currentUser = auth.currentUser;
+                if (currentUser) {
+                  const idToken = await currentUser.getIdToken();
+                  const refreshRes = await fetch("/api/auth/social", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ idToken }),
+                    credentials: "include",
+                  });
+                  if (refreshRes.ok) {
+                    const data = await refreshRes.json();
+                    setUser(data.data.user);
+                    return;
+                  }
+                }
+              } catch {
+                // Refresh failed — fall through to setUser(null)
+              }
               setUser(null);
             } else {
               // Token expired or invalid at backend
@@ -149,7 +169,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (
           popupError.code === "auth/popup-blocked" ||
           popupError.code === "auth/popup-closed-by-user" ||
-          popupError.code === "auth/cancelled-popup-request"
+          popupError.code === "auth/cancelled-popup-request" ||
+          popupError.code === "auth/operation-not-supported-in-this-environment"
         ) {
           await signInWithRedirect(auth, provider);
           // Browser will redirect away — execution stops here.
