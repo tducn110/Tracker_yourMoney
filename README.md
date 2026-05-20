@@ -8,7 +8,7 @@
 | **Project Name**      | Finance Tracker V3 — Personal Finance Management App                                   |
 | **GitHub Repository** | [github.com/tducn110/Tracker_yourMoney](https://github.com/tducn110/Tracker_yourMoney) |
 | **Demo Deploy**       | [finance-for-me-local.vercel.app](https://finance-for-me-local.vercel.app)             |
-| **Video Demo**        | [youtube.com/watch?v=zAD1gF02NrU](https://www.youtube.com/watch?v=zAD1gF02NrU)         |
+| **Video Demo**        | [youtube.com/watch?v=zAD1gF02NrU](https://www.youtube.com/watch?v=R6N0wTBkIvc)         |
 | **Submission Date**   | 15/05/2026                                                                             |
 
 ### Team Members
