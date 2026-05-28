@@ -11,7 +11,7 @@ import {
   signOut as firebaseSignOut, 
   AuthProvider as FirebaseAuthProvider
 } from "firebase/auth";
-import { auth, googleProvider } from "../../_lib/firebase";
+import { auth, googleProvider, whenPersistenceReady } from "../../_lib/firebase";
 import { initiateGoogleOAuth, consumeGoogleOAuthState } from "../../_lib/google-oauth";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -35,13 +35,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function isSafariLikeBrowser(): boolean {
-  if (typeof navigator === "undefined") return false;
-
-  const userAgent = navigator.userAgent;
-  return /Safari/i.test(userAgent) && !/Chrome|Chromium|CriOS|FxiOS|Edg/i.test(userAgent);
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +46,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let unsub: (() => void) | undefined;
 
     (async () => {
-      // 0. Process custom Google OAuth redirect (Safari-compatible — bypasses
+      // 0. Wait for Firebase persistence to be configured before any auth
+      //    operation.  Without this, Firebase uses its default (IndexedDB)
+      //    which Safari ITP / Private Mode may block → in-memory auth state
+      //    evaporates on navigation → user appears signed out.
+      await whenPersistenceReady();
+      if (cancelled) return;
+
+      // 1. Process custom Google OAuth redirect (Safari-compatible — bypasses
       //    Firebase's signInWithRedirect which relies on sessionStorage).
       try {
         const oauthResult = consumeGoogleOAuthState();
@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // No pending OAuth redirect — continue below
       }
 
-      // 1. Process Firebase redirect result (legacy mobile fallback).
+      // 2. Process Firebase redirect result (legacy mobile fallback).
       //    Must run before onAuthStateChanged to avoid race.
       try {
         const result = await getRedirectResult(auth);
@@ -148,7 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (cancelled) return;
 
-      // 2. Auth state listener (normal page loads & popup flows)
+      // 3. Auth state listener (normal page loads & popup flows)
       unsub = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
           // Skip /auth/me check if social login is about to set the user from /auth/social response
@@ -223,11 +223,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     socialLoginInProgress.current = true;
     try {
       setLoading(true);
-
-      if (isSafariLikeBrowser()) {
-        initiateGoogleOAuth();
-        return;
-      }
 
       let result;
       try {

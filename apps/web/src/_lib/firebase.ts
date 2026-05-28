@@ -40,19 +40,34 @@ function getFirebaseApp(): FirebaseApp {
 }
 
 let _auth: Auth | null = null;
+let _persistenceReady: Promise<void> | null = null;
 
 function getFirebaseAuth(): Auth {
   if (!_auth) {
     _auth = getAuth(getFirebaseApp());
     // localStorage survives cross-origin redirects on mobile (Safari / Chrome);
     // sessionStorage is often cleared, causing "missing initial state".
-    setPersistence(_auth, browserLocalPersistence).catch((err) => {
+    _persistenceReady = setPersistence(_auth, browserLocalPersistence).catch((err) => {
       if (process.env.NODE_ENV !== "production") {
         console.warn("Failed to set auth persistence:", err);
       }
+      // Resolve anyway — app can limp on with default persistence.
     });
   }
   return _auth;
+}
+
+/**
+ * Returns a promise that resolves once Firebase Auth persistence is
+ * configured.  Callers MUST await this before any sign-in operation;
+ * otherwise Firebase uses its default (IndexedDB), which Safari's ITP
+ * and Private Mode may block, causing in-memory-only auth state that
+ * evaporates on navigation.
+ */
+export function whenPersistenceReady(): Promise<void> {
+  // Touch auth so _persistenceReady is initialised
+  getFirebaseAuth();
+  return _persistenceReady ?? Promise.resolve();
 }
 
 // Providers are stateless and safe to create eagerly
