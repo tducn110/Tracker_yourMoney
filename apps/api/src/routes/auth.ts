@@ -1,18 +1,28 @@
 // apps/api/src/routes/auth.ts
 import { Hono } from "hono";
-import { setCookie } from "hono/cookie";
+import { setCookie, deleteCookie } from "hono/cookie";
+import bcrypt from "bcryptjs";
 import { zValidator } from "../lib/validator";
-import { socialLoginSchema } from "@finance/shared-schemas";
-import { db, users, categories } from "@finance/db";
-import { eq } from "@finance/db";
-import {
-  verifyFirebaseIdToken,
-  createSessionCookie,
-  verifySessionCookie,
-} from "../lib/firebase-auth";
-import { ok, err } from "../lib/response";
-
+import { insertUserSchema, loginSchema } from "@finance/shared-schemas";
+import { db, users, userSettings, wallets, refreshTokens, categories } from "@finance/db";
+import { eq, and, isNull, gt } from "@finance/db";
+import { signAccessToken, signRefreshToken, verifyToken } from "../lib/jwt";
+import { ok, created, err } from "../lib/response";
 import { logger, logError } from "../lib/logger";
+import { socialLogin as socialLoginService } from "../services/auth-service";
+
+// ── Helpers ──────────────────────────────────────────────────────────
+
+async function hashToken(token: string): Promise<string> {
+  const data = new TextEncoder().encode(token);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+const ACCESS_COOKIE = "access_token";
+const REFRESH_COOKIE = "refresh_token";
 
 const COOKIE_BASE = {
   httpOnly: true,
@@ -21,225 +31,328 @@ const COOKIE_BASE = {
   path: "/",
 };
 
-const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 ngày
-
 const DEFAULT_CATEGORIES = [
-  { name: "Thu Nhập", icon: "💰", color: "#10B981", type: "income" as const, sortOrder: 1 },
-  { name: "Ăn Uống", icon: "🍜", color: "#F59E0B", type: "expense" as const, sortOrder: 2 },
-  { name: "Di Chuyển", icon: "🚗", color: "#EAB308", type: "expense" as const, sortOrder: 3 },
-  { name: "Mua Sắm", icon: "🛍️", color: "#EC4899", type: "expense" as const, sortOrder: 4 },
-  { name: "Nhà Ở", icon: "🏠", color: "#8B5CF6", type: "expense" as const, sortOrder: 5 },
-  { name: "Hóa Đơn", icon: "📄", color: "#6B7280", type: "expense" as const, sortOrder: 6 },
+  { name: "Thu Nhập",  icon: "💰", color: "#10B981", type: "income"  as const, sortOrder: 1 },
+  { name: "Ăn Uống",  icon: "🍜", color: "#F59E0B", type: "expense" as const, sortOrder: 2 },
+  { name: "Di Chuyển",icon: "🚗", color: "#EAB308", type: "expense" as const, sortOrder: 3 },
+  { name: "Mua Sắm",  icon: "🛍️", color: "#EC4899", type: "expense" as const, sortOrder: 4 },
+  { name: "Nhà Ở",    icon: "🏠", color: "#8B5CF6", type: "expense" as const, sortOrder: 5 },
+  { name: "Hóa Đơn",  icon: "📄", color: "#6B7280", type: "expense" as const, sortOrder: 6 },
   { name: "Giải Trí", icon: "🎬", color: "#EF4444", type: "expense" as const, sortOrder: 7 },
   { name: "Sức Khỏe", icon: "💊", color: "#10B981", type: "expense" as const, sortOrder: 8 },
   { name: "Giáo Dục", icon: "📚", color: "#6366F1", type: "expense" as const, sortOrder: 9 },
-  { name: "Tiết Kiệm", icon: "🏦", color: "#14B8A6", type: "both" as const, sortOrder: 10 },
-  { name: "Khác", icon: "📦", color: "#6B7280", type: "expense" as const, sortOrder: 99 },
+  { name: "Tiết Kiệm",icon: "🏦", color: "#14B8A6", type: "both"    as const, sortOrder: 10 },
+  { name: "Khác",     icon: "📦", color: "#6B7280", type: "expense" as const, sortOrder: 99 },
 ];
-
-const authUserSelect = {
-  id: users.id,
-  email: users.email,
-  username: users.username,
-  fullName: users.fullName,
-  avatarUrl: users.avatarUrl,
-  avatarText: users.avatarText,
-  isActive: users.isActive,
-  emailVerified: users.emailVerified,
-  hasOnboarded: users.hasOnboarded,
-  onboardingCompletedAt: users.onboardingCompletedAt,
-  lastLoginAt: users.lastLoginAt,
-  deletedAt: users.deletedAt,
-  createdAt: users.createdAt,
-  updatedAt: users.updatedAt,
-};
 
 async function seedDefaultCategories(userId: string) {
   const existing = await db
     .select({ name: categories.name })
     .from(categories)
-    .where(eq(categories.userId, userId))
-  const existingNames = new Set(existing.map((category) => category.name));
-  const missingCategories = DEFAULT_CATEGORIES.filter((category) => !existingNames.has(category.name));
-
-  if (missingCategories.length === 0) return;
-
-  await db.insert(categories).values(
-    missingCategories.map((cat) => ({ userId, ...cat }))
-  );
+    .where(eq(categories.userId, userId));
+  const existingNames = new Set(existing.map((c) => c.name));
+  const missing = DEFAULT_CATEGORIES.filter((c) => !existingNames.has(c.name));
+  if (missing.length === 0) return;
+  await db.insert(categories).values(missing.map((c) => ({ userId, ...c })));
 }
 
+async function issueTokenPair(
+  c: any,
+  userId: string,
+  email: string,
+  deviceInfo?: string,
+  ipAddress?: string,
+) {
+  const accessToken  = await signAccessToken({ userId: userId as any, email });
+  const refreshToken = await signRefreshToken({ userId: userId as any, email });
+  const tokenHash    = await hashToken(refreshToken);
+
+  await db.insert(refreshTokens).values({
+    userId: userId as any,
+    tokenHash,
+    deviceInfo: deviceInfo ?? null,
+    ipAddress:  ipAddress  ?? null,
+    expiresAt:  new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+  });
+
+  // HttpOnly cookies — 15 min access, 30 day refresh
+  setCookie(c, ACCESS_COOKIE, accessToken, {
+    ...COOKIE_BASE,
+    maxAge: 15 * 60,
+  });
+  setCookie(c, REFRESH_COOKIE, refreshToken, {
+    ...COOKIE_BASE,
+    maxAge: 30 * 24 * 60 * 60,
+  });
+
+  return { accessToken, refreshToken };
+}
+
+// ── Routes ────────────────────────────────────────────────────────────
+
 export const authRoutes = new Hono()
-  // POST /api/auth/social
-  .post("/social", zValidator("json", socialLoginSchema), async (c) => {
-    logger.info({ event: "SOCIAL_LOGIN_REQUEST", path: c.req.path });
-    let step = "init";
+
+  // POST /api/auth/register
+  .post("/register", zValidator("json", insertUserSchema), async (c) => {
+    const { email, password, fullName, username } = c.req.valid("json");
+    logger.info({ event: "REGISTER_REQUEST", email });
+
     try {
-      const { idToken } = c.req.valid("json");
-
-      // 1. Verify Firebase ID Token
-      step = "verify_firebase_token";
-      const decodedToken = await verifyFirebaseIdToken(idToken);
-      const { uid, email, name, picture } = decodedToken;
-      logger.info({ event: "FIREBASE_TOKEN_VERIFIED", uid, email });
-
-      if (!email) {
-        return err(c, 400, "INVALID_TOKEN", "Token không chứa email");
-      }
-
-      // 2. Sync user với database (with retry for race conditions)
-      step = "sync_user_db";
-      logger.info({ event: "DB_SYNC_START", uid });
-      let user = await db
-        .select(authUserSelect)
+      // Check uniqueness
+      const [emailConflict] = await db
+        .select({ id: users.id })
         .from(users)
-        .where(eq(users.firebaseUid, uid))
-        .limit(1)
-        .then((rows) => rows[0]);
-      logger.info({ event: "DB_SYNC_FOUND_BY_UID", found: !!user });
+        .where(and(eq(users.email, email), isNull(users.deletedAt)))
+        .limit(1);
+      if (emailConflict) return err(c, 409, "EMAIL_TAKEN", "Email đã được sử dụng");
 
-      if (!user) {
-        // Thử tìm bằng email (có thể user đã tạo trước đó với password)
-        user = await db
-          .select(authUserSelect)
-          .from(users)
-          .where(eq(users.email, email))
-          .limit(1)
-          .then((rows) => rows[0]);
-        logger.info({ event: "DB_SYNC_FOUND_BY_EMAIL", found: !!user });
+      const [usernameConflict] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.username, username), isNull(users.deletedAt)))
+        .limit(1);
+      if (usernameConflict) return err(c, 409, "USERNAME_TAKEN", "Tên người dùng đã tồn tại");
 
-        if (user) {
-          // Link existing account with Firebase UID
-          await db.update(users).set({ firebaseUid: uid }).where(eq(users.id, user.id));
-        } else {
-          // Create new account — with retry for race conditions
-          const maxRetries = 3;
-          let created = false;
-          for (let attempt = 0; attempt < maxRetries && !created; attempt++) {
-            try {
-              const username = email.split("@")[0] + Math.floor(Math.random() * 10000);
-              const [createdUser] = await db.insert(users).values({
-                firebaseUid: uid,
-                email,
-                username,
-                fullName: name || email.split("@")[0],
-                avatarUrl: picture || null,
-                emailVerified: true,
-              }).returning(authUserSelect);
+      const passwordHash = await bcrypt.hash(password, 12);
 
-              user = createdUser;
-              created = true;
-            } catch (insertErr: any) {
-              // PostgreSQL unique violation code
-              if (insertErr.code === '23505' && attempt < maxRetries - 1) {
-                // Could be race condition → re-check if user was created by concurrent request
-                user = await db
-                  .select(authUserSelect)
-                  .from(users)
-                  .where(eq(users.firebaseUid, uid))
-                  .limit(1)
-                  .then((rows) => rows[0]);
-                if (user) {
-                  created = true;
-                  break; // User was created by concurrent request — use it
-                }
-                // Username collision → retry with new random suffix
-                logger.warn({
-                  event: "DB_INSERT_RETRY",
-                  attempt: attempt + 1,
-                  uid,
-                  email,
-                  error: insertErr.message,
-                });
-                // Small backoff before retry
-                if (attempt < maxRetries - 1) {
-                  await new Promise(r => setTimeout(r, 150 * (attempt + 1)));
-                }
-                continue;
-              }
-              // Re-throw non-retryable errors
-              throw insertErr;
-            }
-          }
-          if (!created) {
-            throw new Error(`Duplicate key violation khi tạo user sau ${maxRetries} lần thử`);
-          }
-        }
+      let newUserId = "";
+
+      await db.transaction(async (tx: any) => {
+        const [newUser] = await tx
+          .insert(users)
+          .values({ email, username, fullName, passwordHash, emailVerified: false })
+          .returning({ id: users.id });
+
+        newUserId = String(newUser.id);
+
+        await tx.insert(userSettings).values({ userId: newUserId as any });
+        await tx.insert(wallets).values({
+          userId: newUserId as any,
+          name: "Ví Tiền Mặt",
+          type: "cash",
+          isDefault: true,
+        });
+      });
+
+      await seedDefaultCategories(newUserId!);
+
+      const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
+      await issueTokenPair(c, newUserId!, email, c.req.header("user-agent"), ip);
+
+      logger.info({ event: "REGISTER_SUCCESS", userId: newUserId });
+
+      const [user] = await db
+        .select({
+          id: users.id, email: users.email, fullName: users.fullName,
+          username: users.username, avatarUrl: users.avatarUrl,
+          hasOnboarded: users.hasOnboarded,
+        })
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+
+      return created(c, { user: { ...user, id: String(user.id) } });
+    } catch (e: any) {
+      logError(e, c.req.path, c.req.method, "register");
+      return err(c, 500, "REGISTER_ERROR", "Đăng ký thất bại");
+    }
+  })
+
+  // POST /api/auth/login
+  .post("/login", zValidator("json", loginSchema), async (c) => {
+    const { email, password } = c.req.valid("json");
+    logger.info({ event: "LOGIN_REQUEST", email });
+
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(and(eq(users.email, email), isNull(users.deletedAt)))
+        .limit(1);
+
+      if (!user || !user.passwordHash) {
+        return err(c, 401, "INVALID_CREDENTIALS", "Email hoặc mật khẩu không đúng");
+      }
+      if (!user.isActive) {
+        return err(c, 403, "ACCOUNT_DISABLED", "Tài khoản đã bị khóa");
       }
 
-      // Seed default categories if user doesn't have any yet
-      step = "seed_categories";
-      await seedDefaultCategories(String(user!.id));
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) {
+        return err(c, 401, "INVALID_CREDENTIALS", "Email hoặc mật khẩu không đúng");
+      }
 
-      // 3. Tạo Firebase Session Cookie
-      step = "create_session_cookie";
-      const sessionCookie = await createSessionCookie(idToken, SESSION_TTL_MS);
+      const userId = String(user.id);
+      const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
+      await issueTokenPair(c, userId, user.email, c.req.header("user-agent"), ip);
 
-      // 4. Set HttpOnly cookie
-      step = "set_hono_cookie";
-      setCookie(c, "session", sessionCookie, {
-        ...COOKIE_BASE,
-        maxAge: SESSION_TTL_MS / 1000,
-      });
+      await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id as any));
+
+      logger.info({ event: "LOGIN_SUCCESS", userId });
 
       return ok(c, {
         user: {
-          id: String(user!.id),
-          email: user!.email,
-          fullName: user!.fullName,
-          username: user!.username,
-          avatarUrl: user!.avatarUrl,
-          hasOnboarded: user!.hasOnboarded,
+          id: userId,
+          email: user.email,
+          fullName: user.fullName,
+          username: user.username,
+          avatarUrl: user.avatarUrl,
+          hasOnboarded: user.hasOnboarded,
         },
       });
     } catch (e: any) {
-      logError(e, c.req.path, c.req.method, `social-login:${step}`);
-      return err(c, 401, "AUTH_ERROR", `Xác thực thất bại tại bước: ${step}`, {
-        step,
-        internalMessage: e.message
-      });
+      logError(e, c.req.path, c.req.method, "login");
+      return err(c, 500, "LOGIN_ERROR", "Đăng nhập thất bại");
+    }
+  })
+
+  // POST /api/auth/refresh
+  .post("/refresh", async (c) => {
+    // Accept token from cookie or body
+    const cookieHeader = c.req.header("cookie") ?? "";
+    const fromCookie   = getCookieValue(cookieHeader, REFRESH_COOKIE);
+    const body         = await c.req.json().catch(() => ({}));
+    const incomingToken: string | undefined = fromCookie ?? body?.refreshToken;
+
+    if (!incomingToken) {
+      return err(c, 401, "MISSING_TOKEN", "Refresh token không được cung cấp");
+    }
+
+    try {
+      const payload   = await verifyToken(incomingToken);
+      const tokenHash = await hashToken(incomingToken);
+
+      const [stored] = await db
+        .select()
+        .from(refreshTokens)
+        .where(
+          and(
+            eq(refreshTokens.tokenHash, tokenHash),
+            isNull(refreshTokens.revokedAt),
+            gt(refreshTokens.expiresAt, new Date()),
+          ),
+        )
+        .limit(1);
+
+      if (!stored) {
+        return err(c, 401, "REFRESH_EXPIRED", "Refresh token đã hết hạn hoặc bị thu hồi");
+      }
+
+      // Rotate: revoke old, issue new pair
+      await db
+        .update(refreshTokens)
+        .set({ revokedAt: new Date() })
+        .where(eq(refreshTokens.tokenHash, tokenHash));
+
+      const userId = String(payload.userId);
+      const ip     = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
+      await issueTokenPair(c, userId, payload.email, undefined, ip);
+
+      return ok(c, { message: "Token đã được làm mới" });
+    } catch {
+      return err(c, 401, "REFRESH_INVALID", "Refresh token không hợp lệ");
     }
   })
 
   // POST /api/auth/logout
   .post("/logout", async (c) => {
-    // Xóa session cookie
-    setCookie(c, "session", "", { ...COOKIE_BASE, maxAge: 0 });
+    const cookieHeader  = c.req.header("cookie") ?? "";
+    const refreshCookie = getCookieValue(cookieHeader, REFRESH_COOKIE);
+
+    if (refreshCookie) {
+      try {
+        const tokenHash = await hashToken(refreshCookie);
+        await db
+          .update(refreshTokens)
+          .set({ revokedAt: new Date() })
+          .where(eq(refreshTokens.tokenHash, tokenHash));
+      } catch {
+        // Best-effort revocation
+      }
+    }
+
+    deleteCookie(c, ACCESS_COOKIE,  { ...COOKIE_BASE });
+    deleteCookie(c, REFRESH_COOKIE, { ...COOKIE_BASE });
+
     return ok(c, { message: "Đã đăng xuất" });
   })
 
-  // GET /api/auth/me
+  // GET /api/auth/me  — requires valid access token (cookie or Bearer)
   .get("/me", async (c) => {
-    const sessionCookie = getCookieValue(c.req.header("cookie") ?? "", "session");
-    if (!sessionCookie) return err(c, 401, "UNAUTHORIZED", "Chưa đăng nhập");
+    const cookieHeader = c.req.header("cookie") ?? "";
+    const fromCookie   = getCookieValue(cookieHeader, ACCESS_COOKIE);
+    const fromHeader   = c.req.header("Authorization")?.replace("Bearer ", "");
+    const token        = fromCookie ?? fromHeader;
+
+    if (!token) return err(c, 401, "UNAUTHORIZED", "Chưa đăng nhập");
 
     try {
-      const decodedClaims = await verifySessionCookie(sessionCookie);
+      const payload = await verifyToken(token);
+      const userId  = String(payload.userId);
 
-      const user = await db
+      const [user] = await db
         .select({
-          id: users.id,
-          email: users.email,
-          fullName: users.fullName,
-          username: users.username,
-          avatarUrl: users.avatarUrl,
-          avatarText: users.avatarText,
-          hasOnboarded: users.hasOnboarded,
+          id: users.id, email: users.email, fullName: users.fullName,
+          username: users.username, avatarUrl: users.avatarUrl,
+          avatarText: users.avatarText, hasOnboarded: users.hasOnboarded,
           createdAt: users.createdAt,
         })
         .from(users)
-        .where(eq(users.firebaseUid, decodedClaims.uid))
-        .limit(1)
-        .then((rows) => rows[0]);
+        .where(and(eq(users.id, userId as any), isNull(users.deletedAt)))
+        .limit(1);
 
       if (!user) return err(c, 404, "NOT_FOUND", "Không tìm thấy người dùng");
-      return ok(c, user);
+
+      return ok(c, { ...user, id: String(user.id) });
     } catch {
-      return err(c, 401, "TOKEN_INVALID", "Phiên đăng nhập đã hết hạn");
+      return err(c, 401, "TOKEN_INVALID", "Token không hợp lệ hoặc đã hết hạn");
+    }
+  })
+
+  // POST /api/auth/social — Firebase social login (Google, GitHub, etc.)
+  // Body: { idToken: string } — Firebase ID token from client SDK
+  .post("/social", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const idToken: string | undefined = body?.idToken;
+    if (!idToken) return err(c, 400, "MISSING_TOKEN", "Firebase ID token không được cung cấp");
+
+    try {
+      const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
+      const { accessToken, refreshToken, user } = await socialLoginService(
+        idToken,
+        c.req.header("user-agent"),
+        ip,
+      );
+
+      // refreshToken already stored in DB by socialLoginService
+      setCookie(c, ACCESS_COOKIE, accessToken, { ...COOKIE_BASE, maxAge: 15 * 60 });
+      setCookie(c, REFRESH_COOKIE, refreshToken, { ...COOKIE_BASE, maxAge: 30 * 24 * 60 * 60 });
+
+      logger.info({ event: "SOCIAL_LOGIN_SUCCESS", userId: String(user.id) });
+
+      return ok(c, {
+        user: {
+          id: String(user.id),
+          email: user.email,
+          fullName: user.fullName,
+          username: user.username,
+          avatarUrl: user.avatarUrl,
+          hasOnboarded: user.hasOnboarded,
+        },
+      });
+    } catch (e: any) {
+      logError(e, c.req.path, c.req.method, "social-login");
+      if (e?.code === "ACCOUNT_DISABLED") return err(c, 403, "ACCOUNT_DISABLED", e.message);
+      if (e?.code === "INVALID_TOKEN")    return err(c, 401, "INVALID_TOKEN",    e.message);
+      return err(c, 500, "SOCIAL_LOGIN_ERROR", "Đăng nhập thất bại", {
+        internalMessage: process.env.NODE_ENV !== "production" ? e.message : undefined,
+      });
     }
   });
 
-function getCookieValue(header: string, name: string) {
+// ── Utility ───────────────────────────────────────────────────────────
+
+function getCookieValue(header: string, name: string): string | undefined {
   return header
     .split(";")
     .map((c) => c.trim())

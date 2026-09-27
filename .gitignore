@@ -44,6 +44,8 @@ Thumbs.db
 .antigravity/
 .agent/
 .deepseek/
+.bob/
+bob-session/
 .gitnexus/
 !.gitnexus/config.json
 .codersinflow/
@@ -60,3 +62,5 @@ Thumbs.db
 __pycache__/
 *.pyc
 .venv/
+.vercel
+.env*

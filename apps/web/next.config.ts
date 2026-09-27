@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import path from "path";
+const projectRoot = process.cwd().endsWith("apps/web")
+  ? path.resolve(process.cwd(), "../..")
+  : process.cwd();
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: projectRoot,
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
@@ -20,7 +27,8 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     if (process.env.NODE_ENV !== 'development') return [];
-    return [{ source: '/api/:path*', destination: 'http://localhost:3001/api/:path*' }];
+    const apiTarget = process.env.INTERNAL_API_URL || 'http://localhost:3001';
+    return [{ source: '/api/:path*', destination: `${apiTarget}/api/:path*` }];
   },
   env: { CUSTOM_KEY: process.env.CUSTOM_KEY },
   typescript: { ignoreBuildErrors: true },

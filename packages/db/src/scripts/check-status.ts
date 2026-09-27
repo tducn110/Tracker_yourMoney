@@ -5,9 +5,10 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables from root .env.local
-const envPath = path.resolve(__dirname, "../../../../.env.local");
-dotenv.config({ path: envPath });
+// Load environment variables from root — try .env.local first, fall back to .env
+const rootPath = path.resolve(__dirname, "../../../../");
+dotenv.config({ path: path.join(rootPath, ".env.local") });
+dotenv.config({ path: path.join(rootPath, ".env") });
 
 async function check() {
   const { db, users } = await import("../index");

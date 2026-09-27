@@ -24,9 +24,14 @@ export async function signAccessToken(payload: Omit<TokenPayload, "iat" | "exp">
 
 // Refresh token — 30 ngày
 export async function signRefreshToken(payload: Omit<TokenPayload, "iat" | "exp">) {
+  // jti (JWT ID) ensures each token is unique even if issued within the same second
+  const jti = typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
+    .setJti(jti)
     .setExpirationTime("30d")
     .sign(getSecret());
 }

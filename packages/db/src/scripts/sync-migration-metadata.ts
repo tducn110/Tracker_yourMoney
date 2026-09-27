@@ -94,23 +94,24 @@ async function syncMetadata() {
     const client = await pool.connect();
     try {
       const { rows } = await client.query(
-        "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '__drizzle_migrations')"
+        "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'drizzle' AND table_name = '__drizzle_migrations')"
       );
 
       if (!rows[0].exists) {
-        process.stdout.write("⚠️ Infrastructure Warning: __drizzle_migrations table does not exist. Initializing...\n");
+        process.stdout.write("⚠️ Infrastructure Warning: drizzle.__drizzle_migrations table does not exist. Initializing...\n");
+        await client.query("CREATE SCHEMA IF NOT EXISTS drizzle");
         await client.query(
-          "CREATE TABLE __drizzle_migrations (id BIGSERIAL PRIMARY KEY, hash TEXT NOT NULL, created_at BIGINT NOT NULL)"
+          "CREATE TABLE drizzle.__drizzle_migrations (id SERIAL PRIMARY KEY, hash TEXT NOT NULL, created_at BIGINT NOT NULL)"
         );
       }
 
       const migrations = getMigrations();
       process.stdout.write(`📦 Found ${migrations.length} migrations in directory.\n`);
 
-      await client.query("TRUNCATE TABLE __drizzle_migrations");
+      await client.query("TRUNCATE TABLE drizzle.__drizzle_migrations");
       for (const entry of migrations) {
         await client.query(
-          "INSERT INTO __drizzle_migrations (hash, created_at) VALUES ($1, $2)",
+          "INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ($1, $2)",
           [entry.hash, entry.timestamp]
         );
       }
