@@ -36,8 +36,7 @@ if (process.env.NODE_ENV !== "production") {
  * For serverless: trigger via HTTP endpoint or cron service.
  */
 
-import { db, bills, billPayments, transactions, wallets, walletLogs } from "@finance/db";
-import { eq, and, sql } from "drizzle-orm";
+import { db, bills, billPayments, transactions, wallets, walletLogs, eq, and, sql } from "@finance/db";
 import Decimal from "decimal.js";
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000; // Every hour

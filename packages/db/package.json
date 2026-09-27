@@ -1,6 +1,7 @@
 {
   "name": "@finance/db",
   "version": "1.0.0",
+  "type": "module",
   "main": "src/index.ts",
   "scripts": {
     "dev": "tsc --watch",

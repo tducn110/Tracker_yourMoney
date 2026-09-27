@@ -11,7 +11,7 @@ import {
   signOut as firebaseSignOut, 
   AuthProvider as FirebaseAuthProvider
 } from "firebase/auth";
-import { auth, googleProvider, whenPersistenceReady } from "../../_lib/firebase";
+import { auth, googleProvider, whenPersistenceReady, isFirebaseAvailable } from "../../_lib/firebase";
 import { initiateGoogleOAuth, consumeGoogleOAuthState } from "../../_lib/google-oauth";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -29,6 +29,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   loginWithGoogle: () => Promise<void>;
+  loginWithEmail: (email: string, password: string) => Promise<void>;
+  registerWithEmail: (email: string, password: string, fullName: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
   markOnboarded: () => void;
 }
@@ -53,164 +55,182 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await whenPersistenceReady();
       if (cancelled) return;
 
-      // 1. Process custom Google OAuth redirect (Safari-compatible — bypasses
-      //    Firebase's signInWithRedirect which relies on sessionStorage).
-      try {
-        const oauthResult = consumeGoogleOAuthState();
-        if (oauthResult && !cancelled) {
-          socialLoginInProgress.current = true;
-          setLoading(true);
+      if (isFirebaseAvailable()) {
+        // 1. Process custom Google OAuth redirect (Safari-compatible — bypasses
+        //    Firebase's signInWithRedirect which relies on sessionStorage).
+        try {
+          const oauthResult = consumeGoogleOAuthState();
+          if (oauthResult && !cancelled) {
+            socialLoginInProgress.current = true;
+            setLoading(true);
 
-          try {
-            const credential = GoogleAuthProvider.credential(oauthResult.idToken);
-            const credResult = await signInWithCredential(auth, credential);
-            const idToken = await credResult.user.getIdToken();
+            try {
+              const credential = GoogleAuthProvider.credential(oauthResult.idToken);
+              const credResult = await signInWithCredential(auth, credential);
+              const idToken = await credResult.user.getIdToken();
 
-            const response = await fetch("/api/auth/social", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ idToken }),
-              credentials: "include",
-            });
+              const response = await fetch("/api/auth/social", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ idToken }),
+                credentials: "include",
+              });
 
-            if (!response.ok) {
-              let errorMessage = "Xác thực backend thất bại (" + response.status + ")";
-              const contentType = response.headers.get("content-type");
+              if (!response.ok) {
+                let errorMessage = "Xác thực backend thất bại (" + response.status + ")";
+                const contentType = response.headers.get("content-type");
 
-              if (contentType && contentType.includes("application/json")) {
-                const errorData = await response.json();
-                errorMessage = errorData?.error?.message || errorMessage;
-                const internalMessage = errorData?.error?.details?.internalMessage;
-                if (internalMessage && process.env.NODE_ENV !== "production") {
-                  console.error("[Auth] OAuth backend error details:", internalMessage);
-                }
-              }
-
-              throw new Error(errorMessage);
-            }
-
-            if (!cancelled) {
-              const data = await response.json();
-              setUser(data.data.user);
-              toast.success("Đăng nhập thành công");
-              router.push(data.data.user.hasOnboarded ? "/dashboard" : "/onboarding");
-            }
-          } catch (error) {
-            if (process.env.NODE_ENV !== "production") console.error("OAuth login error:", error);
-            toast.error(error instanceof Error ? error.message : "Đăng nhập thất bại");
-          } finally {
-            setTimeout(() => { socialLoginInProgress.current = false; }, 1000);
-            if (!cancelled) setLoading(false);
-          }
-          // Fall through to subscribe onAuthStateChanged
-        }
-      } catch {
-        // No pending OAuth redirect — continue below
-      }
-
-      // 2. Process Firebase redirect result (legacy mobile fallback).
-      //    Must run before onAuthStateChanged to avoid race.
-      try {
-        const result = await getRedirectResult(auth);
-        if (result && !cancelled) {
-          socialLoginInProgress.current = true;
-          setLoading(true);
-
-          try {
-            const idToken = await result.user.getIdToken();
-            const response = await fetch("/api/auth/social", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ idToken }),
-              credentials: "include",
-            });
-
-            if (response.ok && !cancelled) {
-              const data = await response.json();
-              setUser(data.data.user);
-              toast.success("Đăng nhập thành công");
-              router.push(data.data.user.hasOnboarded ? "/dashboard" : "/onboarding");
-            }
-          } catch (error) {
-            if (process.env.NODE_ENV !== "production") console.error("Redirect login error:", error);
-            toast.error("Đăng nhập thất bại");
-          } finally {
-            // Keep guard active briefly to prevent onAuthStateChanged race
-            setTimeout(() => { socialLoginInProgress.current = false; }, 1000);
-            if (!cancelled) setLoading(false);
-          }
-          // Fall through to subscribe onAuthStateChanged below; the
-          // socialLoginInProgress guard prevents a duplicate /auth/me call.
-        }
-      } catch {
-        // No pending redirect — normal page load, continue below
-      }
-
-      if (cancelled) return;
-
-      // 3. Auth state listener (normal page loads & popup flows)
-      unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-        if (firebaseUser) {
-          // Skip /auth/me check if social login is about to set the user from /auth/social response
-          if (socialLoginInProgress.current) {
-            // Small delay to ensure any concurrent state updates settle
-            setTimeout(() => setLoading(false), 500);
-            return;
-          }
-          try {
-            const response = await fetch("/api/auth/me", {
-              credentials: "include",
-            });
-            if (response.ok) {
-              const data = await response.json();
-              setUser(data.data);
-            } else if (response.status === 401) {
-              // Backend session expired — try refreshing via Firebase idToken
-              try {
-                const currentUser = auth.currentUser;
-                if (currentUser) {
-                  const idToken = await currentUser.getIdToken();
-                  const refreshRes = await fetch("/api/auth/social", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ idToken }),
-                    credentials: "include",
-                  });
-                  if (refreshRes.ok) {
-                    const data = await refreshRes.json();
-                    setUser(data.data.user);
-                    return;
+                if (contentType && contentType.includes("application/json")) {
+                  const errorData = await response.json();
+                  errorMessage = errorData?.error?.message || errorMessage;
+                  const internalMessage = errorData?.error?.details?.internalMessage;
+                  if (internalMessage && process.env.NODE_ENV !== "production") {
+                    console.error("[Auth] OAuth backend error details:", internalMessage);
                   }
                 }
-              } catch {
-                // Refresh failed — fall through to setUser(null)
+
+                throw new Error(errorMessage);
               }
-              setUser(null);
-            } else {
-              // Token expired or invalid at backend
-              let errorMsg = "";
-              try {
-                const errorData = await response.json();
-                errorMsg = errorData.error?.message || "";
-              } catch {
-                // fallback to status text
+
+              if (!cancelled) {
+                const data = await response.json();
+                setUser(data.data.user);
+                toast.success("Đăng nhập thành công");
+                router.push(data.data.user.hasOnboarded ? "/dashboard" : "/onboarding");
               }
-              if (process.env.NODE_ENV !== 'production') {
-                console.error(
-                  `Auth /me failed: HTTP ${response.status} ${response.statusText} ${errorMsg ? `— ${errorMsg}` : ""}`,
-                );
+            } catch (error) {
+              if (process.env.NODE_ENV !== "production") console.error("OAuth login error:", error);
+              toast.error(error instanceof Error ? error.message : "Đăng nhập thất bại");
+            } finally {
+              setTimeout(() => { socialLoginInProgress.current = false; }, 1000);
+              if (!cancelled) setLoading(false);
+            }
+            // Fall through to subscribe onAuthStateChanged
+          }
+        } catch {
+          // No pending OAuth redirect — continue below
+        }
+
+        // 2. Process Firebase redirect result (legacy mobile fallback).
+        //    Must run before onAuthStateChanged to avoid race.
+        try {
+          const result = await getRedirectResult(auth);
+          if (result && !cancelled) {
+            socialLoginInProgress.current = true;
+            setLoading(true);
+
+            try {
+              const idToken = await result.user.getIdToken();
+              const response = await fetch("/api/auth/social", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ idToken }),
+                credentials: "include",
+              });
+
+              if (response.ok && !cancelled) {
+                const data = await response.json();
+                setUser(data.data.user);
+                toast.success("Đăng nhập thành công");
+                router.push(data.data.user.hasOnboarded ? "/dashboard" : "/onboarding");
               }
+            } catch (error) {
+              if (process.env.NODE_ENV !== "production") console.error("Redirect login error:", error);
+              toast.error("Đăng nhập thất bại");
+            } finally {
+              // Keep guard active briefly to prevent onAuthStateChanged race
+              setTimeout(() => { socialLoginInProgress.current = false; }, 1000);
+              if (!cancelled) setLoading(false);
+            }
+            // Fall through to subscribe onAuthStateChanged below; the
+            // socialLoginInProgress guard prevents a duplicate /auth/me call.
+          }
+        } catch {
+          // No pending redirect — normal page load, continue below
+        }
+
+        if (cancelled) return;
+
+        // 3. Auth state listener (normal page loads & popup flows)
+        unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+          if (firebaseUser) {
+            // Skip /auth/me check if social login is about to set the user from /auth/social response
+            if (socialLoginInProgress.current) {
+              // Small delay to ensure any concurrent state updates settle
+              setTimeout(() => setLoading(false), 500);
+              return;
+            }
+            try {
+              const response = await fetch("/api/auth/me", {
+                credentials: "include",
+              });
+              if (response.ok) {
+                const data = await response.json();
+                setUser(data.data);
+              } else if (response.status === 401) {
+                // Backend session expired — try refreshing via Firebase idToken
+                try {
+                  const currentUser = auth.currentUser;
+                  if (currentUser) {
+                    const idToken = await currentUser.getIdToken();
+                    const refreshRes = await fetch("/api/auth/social", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ idToken }),
+                      credentials: "include",
+                    });
+                    if (refreshRes.ok) {
+                      const data = await refreshRes.json();
+                      setUser(data.data.user);
+                      return;
+                    }
+                  }
+                } catch {
+                  // Refresh failed — fall through to setUser(null)
+                }
+                setUser(null);
+              } else {
+                // Token expired or invalid at backend
+                let errorMsg = "";
+                try {
+                  const errorData = await response.json();
+                  errorMsg = errorData.error?.message || "";
+                } catch {
+                  // fallback to status text
+                }
+                if (process.env.NODE_ENV !== 'production') {
+                  console.error(
+                    `Auth /me failed: HTTP ${response.status} ${response.statusText} ${errorMsg ? `— ${errorMsg}` : ""}`,
+                  );
+                }
+                setUser(null);
+              }
+            } catch (error) {
+              if (process.env.NODE_ENV !== 'production') console.error("Sync user error:", error);
               setUser(null);
             }
-          } catch (error) {
-            if (process.env.NODE_ENV !== 'production') console.error("Sync user error:", error);
+          } else {
             setUser(null);
           }
-        } else {
-          setUser(null);
+          setLoading(false);
+        });
+      } else {
+        // Firebase not configured — skip all Firebase auth.
+        // Check for an existing backend session (email/password login persists
+        // via httpOnly cookie; this restores the user on page refresh).
+        if (!cancelled) {
+          try {
+            const response = await fetch("/api/auth/me", { credentials: "include" });
+            if (response.ok) {
+              const data = await response.json();
+              if (!cancelled) setUser(data.data);
+            }
+          } catch {
+            // No active session — stay logged out
+          }
+          if (!cancelled) setLoading(false);
         }
-        setLoading(false);
-      });
+      }
     })();
 
     return () => {
@@ -293,9 +313,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loginWithGoogle = () => loginWithSocial(googleProvider);
 
+  /** Email/password login against the Hono API */
+  const loginWithEmail = async (email: string, password: string) => {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+      credentials: "include",
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.error?.message || "Đăng nhập thất bại");
+    }
+
+    setUser(data.data.user);
+    toast.success("Đăng nhập thành công");
+    router.push(data.data.user.hasOnboarded ? "/dashboard" : "/onboarding");
+  };
+
+  /** Email/password register against the Hono API */
+  const registerWithEmail = async (
+    email: string,
+    password: string,
+    fullName: string,
+    username: string,
+  ) => {
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, fullName, username }),
+      credentials: "include",
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.error?.message || "Đăng ký thất bại");
+    }
+
+    setUser(data.data.user);
+    toast.success("Tạo tài khoản thành công! Chào mừng bạn 🎉");
+    router.push(data.data.user.hasOnboarded ? "/dashboard" : "/onboarding");
+  };
+
   const logout = async () => {
     try {
-      await firebaseSignOut(auth);
+      if (isFirebaseAvailable()) {
+        await firebaseSignOut(auth);
+      }
       await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
       setUser(null);
       router.push("/login");
@@ -314,7 +381,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{ 
       user, 
       loading, 
-      loginWithGoogle, 
+      loginWithGoogle,
+      loginWithEmail,
+      registerWithEmail,
       logout,
       markOnboarded,
     }}>

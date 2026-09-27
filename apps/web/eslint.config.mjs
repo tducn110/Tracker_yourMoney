@@ -23,6 +23,7 @@ const eslintConfig = [
       "react-hooks/immutability": "off",
       "react-hooks/incompatible-library": "warn",
       "react-hooks/purity": "off",
+      "react-hooks/refs": "off",
       "react-hooks/set-state-in-effect": "off",
     }
   }

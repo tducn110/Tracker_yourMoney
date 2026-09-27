@@ -85,15 +85,20 @@ cd Tracker_yourMoney
 pnpm install
 
 # 3. Configure environment
-cp .env.example .env.local
-# Fill in: DATABASE_URL, FIREBASE_*, JWT_SECRET, GEMINI_API_KEY
+cp .env.example .env
+# Fill in: DATABASE_URL (PostgreSQL), FIREBASE_*, JWT_SECRET, AI_API_KEY
+# For local Docker DB: DATABASE_URL=postgresql://finance:finance@localhost:5432/finance_db
 
-# 4. Initialize database
-pnpm db:generate
-pnpm db:migrate
-pnpm db:seed
+# 4. Start local database (Docker required for local dev)
+docker run -d --name finance-db-local \
+  -e POSTGRES_DB=finance_db -e POSTGRES_USER=finance -e POSTGRES_PASSWORD=finance \
+  -p 5432:5432 postgres:16-alpine
+# Or: docker-compose up -d  (uses docker-compose.yml)
 
-# 5. Run app (dev)
+# 5. Initialize database (run migrations)
+cd packages/db && DATABASE_URL=<your-url> npx drizzle-kit migrate && cd ../..
+
+# 6. Run app (dev) — starts both API (port 3001) and Next.js (port 3000)
 pnpm dev
 
 # Production build

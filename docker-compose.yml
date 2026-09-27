@@ -1,16 +1,16 @@
 services:
   db:
-    image: mysql:8.0
+    image: postgres:16-alpine
     container_name: finance-db-local
     restart: always
     environment:
-      MYSQL_DATABASE: finance_db
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_PASSWORD: root
+      POSTGRES_DB: finance_db
+      POSTGRES_USER: finance
+      POSTGRES_PASSWORD: finance
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
